@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS Visualizer — 컴퓨터 공학 개념 시각화</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a28;
+  --border: #2a2a3a;
+  --text: #e0e0f0;
+  --text-dim: #8888aa;
+  --accent: #00ffaa;
+  --accent2: #ff6b9d;
+  --accent3: #6b8aff;
+  --accent4: #ffaa00;
+  --danger: #ff4466;
+  --success: #00cc88;
+  --glow: 0 0 20px rgba(0,255,170,0.15);
+  --radius: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 600px 400px at 30% 40%, rgba(0,255,170,0.06), transparent),
+    radial-gradient(ellipse 500px 500px at 70% 60%, rgba(107,138,255,0.06), transparent);
+}
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 60px 60px; animation: gridMove 20s linear infinite;
+}
+@keyframes gridMove { 0%{transform:translate(0,0)}100%{transform:translate(60px,60px)} }
+.hero h1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 700; letter-spacing: -2px;
+  position: relative; z-index: 1;
+}
+.hero h1 span { color: var(--accent); }
+.hero p { font-size:1.15rem; color:var(--text-dim); margin-top:1rem; position:relative; z-index:1; max-width:600px; padding:0 20px; }
+.hero-nav {
+  display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
+  margin-top:3rem; position:relative; z-index:1; padding:0 20px;
+}
+.hero-nav a {
+  display:inline-flex; align-items:center; gap:8px; padding:10px 20px;
+  border:1px solid var(--border); border-radius:100px; color:var(--text-dim);
+  text-decoration:none; font-size:0.9rem; transition:all 0.3s;
+  font-family:'JetBrains Mono',monospace;
+}
+.hero-nav a:hover { border-color:var(--accent); color:var(--accent); background:rgba(0,255,170,0.05); box-shadow:var(--glow); }
+.level { font-size:0.65rem; padding:2px 8px; border-radius:100px; font-weight:600; }
+.level-1 { background:rgba(0,204,136,0.2); color:var(--success); }
+.level-2 { background:rgba(107,138,255,0.2); color:var(--accent3); }
+.level-3 { background:rgba(255,170,0,0.2); color:var(--accent4); }
+.level-4 { background:rgba(255,68,102,0.2); color:var(--danger); }
+
+section { max-width:960px; margin:0 auto; padding:100px 24px; }
+.section-header { margin-bottom:2.5rem; }
+.section-header .tag {
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:'JetBrains Mono',monospace; font-size:0.75rem;
+  padding:4px 12px; border-radius:100px; margin-bottom:12px;
+}
+.section-header h2 { font-family:'JetBrains Mono',monospace; font-size:clamp(1.8rem,4vw,2.5rem); font-weight:700; letter-spacing:-1px; }
+.section-header p { color:var(--text-dim); margin-top:8px; font-size:1rem; max-width:640px; }
+.viz-box {
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:32px; margin-top:1.5rem; position:relative; overflow:hidden;
+}
+.viz-box::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent); opacity:0.3;
+}
+.controls { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:24px; }
+.btn {
+  font-family:'JetBrains Mono',monospace; font-size:0.82rem; padding:8px 18px;
+  border:1px solid var(--border); border-radius:8px; background:var(--surface2);
+  color:var(--text); cursor:pointer; transition:all 0.2s; user-select:none;
+}
+.btn:hover { border-color:var(--accent); color:var(--accent); background:rgba(0,255,170,0.05); }
+.btn.active { border-color:var(--accent); color:var(--bg); background:var(--accent); }
+.btn.danger { border-color:var(--danger); color:var(--danger); }
+.btn.danger:hover { background:var(--danger); color:#fff; }
+.btn:disabled { opacity:0.3; cursor:not-allowed; pointer-events:none; }
+canvas { display:block; width:100%; border-radius:8px; }
+.info-text {
+  font-family:'JetBrains Mono',monospace; font-size:0.82rem; color:var(--text-dim);
+  margin-top:16px; padding:12px 16px; background:var(--surface2); border-radius:8px;
+  border-left:3px solid var(--accent); line-height:1.8;
+}
+
+/* BINARY */
+.binary-display { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:24px 0; }
+.bit-cell {
+  width:64px; height:80px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:var(--surface2); border:2px solid var(--border); border-radius:10px;
+  cursor:pointer; transition:all 0.25s; user-select:none;
+}
+.bit-cell:hover { border-color:var(--accent); transform:translateY(-2px); }
+.bit-cell.on { border-color:var(--accent); background:rgba(0,255,170,0.1); box-shadow:0 0 20px rgba(0,255,170,0.15); }
+.bit-cell .bit-val { font-family:'JetBrains Mono',monospace; font-size:1.8rem; font-weight:700; color:var(--text-dim); transition:all 0.25s; }
+.bit-cell.on .bit-val { color:var(--accent); }
+.bit-cell .bit-weight { font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--text-dim); margin-top:4px; }
+.decimal-result { text-align:center; font-family:'JetBrains Mono',monospace; font-size:2rem; color:var(--accent); margin-top:16px; }
+.decimal-result small { font-size:0.9rem; color:var(--text-dim); }
+
+/* LOGIC GATES */
+.gate-container { display:flex; flex-direction:column; gap:20px; align-items:center; }
+.gate-row { display:flex; align-items:center; gap:20px; flex-wrap:wrap; justify-content:center; }
+.gate-input { width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:700; border:2px solid var(--border); border-radius:50%; cursor:pointer; transition:all 0.25s; user-select:none; }
+.gate-input.on { border-color:var(--accent); background:rgba(0,255,170,0.15); color:var(--accent); box-shadow:0 0 16px rgba(0,255,170,0.2); }
+.gate-symbol { font-family:'JetBrains Mono',monospace; font-size:1rem; font-weight:600; padding:10px 20px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; min-width:80px; text-align:center; }
+.gate-output { width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:700; border:2px solid var(--border); border-radius:50%; transition:all 0.3s; }
+.gate-output.on { border-color:var(--accent2); background:rgba(255,107,157,0.15); color:var(--accent2); box-shadow:0 0 16px rgba(255,107,157,0.2); }
+
+/* SORTING */
+.sort-bars { display:flex; align-items:flex-end; gap:3px; height:260px; padding:0 4px; }
+.sort-bar { flex:1; background:var(--accent3); border-radius:3px 3px 0 0; transition:height 0.15s,background 0.15s; min-width:4px; }
+.sort-bar.comparing { background:var(--accent4); }
+.sort-bar.swapping { background:var(--accent2); }
+.sort-bar.sorted { background:var(--accent); }
+.sort-speed { display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--text-dim); }
+.sort-speed input[type=range] { -webkit-appearance:none; width:120px; height:4px; background:var(--border); border-radius:2px; outline:none; }
+.sort-speed input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; background:var(--accent); border-radius:50%; cursor:pointer; }
+
+/* STACK & QUEUE */
+.ds-container { display:flex; gap:40px; flex-wrap:wrap; justify-content:center; }
+.ds-panel { flex:1; min-width:280px; max-width:400px; }
+.ds-panel h3 { font-family:'JetBrains Mono',monospace; font-size:1.1rem; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.ds-visual { min-height:300px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:6px; }
+.ds-item { padding:10px 16px; font-family:'JetBrains Mono',monospace; font-size:0.9rem; border-radius:6px; animation:itemIn 0.3s ease-out; display:flex; justify-content:space-between; align-items:center; }
+.ds-item .idx { font-size:0.7rem; opacity:0.5; }
+@keyframes itemIn { from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)} }
+.stack-item { background:rgba(107,138,255,0.15); border:1px solid rgba(107,138,255,0.3); color:var(--accent3); }
+.queue-item { background:rgba(255,170,0,0.12); border:1px solid rgba(255,170,0,0.3); color:var(--accent4); }
+.ds-controls { display:flex; gap:8px; margin-top:12px; }
+.ds-empty { color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:0.8rem; text-align:center; padding:40px; opacity:0.5; }
+
+/* MEMORY */
+.memory-grid { display:grid; grid-template-columns:repeat(16,1fr); gap:2px; margin:20px 0; }
+.mem-cell { aspect-ratio:1; border-radius:3px; background:var(--surface2); border:1px solid var(--border); transition:all 0.3s; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:0.55rem; color:transparent; }
+.mem-cell.allocated { color:rgba(0,0,0,0.5); font-weight:600; }
+.mem-legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; }
+.mem-legend-item { display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--text-dim); }
+.mem-legend-color { width:14px; height:14px; border-radius:3px; }
+
+/* SCHEDULING */
+.process-timeline { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+.process-row { display:flex; align-items:center; gap:12px; }
+.process-label { font-family:'JetBrains Mono',monospace; font-size:0.82rem; width:40px; flex-shrink:0; }
+.process-track { flex:1; height:36px; background:var(--surface2); border-radius:6px; position:relative; overflow:hidden; }
+.process-block { position:absolute; top:3px; bottom:3px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:rgba(0,0,0,0.7); font-weight:600; }
+.process-info { display:flex; gap:20px; flex-wrap:wrap; margin-top:16px; font-family:'JetBrains Mono',monospace; font-size:0.8rem; }
+.process-stat { display:flex; align-items:center; gap:6px; }
+.process-dot { width:10px; height:10px; border-radius:50%; }
+
+/* DEADLOCK */
+.deadlock-canvas-wrap { position:relative; background:var(--surface2); border-radius:8px; overflow:hidden; }
+.deadlock-status {
+  position:absolute; top:16px; right:16px;
+  font-family:'JetBrains Mono',monospace; font-size:0.85rem;
+  padding:6px 16px; border-radius:100px; z-index:5; transition:all 0.3s;
+}
+.deadlock-status.safe { background:rgba(0,204,136,0.15); color:var(--success); border:1px solid rgba(0,204,136,0.3); }
+.deadlock-status.warning { background:rgba(255,170,0,0.15); color:var(--accent4); border:1px solid rgba(255,170,0,0.3); }
+.deadlock-status.deadlocked { background:rgba(255,68,102,0.15); color:var(--danger); border:1px solid rgba(255,68,102,0.3); animation:pulse 1.5s ease-in-out infinite; }
+.deadlock-status.resolving { background:rgba(107,138,255,0.15); color:var(--accent3); border:1px solid rgba(107,138,255,0.3); }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,68,102,0.3)}50%{box-shadow:0 0 20px 4px rgba(255,68,102,0.2)} }
+
+.narration-log { margin-top:20px; max-height:340px; overflow-y:auto; scroll-behavior:smooth; }
+.narration-log::-webkit-scrollbar { width:4px; }
+.narration-log::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.narration-entry {
+  display:flex; gap:12px; padding:10px 14px; border-radius:8px; margin-bottom:6px;
+  font-family:'JetBrains Mono',monospace; font-size:0.8rem; line-height:1.7;
+  animation:fadeSlideIn 0.4s ease-out; border-left:3px solid transparent;
+}
+@keyframes fadeSlideIn { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
+.narration-entry.normal { background:rgba(0,204,136,0.05); border-left-color:var(--success); color:var(--text-dim); }
+.narration-entry.warning { background:rgba(255,170,0,0.07); border-left-color:var(--accent4); color:var(--accent4); }
+.narration-entry.danger { background:rgba(255,68,102,0.07); border-left-color:var(--danger); color:var(--danger); }
+.narration-entry.info { background:rgba(107,138,255,0.07); border-left-color:var(--accent3); color:var(--accent3); }
+.narration-entry.resolve { background:rgba(0,255,170,0.07); border-left-color:var(--accent); color:var(--accent); }
+.narration-time { flex-shrink:0; color:var(--text-dim); opacity:0.5; min-width:36px; text-align:right; font-size:0.7rem; }
+.narration-text { flex:1; }
+
+.dl-progress-wrap { margin-top:16px; background:var(--surface2); border-radius:100px; height:6px; overflow:hidden; }
+.dl-progress { height:100%; border-radius:100px; background:var(--accent); transition:width 0.3s,background 0.3s; width:0%; }
+.dl-progress.danger { background:var(--danger); }
+.dl-progress.resolve { background:var(--accent3); }
+
+.dl-phase { display:flex; gap:0; margin-bottom:24px; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+.dl-phase-step {
+  flex:1; padding:10px 8px; font-family:'JetBrains Mono',monospace; font-size:0.7rem;
+  text-align:center; background:var(--surface2); color:var(--text-dim); transition:all 0.4s;
+  border-right:1px solid var(--border);
+}
+.dl-phase-step:last-child { border-right:none; }
+.dl-phase-step.done { background:rgba(0,255,170,0.08); color:rgba(0,255,170,0.5); }
+.dl-phase-step.active-normal { background:rgba(0,204,136,0.15); color:var(--success); }
+.dl-phase-step.active-warning { background:rgba(255,170,0,0.15); color:var(--accent4); }
+.dl-phase-step.active-danger { background:rgba(255,68,102,0.15); color:var(--danger); }
+.dl-phase-step.active-resolve { background:rgba(107,138,255,0.15); color:var(--accent3); }
+.dl-phase-step.active-done { background:rgba(0,255,170,0.15); color:var(--accent); }
+.dl-phase-step .phase-num { display:block; font-size:0.55rem; opacity:0.5; margin-bottom:2px; }
+
+footer { text-align:center; padding:60px 24px; color:var(--text-dim); font-size:0.85rem; border-top:1px solid var(--border); }
+.section-divider { max-width:960px; margin:0 auto; height:1px; background:linear-gradient(90deg,transparent,var(--border),transparent); }
+@media(max-width:640px){
+  .bit-cell{width:48px;height:64px} .bit-cell .bit-val{font-size:1.4rem}
+  .ds-container{flex-direction:column} section{padding:60px 16px}
+  .dl-phase-step{font-size:0.55rem;padding:8px 4px}
+}
+::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-track{background:var(--bg)} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-grid"></div>
+  <h1>CS <span>Visualizer</span></h1>
+  <p>컴퓨터 공학의 핵심 개념들을 인터랙티브 시각화로 직관적으로 이해하세요. 기초부터 고급까지 단계별로 탐험합니다.</p>
+  <nav class="hero-nav">
+    <a href="#binary"><span class="level level-1">Lv.1</span> 이진수</a>
+    <a href="#gates"><span class="level level-1">Lv.1</span> 논리 게이트</a>
+    <a href="#sorting"><span class="level level-2">Lv.2</span> 정렬 알고리즘</a>
+    <a href="#datastructure"><span class="level level-2">Lv.2</span> 스택 & 큐</a>
+    <a href="#memory"><span class="level level-3">Lv.3</span> 메모리 관리</a>
+    <a href="#scheduling"><span class="level level-3">Lv.3</span> 프로세스 스케줄링</a>
+    <a href="#deadlock"><span class="level level-4">Lv.4</span> 데드락</a>
+  </nav>
+</header>
+
+<!-- BINARY -->
+<div class="section-divider"></div>
+<section id="binary">
+  <div class="section-header">
+    <div class="tag level-1">Lv.1 기초</div>
+    <h2>이진수 (Binary)</h2>
+    <p>컴퓨터는 0과 1만 이해합니다. 비트를 클릭해 켜고 끄면서 이진수↔십진수 변환을 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="binary-display" id="binaryDisplay"></div>
+    <div class="decimal-result" id="decimalResult"><small>= </small>0<small> (10진수)</small></div>
+    <div class="controls" style="justify-content:center;margin-top:20px;margin-bottom:0">
+      <button class="btn" onclick="resetBinary()">초기화</button>
+      <button class="btn" onclick="randomBinary()">랜덤</button>
+      <button class="btn" onclick="incrementBinary()">+1 증가</button>
+    </div>
+    <div class="info-text">💡 각 비트의 자릿값은 오른쪽부터 2⁰, 2¹, 2², ... 입니다. 켜진 비트의 자릿값을 모두 더하면 십진수 값이 됩니다.</div>
+  </div>
+</section>
+
+<!-- LOGIC GATES -->
+<div class="section-divider"></div>
+<section id="gates">
+  <div class="section-header">
+    <div class="tag level-1">Lv.1 기초</div>
+    <h2>논리 게이트 (Logic Gates)</h2>
+    <p>디지털 회로의 기본 구성 요소입니다. 입력값을 클릭해 토글하고 각 게이트의 동작을 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls" id="gateTabs"></div>
+    <div class="gate-container" id="gateContainer"></div>
+    <div class="info-text" id="gateInfo"></div>
+  </div>
+</section>
+
+<!-- SORTING -->
+<div class="section-divider"></div>
+<section id="sorting">
+  <div class="section-header">
+    <div class="tag level-2">Lv.2 중급</div>
+    <h2>정렬 알고리즘 (Sorting)</h2>
+    <p>같은 데이터를 정렬하는 다양한 전략을 비교해보세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="startSort('bubble')">버블</button>
+      <button class="btn" onclick="startSort('selection')">선택</button>
+      <button class="btn" onclick="startSort('insertion')">삽입</button>
+      <button class="btn" onclick="startSort('quick')">퀵</button>
+      <button class="btn" onclick="startSort('merge')">병합</button>
+      <button class="btn" onclick="resetSort()">새 배열</button>
+      <div class="sort-speed">🏎️<input type="range" id="sortSpeed" min="1" max="100" value="50"></div>
+    </div>
+    <div class="sort-bars" id="sortBars"></div>
+    <div class="info-text" id="sortInfo">정렬 알고리즘을 선택하세요.</div>
+  </div>
+</section>
+
+<!-- STACK & QUEUE -->
+<div class="section-divider"></div>
+<section id="datastructure">
+  <div class="section-header">
+    <div class="tag level-2">Lv.2 중급</div>
+    <h2>스택 & 큐 (Stack & Queue)</h2>
+    <p>스택은 LIFO(후입선출), 큐는 FIFO(선입선출). 직접 조작해보세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="ds-container">
+      <div class="ds-panel">
+        <h3 style="color:var(--accent3)">📚 Stack <small style="color:var(--text-dim);font-size:0.75rem">LIFO</small></h3>
+        <div class="ds-visual" id="stackVisual"><div class="ds-empty">비어있음</div></div>
+        <div class="ds-controls">
+          <button class="btn" onclick="stackPush()">Push ↓</button>
+          <button class="btn" onclick="stackPop()">Pop ↑</button>
+          <button class="btn" onclick="stackClear()">Clear</button>
+        </div>
+      </div>
+      <div class="ds-panel">
+        <h3 style="color:var(--accent4)">🚶 Queue <small style="color:var(--text-dim);font-size:0.75rem">FIFO</small></h3>
+        <div class="ds-visual" id="queueVisual"><div class="ds-empty">비어있음</div></div>
+        <div class="ds-controls">
+          <button class="btn" onclick="queueEnqueue()">Enqueue →</button>
+          <button class="btn" onclick="queueDequeue()">Dequeue ←</button>
+          <button class="btn" onclick="queueClear()">Clear</button>
+        </div>
+      </div>
+    </div>
+    <div class="info-text">💡 스택: 접시 쌓기처럼 마지막에 넣은 것이 먼저 나옵니다. 큐: 줄 서기처럼 먼저 온 것이 먼저 나갑니다.</div>
+  </div>
+</section>
+
+<!-- MEMORY -->
+<div class="section-divider"></div>
+<section id="memory">
+  <div class="section-header">
+    <div class="tag level-3">Lv.3 고급</div>
+    <h2>메모리 관리 (Memory Management)</h2>
+    <p>프로세스에 메모리를 할당/해제하면서 단편화가 어떻게 발생하는지 관찰하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="memAlloc()">할당</button>
+      <button class="btn" onclick="memFree()">해제</button>
+      <button class="btn" onclick="memCompact()">압축</button>
+      <button class="btn danger" onclick="memReset()">초기화</button>
+    </div>
+    <div class="memory-grid" id="memoryGrid"></div>
+    <div class="mem-legend" id="memLegend"></div>
+    <div class="info-text" id="memInfo">메모리 할당과 해제를 반복하면 외부 단편화가 발생합니다.</div>
+  </div>
+</section>
+
+<!-- SCHEDULING -->
+<div class="section-divider"></div>
+<section id="scheduling">
+  <div class="section-header">
+    <div class="tag level-3">Lv.3 고급</div>
+    <h2>프로세스 스케줄링 (Scheduling)</h2>
+    <p>CPU 하나로 여러 프로세스를 어떻게 처리할까요?</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn active" onclick="setScheduler('fcfs',this)">FCFS</button>
+      <button class="btn" onclick="setScheduler('sjf',this)">SJF</button>
+      <button class="btn" onclick="setScheduler('rr',this)">Round Robin</button>
+      <button class="btn" onclick="runScheduler()">▶ 실행</button>
+      <button class="btn" onclick="resetScheduler()">초기화</button>
+    </div>
+    <div class="process-timeline" id="processTimeline"></div>
+    <div class="process-info" id="processInfo"></div>
+    <div class="info-text">FCFS: 먼저 온 순서 | SJF: 짧은 작업 우선 | Round Robin: 번갈아 처리</div>
+  </div>
+</section>
+
+<!-- DEADLOCK -->
+<div class="section-divider"></div>
+<section id="deadlock">
+  <div class="section-header">
+    <div class="tag level-4">Lv.4 심화</div>
+    <h2>데드락 (Deadlock)</h2>
+    <p>식사하는 철학자 문제를 통해 데드락이 <strong>왜</strong> 발생하고, <strong>어떻게</strong> 해결하는지 처음부터 끝까지 자동으로 경험하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="dl-phase" id="dlPhase">
+      <div class="dl-phase-step" id="phase0"><span class="phase-num">PHASE 1</span>정상 식사</div>
+      <div class="dl-phase-step" id="phase1"><span class="phase-num">PHASE 2</span>위험 징후</div>
+      <div class="dl-phase-step" id="phase2"><span class="phase-num">PHASE 3</span>데드락!</div>
+      <div class="dl-phase-step" id="phase3"><span class="phase-num">PHASE 4</span>원인 분석</div>
+      <div class="dl-phase-step" id="phase4"><span class="phase-num">PHASE 5</span>해결</div>
+    </div>
+    <div class="controls">
+      <button class="btn active" id="dlStartBtn" onclick="dlStart()">▶ 시나리오 시작</button>
+      <button class="btn" id="dlResetBtn" onclick="dlReset()">초기화</button>
+    </div>
+    <div class="deadlock-canvas-wrap">
+      <div class="deadlock-status safe" id="deadlockStatus">▶ 시작을 눌러보세요</div>
+      <canvas id="deadlockCanvas" height="400"></canvas>
+    </div>
+    <div class="dl-progress-wrap"><div class="dl-progress" id="dlProgress"></div></div>
+    <div class="narration-log" id="narrationLog"></div>
+    <div class="info-text" style="margin-top:20px">
+      💡 <strong>데드락 4가지 필수 조건:</strong><br>
+      ① 상호 배제 — 포크는 한 번에 한 사람만 사용<br>
+      ② 점유와 대기 — 하나를 잡은 채 다른 것을 기다림<br>
+      ③ 비선점 — 남의 자원을 빼앗을 수 없음<br>
+      ④ 순환 대기 — 모두가 원형으로 서로를 기다림<br>
+      → 이 중 <strong>하나만 깨도</strong> 데드락은 방지됩니다!
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>CS Visualizer — 컴퓨터 공학 개념 시각화</p>
+  <p style="margin-top:8px">Built with ❤️ for learners everywhere</p>
+</footer>
+
+<script>
+// ===== BINARY =====
+const BITS=8; let binaryBits=new Array(BITS).fill(0);
+function initBinary(){
+  const d=document.getElementById('binaryDisplay');d.innerHTML='';
+  for(let i=BITS-1;i>=0;i--){const c=document.createElement('div');c.className='bit-cell'+(binaryBits[i]?' on':'');c.innerHTML=`<div class="bit-val">${binaryBits[i]}</div><div class="bit-weight">2<sup>${i}</sup>=${1<<i}</div>`;c.onclick=()=>{binaryBits[i]^=1;initBinary()};d.appendChild(c);}
+  let v=0;for(let i=0;i<BITS;i++)v+=binaryBits[i]*(1<<i);
+  document.getElementById('decimalResult').innerHTML=`<small>= </small>${v}<small> (10진수)</small>`;
+}
+function resetBinary(){binaryBits.fill(0);initBinary();}
+function randomBinary(){binaryBits=binaryBits.map(()=>Math.random()>0.5?1:0);initBinary();}
+function incrementBinary(){let c=1;for(let i=0;i<BITS&&c;i++){let s=binaryBits[i]+c;binaryBits[i]=s%2;c=s>>1;}initBinary();}
+
+// ===== LOGIC GATES =====
+const gates=[{name:'AND',n:2,fn:(a,b)=>a&b,d:'두 입력이 모두 1일 때만 출력 1'},{name:'OR',n:2,fn:(a,b)=>a|b,d:'하나라도 1이면 출력 1'},{name:'NOT',n:1,fn:a=>a?0:1,d:'입력을 반전 (0→1, 1→0)'},{name:'XOR',n:2,fn:(a,b)=>a^b,d:'두 입력이 다를 때 출력 1'},{name:'NAND',n:2,fn:(a,b)=>(a&b)?0:1,d:'AND의 반전. 범용 게이트'},{name:'NOR',n:2,fn:(a,b)=>(a|b)?0:1,d:'OR의 반전. 범용 게이트'}];
+let gI=[0,0],cG=0;
+function initGates(){document.getElementById('gateTabs').innerHTML=gates.map((g,i)=>`<button class="btn ${i===cG?'active':''}" onclick="cG=${i};gI=[0,0];initGates()">${g.name}</button>`).join('');rGate();}
+function rGate(){const g=gates[cG];const o=g.n===1?g.fn(gI[0]):g.fn(gI[0],gI[1]);let h='<div class="gate-row">';h+=`<div class="gate-input ${gI[0]?'on':''}" onclick="gI[0]^=1;rGate()">${gI[0]}</div>`;if(g.n===2)h+=`<div class="gate-input ${gI[1]?'on':''}" onclick="gI[1]^=1;rGate()">${gI[1]}</div>`;h+=`<div class="gate-symbol">${g.name}</div><div class="gate-output ${o?'on':''}">${o}</div></div>`;document.getElementById('gateContainer').innerHTML=h;document.getElementById('gateInfo').textContent='💡 '+g.d;}
+
+// ===== SORTING =====
+let sA=[],sR=false;
+function initSort(){sA=Array.from({length:50},()=>Math.random()*0.9+0.1);rSB();}
+function rSB(c=[],s=[],d=[]){document.getElementById('sortBars').innerHTML=sA.map((v,i)=>{let cl='sort-bar';if(d.includes(i))cl+=' sorted';else if(s.includes(i))cl+=' swapping';else if(c.includes(i))cl+=' comparing';return`<div class="${cl}" style="height:${v*100}%"></div>`;}).join('');}
+function gD(){return 200-document.getElementById('sortSpeed').value*1.8;}
+const sl=ms=>new Promise(r=>setTimeout(r,ms));
+function resetSort(){sR=false;initSort();document.getElementById('sortInfo').textContent='정렬 알고리즘을 선택하세요.';}
+async function startSort(t){if(sR)return;sR=true;let cp=0;const info=document.getElementById('sortInfo'),nm={bubble:'버블',selection:'선택',insertion:'삽입',quick:'퀵',merge:'병합'};info.textContent=`🔄 ${nm[t]} 정렬 진행 중...`;
+if(t==='bubble'){for(let i=0;i<sA.length&&sR;i++)for(let j=0;j<sA.length-i-1&&sR;j++){cp++;rSB([j,j+1]);await sl(gD());if(sA[j]>sA[j+1]){[sA[j],sA[j+1]]=[sA[j+1],sA[j]];rSB([],[j,j+1]);await sl(gD());}}}
+else if(t==='selection'){for(let i=0;i<sA.length&&sR;i++){let m=i;for(let j=i+1;j<sA.length&&sR;j++){cp++;rSB([m,j]);await sl(gD());if(sA[j]<sA[m])m=j;}if(m!==i){[sA[i],sA[m]]=[sA[m],sA[i]];rSB([],[i,m]);await sl(gD());}}}
+else if(t==='insertion'){for(let i=1;i<sA.length&&sR;i++){let k=sA[i],j=i-1;while(j>=0&&sA[j]>k&&sR){cp++;rSB([j,j+1]);await sl(gD());sA[j+1]=sA[j];j--;}sA[j+1]=k;}}
+else if(t==='quick'){async function qs(l,h){if(l>=h||!sR)return;let p=sA[h],i=l;for(let j=l;j<h&&sR;j++){cp++;rSB([j,h]);await sl(gD());if(sA[j]<p){[sA[i],sA[j]]=[sA[j],sA[i]];i++;}}[sA[i],sA[h]]=[sA[h],sA[i]];await sl(gD());await qs(l,i-1);await qs(i+1,h);}await qs(0,sA.length-1);}
+else if(t==='merge'){async function ms(a,l,r){if(l>=r||!sR)return;const m=(l+r)>>1;await ms(a,l,m);await ms(a,m+1,r);let L=a.slice(l,m+1),R=a.slice(m+1,r+1),i=0,j=0,k=l;while(i<L.length&&j<R.length&&sR){cp++;rSB([k]);await sl(gD());a[k++]=L[i]<=R[j]?L[i++]:R[j++];}while(i<L.length&&sR){a[k++]=L[i++];await sl(gD());}while(j<R.length&&sR){a[k++]=R[j++];await sl(gD());}}await ms(sA,0,sA.length-1);}
+if(sR){rSB([],[],Array.from({length:sA.length},(_,i)=>i));info.textContent=`✅ ${nm[t]} 정렬 완료! 비교: ${cp}`;}sR=false;}
+
+// ===== STACK & QUEUE =====
+let stk=[],que=[],dsC=0;
+function stackPush(){dsC++;stk.push(dsC);rStk();}function stackPop(){stk.pop();rStk();}function stackClear(){stk=[];rStk();}
+function rStk(){const e=document.getElementById('stackVisual');if(!stk.length){e.innerHTML='<div class="ds-empty">비어있음</div>';return;}e.innerHTML=stk.slice().reverse().map((v,i)=>`<div class="ds-item stack-item"><span>${v}</span><span class="idx">${i===0?'← TOP':''}</span></div>`).join('');}
+function queueEnqueue(){dsC++;que.push(dsC);rQue();}function queueDequeue(){que.shift();rQue();}function queueClear(){que=[];rQue();}
+function rQue(){const e=document.getElementById('queueVisual');if(!que.length){e.innerHTML='<div class="ds-empty">비어있음</div>';return;}e.innerHTML=que.map((v,i)=>`<div class="ds-item queue-item"><span>${v}</span><span class="idx">${i===0?'← FRONT':i===que.length-1?'REAR →':''}</span></div>`).join('');}
+
+// ===== MEMORY =====
+const MS=128;let mb=new Array(MS).fill(null),mp=0;
+const mc=['#00cc88','#6b8aff','#ff6b9d','#ffaa00','#aa66ff','#ff8844','#44dddd','#88cc44'];
+function initMem(){rMem();}
+function memAlloc(){const sz=4+Math.floor(Math.random()*16);mp++;let st=-1,cn=0;for(let i=0;i<MS;i++){if(mb[i]===null){if(st===-1)st=i;cn++;if(cn>=sz){for(let j=st;j<st+sz;j++)mb[j]=mp;rMem();document.getElementById('memInfo').textContent=`✅ P${mp} 할당 (${sz} blocks)`;return;}}else{st=-1;cn=0;}}document.getElementById('memInfo').textContent=`❌ 공간 부족! 외부 단편화.`;}
+function memFree(){const ps=[...new Set(mb.filter(x=>x!==null))];if(!ps.length)return;const p=ps[Math.floor(Math.random()*ps.length)];for(let i=0;i<MS;i++)if(mb[i]===p)mb[i]=null;rMem();document.getElementById('memInfo').textContent=`🗑️ P${p} 해제.`;}
+function memCompact(){const u=mb.filter(x=>x!==null);mb=[...u,...new Array(MS-u.length).fill(null)];rMem();document.getElementById('memInfo').textContent='🔧 압축 완료!';}
+function memReset(){mb.fill(null);mp=0;rMem();document.getElementById('memInfo').textContent='메모리 할당과 해제를 반복하면 외부 단편화가 발생합니다.';}
+function rMem(){document.getElementById('memoryGrid').innerHTML=mb.map(v=>{if(v===null)return'<div class="mem-cell"></div>';const c=mc[(v-1)%mc.length];return`<div class="mem-cell allocated" style="background:${c};border-color:${c}">P${v}</div>`;}).join('');const ps=[...new Set(mb.filter(x=>x!==null))];document.getElementById('memLegend').innerHTML=ps.map(p=>`<div class="mem-legend-item"><div class="mem-legend-color" style="background:${mc[(p-1)%mc.length]}"></div>P${p}(${mb.filter(x=>x===p).length})</div>`).join('')+`<div class="mem-legend-item"><div class="mem-legend-color" style="background:var(--surface2);border:1px solid var(--border)"></div>빈(${mb.filter(x=>x===null).length})</div>`;}
+
+// ===== SCHEDULING =====
+let schT='fcfs';
+const procs=[{id:'P1',burst:6,arrival:0,color:'#00cc88'},{id:'P2',burst:4,arrival:1,color:'#6b8aff'},{id:'P3',burst:8,arrival:2,color:'#ff6b9d'},{id:'P4',burst:3,arrival:3,color:'#ffaa00'}];
+function setScheduler(t,el){schT=t;document.querySelectorAll('#scheduling .controls .btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function resetScheduler(){document.getElementById('processTimeline').innerHTML='';document.getElementById('processInfo').innerHTML='';}
+function runScheduler(){let sch=[],ps=procs.map(p=>({...p,rem:p.burst,start:-1,fin:0}));
+if(schT==='fcfs'){let t=0;ps.sort((a,b)=>a.arrival-b.arrival);ps.forEach(p=>{t=Math.max(t,p.arrival);p.start=t;sch.push({id:p.id,s:t,e:t+p.burst,c:p.color});t+=p.burst;p.fin=t;});}
+else if(schT==='sjf'){let t=0,d=0;const v=Array(ps.length).fill(false);ps.sort((a,b)=>a.arrival-b.arrival);while(d<ps.length){let idx=-1,mb=Infinity;ps.forEach((p,i)=>{if(!v[i]&&p.arrival<=t&&p.burst<mb){mb=p.burst;idx=i;}});if(idx===-1){t++;continue;}v[idx]=true;ps[idx].start=t;sch.push({id:ps[idx].id,s:t,e:t+ps[idx].burst,c:ps[idx].color});t+=ps[idx].burst;ps[idx].fin=t;d++;}}
+else{let t=0,q=[];const ar=Array(ps.length).fill(false);ps.sort((a,b)=>a.arrival-b.arrival);const TQ=2;while(true){ps.forEach((p,i)=>{if(!ar[i]&&p.arrival<=t){ar[i]=true;q.push(i);}});if(!q.length){if(ps.some(p=>p.rem>0)){t++;continue;}break;}const i=q.shift(),p=ps[i];if(p.rem<=0)continue;if(p.start===-1)p.start=t;const r=Math.min(TQ,p.rem);sch.push({id:p.id,s:t,e:t+r,c:p.color});t+=r;p.rem-=r;ps.forEach((pp,j)=>{if(!ar[j]&&pp.arrival<=t){ar[j]=true;q.push(j);}});if(p.rem>0)q.push(i);else p.fin=t;}}
+const tot=Math.max(...sch.map(s=>s.e)),pids=[...new Set(procs.map(p=>p.id))];
+document.getElementById('processTimeline').innerHTML=pids.map(pid=>{const bl=sch.filter(s=>s.id===pid);const c=bl[0]?.c||'#888';return`<div class="process-row"><div class="process-label" style="color:${c}">${pid}</div><div class="process-track">${bl.map(b=>`<div class="process-block" style="left:${b.s/tot*100}%;width:${(b.e-b.s)/tot*100}%;background:${c}">${b.e-b.s}</div>`).join('')}</div></div>`;}).join('');
+const aw=ps.reduce((s,p)=>s+(p.fin-p.arrival-p.burst),0)/ps.length,at=ps.reduce((s,p)=>s+(p.fin-p.arrival),0)/ps.length;
+document.getElementById('processInfo').innerHTML=ps.map(p=>`<div class="process-stat"><div class="process-dot" style="background:${p.color}"></div>${p.id}:대기${p.fin-p.arrival-p.burst}</div>`).join('')+`<div class="process-stat" style="color:var(--accent)">평균 대기:${aw.toFixed(1)} | 반환:${at.toFixed(1)}</div>`;}
+
+// ===== DEADLOCK - Storytelling =====
+const DLC=document.getElementById('deadlockCanvas'), ctx=DLC.getContext('2d');
+const NP=5, PC=['#00cc88','#6b8aff','#ff6b9d','#ffaa00','#aa66ff'];
+const ST={THINK:0,HUNGRY:1,EAT:2,WAIT_L:3,WAIT_R:4,BLOCKED:5};
+let phil=[],fk=[],dlAn=null,dlT=0,dlRun=false;
+
+function resizeDL(){DLC.width=DLC.parentElement.clientWidth;DLC.height=400;}
+function hexRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)].join(',');}
+
+function initDL(){
+  resizeDL();
+  phil=Array.from({length:NP},(_,i)=>({state:ST.THINK,lf:false,rf:false,angle:(i/NP)*Math.PI*2-Math.PI/2}));
+  fk=Array.from({length:NP},()=>({owner:-1}));
+  dlT=0; dlRun=false;
+  document.getElementById('narrationLog').innerHTML='';
+  setStatus('safe','▶ 시작을 눌러보세요');
+  setProg(0,'');
+  for(let i=0;i<5;i++)document.getElementById('phase'+i).className='dl-phase-step';
+  drawDL();
+}
+
+function setStatus(t,txt){const e=document.getElementById('deadlockStatus');e.className='deadlock-status '+t;e.textContent=txt;}
+function setProg(p,t){const e=document.getElementById('dlProgress');e.style.width=p+'%';e.className='dl-progress '+t;}
+function actPhase(idx,t){for(let i=0;i<5;i++){const e=document.getElementById('phase'+i);e.className='dl-phase-step'+(i<idx?' done':i===idx?' active-'+t:'');}}
+
+function narrate(type,text){
+  const log=document.getElementById('narrationLog');
+  const e=document.createElement('div');
+  e.className='narration-entry '+type;
+  e.innerHTML=`<span class="narration-time">${dlT.toFixed(1)}s</span><span class="narration-text">${text}</span>`;
+  log.appendChild(e);
+  log.scrollTop=log.scrollHeight;
+}
+
+function drawDL(){
+  const w=DLC.width,h=DLC.height,cx=w/2,cy=h/2,R=Math.min(w,h)*0.32;
+  ctx.clearRect(0,0,w,h);
+
+  // Table
+  ctx.beginPath();ctx.arc(cx,cy,R*0.55,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.03)';ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.06)';ctx.font='11px JetBrains Mono';ctx.textAlign='center';
+  ctx.fillText('🍽️ 식탁',cx,cy);
+
+  // Forks
+  for(let i=0;i<NP;i++){
+    const a=(i+0.5)/NP*Math.PI*2-Math.PI/2;
+    const fx=cx+Math.cos(a)*R*0.55,fy=cy+Math.sin(a)*R*0.55;
+    ctx.save();ctx.translate(fx,fy);ctx.rotate(a+Math.PI/2);
+    const held=fk[i].owner!==-1;
+    ctx.strokeStyle=held?PC[fk[i].owner]:'rgba(255,255,255,0.2)';
+    ctx.lineWidth=held?3:2;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(0,14);ctx.moveTo(-5,-14);ctx.lineTo(-5,-4);ctx.moveTo(5,-14);ctx.lineTo(5,-4);ctx.stroke();
+    if(held){ctx.shadowColor=PC[fk[i].owner];ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;}
+    ctx.restore();
+    const fl=cx+Math.cos(a)*R*0.38,ft=cy+Math.sin(a)*R*0.38;
+    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='9px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText(`F${i}`,fl,ft+4);
+  }
+
+  // Philosophers
+  const fills={[ST.THINK]:'rgba(255,255,255,0.04)',[ST.HUNGRY]:'rgba(255,170,0,0.1)',[ST.EAT]:'placeholder',[ST.WAIT_L]:'rgba(255,170,0,0.12)',[ST.WAIT_R]:'rgba(255,170,0,0.15)',[ST.BLOCKED]:'rgba(255,68,102,0.15)'};
+  const strokes={[ST.THINK]:'rgba(255,255,255,0.12)',[ST.HUNGRY]:'#ffaa00',[ST.EAT]:'placeholder',[ST.WAIT_L]:'#ffaa00',[ST.WAIT_R]:'#ffaa00',[ST.BLOCKED]:'#ff4466'};
+  const emojis={[ST.THINK]:'🤔',[ST.HUNGRY]:'😤',[ST.EAT]:'🍝',[ST.WAIT_L]:'👈',[ST.WAIT_R]:'👉',[ST.BLOCKED]:'🔒'};
+  const stateNames={[ST.THINK]:'THINK',[ST.HUNGRY]:'HUNGRY',[ST.EAT]:'EAT',[ST.WAIT_L]:'WAIT',[ST.WAIT_R]:'WAIT',[ST.BLOCKED]:'BLOCKED'};
+
+  for(let i=0;i<NP;i++){
+    const p=phil[i],px=cx+Math.cos(p.angle)*R,py=cy+Math.sin(p.angle)*R,rad=30;
+
+    if(p.state===ST.EAT){ctx.beginPath();ctx.arc(px,py,rad+10,0,Math.PI*2);ctx.fillStyle=`rgba(${hexRgb(PC[i])},0.12)`;ctx.fill();}
+    if(p.state===ST.BLOCKED){const ps=Math.sin(dlT*4)*3;ctx.beginPath();ctx.arc(px,py,rad+8+ps,0,Math.PI*2);ctx.fillStyle='rgba(255,68,102,0.12)';ctx.fill();}
+
+    ctx.beginPath();ctx.arc(px,py,rad,0,Math.PI*2);
+    ctx.fillStyle=p.state===ST.EAT?`rgba(${hexRgb(PC[i])},0.2)`:fills[p.state]||'rgba(255,255,255,0.04)';ctx.fill();
+    ctx.strokeStyle=p.state===ST.EAT?PC[i]:strokes[p.state]||'rgba(255,255,255,0.12)';ctx.lineWidth=2;ctx.stroke();
+
+    ctx.fillStyle=PC[i];ctx.font='bold 11px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText(`P${i}`,px,py-10);
+    ctx.font='14px sans-serif';ctx.fillText(emojis[p.state]||'',px,py+8);
+    ctx.font='8px JetBrains Mono';ctx.fillStyle='rgba(255,255,255,0.3)';
+    ctx.fillText(stateNames[p.state]||'',px,py+22);
+  }
+
+  // Circular wait arrows
+  if(phil.every(p=>p.state===ST.BLOCKED)){
+    ctx.setLineDash([6,4]);ctx.lineWidth=1.5;
+    for(let i=0;i<NP;i++){
+      const n=(i+1)%NP;
+      const px=cx+Math.cos(phil[i].angle)*R,py=cy+Math.sin(phil[i].angle)*R;
+      const nx=cx+Math.cos(phil[n].angle)*R,ny=cy+Math.sin(phil[n].angle)*R;
+      ctx.beginPath();ctx.strokeStyle=`rgba(255,68,102,${0.4+Math.sin(dlT*3)*0.2})`;
+      ctx.moveTo(px,py);ctx.lineTo(nx,ny);ctx.stroke();
+      const ag=Math.atan2(ny-py,nx-px);
+      ctx.beginPath();
+      const ax=nx-Math.cos(ag)*30,ay=ny-Math.sin(ag)*30;
+      ctx.moveTo(ax,ay);ctx.lineTo(ax-10*Math.cos(ag-0.4),ay-10*Math.sin(ag-0.4));
+      ctx.moveTo(ax,ay);ctx.lineTo(ax-10*Math.cos(ag+0.4),ay-10*Math.sin(ag+0.4));
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.fillStyle=`rgba(255,68,102,${0.5+Math.sin(dlT*2)*0.3})`;
+    ctx.font='bold 14px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText('⚠️ CIRCULAR WAIT',cx,cy+22);
+  }
+}
+
+// Animated sleep
+function dlSleep(ms){
+  return new Promise(resolve=>{
+    let last=performance.now();
+    function tick(now){
+      dlT+=(now-last)/1000; last=now;
+      drawDL();
+      if(now-last+ms<=0||!dlRun){resolve();return;}
+      ms-=(now-(last-((now-last)/1000*1000)));
+    }
+    const start=performance.now();
+    function frame(now){
+      dlT+=(now-(frame.last||now))/1000;frame.last=now;
+      drawDL();
+      if(now-start>=ms||!dlRun)resolve();
+      else requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+async function dlStart(){
+  if(dlRun)return;
+  dlRun=true;
+  document.getElementById('dlStartBtn').disabled=true;
+  initDL(); dlRun=true;
+  document.getElementById('narrationLog').innerHTML='';
+  await dlSleep(400);
+
+  // ===== PHASE 1: Normal =====
+  actPhase(0,'normal'); setStatus('safe','✓ 정상 동작');
+  narrate('normal','🍽️ <b>시나리오 시작!</b> 5명의 철학자가 원형 식탁에 앉아있습니다. 포크는 5개뿐이고, 식사하려면 <b>양쪽 포크 2개</b>가 모두 필요합니다.');
+  await dlSleep(2500);
+
+  narrate('normal','🤔 모두 조용히 생각 중입니다... (THINKING 상태)');
+  await dlSleep(2000);
+
+  narrate('normal',`✅ <b style="color:${PC[0]}">P0</b>이 배가 고파졌습니다! 왼쪽 포크(F0)와 오른쪽 포크(F1)를 <b>순서대로</b> 집습니다.`);
+  phil[0].state=ST.HUNGRY; drawDL(); await dlSleep(1000);
+  fk[0].owner=0; phil[0].lf=true; phil[0].state=ST.WAIT_R; drawDL(); await dlSleep(800);
+  fk[1].owner=0; phil[0].rf=true; phil[0].state=ST.EAT; drawDL();
+  narrate('normal',`🍝 <b style="color:${PC[0]}">P0</b> 양쪽 포크 확보! 맛있게 식사 중...`);
+  setProg(15,'');
+  await dlSleep(2500);
+
+  narrate('normal',`✅ <b style="color:${PC[0]}">P0</b> 식사 완료! 포크를 내려놓습니다. → 다른 철학자가 사용할 수 있게 됩니다.`);
+  fk[0].owner=-1;fk[1].owner=-1;phil[0].lf=false;phil[0].rf=false;phil[0].state=ST.THINK;drawDL();
+  await dlSleep(1500);
+
+  narrate('normal',`✅ <b style="color:${PC[2]}">P2</b>도 양쪽 포크(F2,F3)를 확보해 정상적으로 식사합니다.`);
+  phil[2].state=ST.EAT;fk[2].owner=2;fk[3].owner=2;phil[2].lf=true;phil[2].rf=true;drawDL();
+  setProg(30,'');
+  await dlSleep(2000);
+  fk[2].owner=-1;fk[3].owner=-1;phil[2].lf=false;phil[2].rf=false;phil[2].state=ST.THINK;drawDL();
+  narrate('normal','👍 이렇게 <b>한 명씩 순서대로</b> 포크를 잡으면 아무 문제 없습니다!');
+  await dlSleep(2000);
+
+  // ===== PHASE 2: Danger =====
+  actPhase(1,'warning'); setStatus('warning','⚡ 위험 징후');
+  setProg(40,'danger');
+
+  narrate('warning','⚡ <b>그런데 만약...</b> 모든 철학자가 <b>동시에</b> 배가 고파지면 어떻게 될까요?');
+  await dlSleep(2000);
+
+  narrate('warning','😤 모든 철학자가 동시에 배가 고파졌습니다!');
+  phil.forEach(p=>p.state=ST.HUNGRY); drawDL();
+  await dlSleep(1500);
+
+  narrate('warning','📌 규칙: 각 철학자는 항상 <b>왼쪽 포크부터</b> 집습니다. 이것이 문제의 핵심입니다...');
+  await dlSleep(2000);
+
+  for(let i=0;i<NP;i++){
+    fk[i].owner=i; phil[i].lf=true; phil[i].state=ST.WAIT_R;
+    narrate('warning',`👈 <b style="color:${PC[i]}">P${i}</b> → 왼쪽 포크(F${i})를 집었습니다. 오른쪽 포크(F${(i+1)%NP})를 기다리는 중...`);
+    drawDL(); setProg(45+i*8,'danger');
+    await dlSleep(1200);
+  }
+  await dlSleep(1000);
+
+  // ===== PHASE 3: DEADLOCK =====
+  actPhase(2,'danger'); setStatus('deadlocked','⚠ DEADLOCK!');
+  setProg(90,'danger');
+  phil.forEach(p=>p.state=ST.BLOCKED); drawDL();
+
+  narrate('danger','🔒 <b>DEADLOCK 발생!</b>');
+  await dlSleep(1000);
+  narrate('danger','모든 철학자가 왼쪽 포크를 쥔 채 오른쪽 포크를 기다리고 있습니다. <b>아무도 양쪽 포크를 모을 수 없어 영원히 대기합니다!</b>');
+  await dlSleep(1500);
+  narrate('danger','P0→F1(P1이 보유) 대기, P1→F2(P2가 보유) 대기, P2→F3(P3가 보유) 대기, P3→F4(P4가 보유) 대기, P4→F0(P0이 보유) 대기 — <b>순환 대기!</b>');
+
+  // Keep pulsing for a while
+  await dlSleep(4000);
+
+  // ===== PHASE 4: Analysis =====
+  actPhase(3,'warning');
+  narrate('info','🔍 <b>왜 이런 일이 생겼을까?</b> 데드락의 4가지 조건이 <b>모두</b> 충족되었기 때문입니다:');
+  await dlSleep(1500);
+  narrate('info','① <b>상호 배제 (Mutual Exclusion)</b> — 포크 하나를 두 명이 동시에 쓸 수 없습니다.');
+  await dlSleep(1200);
+  narrate('info','② <b>점유와 대기 (Hold & Wait)</b> — 왼쪽 포크를 잡은 채(점유) 오른쪽을 기다립니다(대기).');
+  await dlSleep(1200);
+  narrate('info','③ <b>비선점 (No Preemption)</b> — 옆 사람의 포크를 강제로 빼앗을 수 없습니다.');
+  await dlSleep(1200);
+  narrate('info','④ <b>순환 대기 (Circular Wait)</b> — P0→P1→P2→P3→P4→P0 ... 원형으로 서로를 기다립니다. (빨간 화살표 참고!)');
+  await dlSleep(3000);
+
+  narrate('info','💡 이 4가지 중 <b>단 하나만 깨뜨려도</b> 데드락은 해결됩니다!');
+  await dlSleep(2500);
+
+  // ===== PHASE 5: Resolution =====
+  actPhase(4,'resolve'); setStatus('resolving','🔧 해결 중...');
+  setProg(95,'resolve');
+
+  narrate('resolve','🔧 <b>해결 전략: 비선점 조건 깨기!</b>');
+  await dlSleep(1000);
+  narrate('resolve',`OS가 <b style="color:${PC[0]}">P0</b>에게 명령합니다: "포크를 내려놓으세요!" (강제 선점)`);
+  await dlSleep(1500);
+
+  fk[0].owner=-1; phil[0].lf=false; phil[0].state=ST.THINK; drawDL();
+  narrate('resolve',`<b style="color:${PC[0]}">P0</b>이 왼쪽 포크(F0)를 내려놓았습니다!`);
+  await dlSleep(1500);
+
+  narrate('resolve',`🎉 이제 <b style="color:${PC[4]}">P4</b>가 오른쪽 포크(F0)를 확보할 수 있습니다! → 양쪽 포크 완성!`);
+  fk[0].owner=4; phil[4].rf=true; phil[4].state=ST.EAT; drawDL();
+  await dlSleep(2000);
+
+  narrate('resolve',`✅ <b style="color:${PC[4]}">P4</b> 식사 완료! 포크 반납 → 연쇄적으로 다음 철학자도 식사 가능!`);
+  fk[4].owner=-1;fk[0].owner=-1;phil[4].lf=false;phil[4].rf=false;phil[4].state=ST.THINK;drawDL();
+  await dlSleep(1000);
+
+  // Chain resolution
+  for(let i=3;i>=0;i--){
+    const lf=i,rf=(i+1)%NP;
+    if(fk[rf].owner===-1||fk[rf].owner===i){
+      fk[rf].owner=i; phil[i].rf=true; phil[i].state=ST.EAT; drawDL();
+      await dlSleep(600);
+      narrate('resolve',`🍝 <b style="color:${PC[i]}">P${i}</b> 식사 완료!`);
+      fk[lf].owner=-1;fk[rf].owner=-1;phil[i].lf=false;phil[i].rf=false;phil[i].state=ST.THINK;drawDL();
+      await dlSleep(400);
+    }
+  }
+
+  setStatus('safe','✅ 해결 완료!'); setProg(100,'');
+  actPhase(4,'done');
+  narrate('resolve','🎉 <b>데드락 완전 해결!</b> 실제 OS에서도 유사한 방법을 사용합니다:');
+  await dlSleep(1000);
+  narrate('resolve','• <b>자원 순서 규칙</b> — 모든 철학자가 번호 순으로 포크를 잡게 하면 순환 대기 방지');
+  await dlSleep(800);
+  narrate('resolve','• <b>타임아웃</b> — 일정 시간 내 자원을 못 얻으면 포기하고 재시도');
+  await dlSleep(800);
+  narrate('resolve','• <b>데드락 감지</b> — 주기적으로 순환 대기를 탐지해 하나를 강제 종료');
+
+  dlRun=false;
+  document.getElementById('dlStartBtn').disabled=false;
+}
+
+function dlReset(){
+  dlRun=false;
+  document.getElementById('dlStartBtn').disabled=false;
+  initDL();
+}
+
+// ===== INIT =====
+window.addEventListener('load',()=>{initBinary();initGates();initSort();initMem();initDL();});
+window.addEventListener('resize',()=>{resizeDL();drawDL();});
+</script>
+</body>
+</html>
