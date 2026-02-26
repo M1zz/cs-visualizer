@@ -16,7 +16,7 @@
 
 ## 🚀 GitHub Pages 배포
 
-이미 배포되어 있습니다: [CS Visualizer 바로가기](https://YOUR_USERNAME.github.io/cs-visualizer/)
+이미 배포되어 있습니다: [CS Visualizer 바로가기](https://m1zz.github.io/cs-visualizer/)
 
 ## 🛠 기술 스택
 
