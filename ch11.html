@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.11 OOP & 패러다임 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── Ch11 Local Styles ────────────────────── */
+.tag-ch11 { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+
+/* OOP Cards */
+.oop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.oop-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.oop-card:hover { border-color: #f59e0b; box-shadow: 0 0 20px rgba(245,158,11,0.12); }
+.oop-card.active { border-color: #f59e0b; }
+.oop-card-header {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.oop-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.oop-card-title { font-weight: 700; font-size: 1rem; }
+.oop-card-sub { font-size: 0.75rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.oop-card-desc { padding: 0 20px 16px; font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; }
+.oop-expand {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+.oop-expand.open { max-height: 900px; }
+.oop-expand-inner {
+  padding: 0 20px 20px;
+  border-top: 1px solid var(--border);
+}
+.oop-code {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  line-height: 1.8;
+  color: var(--text-dim);
+  margin-top: 12px;
+  overflow-x: auto;
+}
+.oop-code .kw { color: #f59e0b; }
+.oop-code .cls { color: var(--accent3); }
+.oop-code .fn { color: var(--accent); }
+.oop-code .str { color: var(--accent2); }
+.oop-code .cmt { color: #4a4a6a; }
+.oop-code .num { color: var(--accent4); }
+
+/* Inheritance diagram */
+.inherit-diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin-top: 16px;
+  padding: 10px;
+}
+.inherit-node {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.3s;
+}
+.inherit-node.root { border-color: #f59e0b; color: #f59e0b; }
+.inherit-node.child { border-color: var(--accent3); color: var(--accent3); }
+.inherit-arrow {
+  width: 2px;
+  height: 28px;
+  background: var(--border);
+  position: relative;
+}
+.inherit-arrow::after {
+  content: '▼';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+.inherit-children {
+  display: flex;
+  gap: 24px;
+  position: relative;
+}
+.inherit-children::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 60px);
+  height: 2px;
+  background: var(--border);
+}
+.inherit-child-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.inherit-child-connector {
+  width: 2px;
+  height: 14px;
+  background: var(--border);
+}
+
+/* Polymorphism viz */
+.poly-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.poly-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+}
+.poly-label { color: var(--accent3); min-width: 80px; font-weight: 600; }
+.poly-method { color: var(--text-dim); }
+.poly-result { color: var(--accent); margin-left: auto; }
+
+/* Abstraction viz */
+.abstract-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 12px;
+}
+.abstract-layer {
+  padding: 10px 16px;
+  font-size: 0.78rem;
+  font-family: 'JetBrains Mono', monospace;
+  border-left: 3px solid;
+  margin-bottom: 6px;
+  border-radius: 0 6px 6px 0;
+}
+
+/* Encapsulation viz */
+.encap-viz {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 12px;
+  position: relative;
+}
+.encap-outer {
+  border: 2px dashed #f59e0b;
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+}
+.encap-outer-label {
+  position: absolute;
+  top: -10px; left: 12px;
+  background: var(--bg);
+  padding: 0 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: #f59e0b;
+}
+.encap-private { color: var(--danger); font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; margin: 4px 0; }
+.encap-public { color: var(--accent); font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; margin: 4px 0; }
+
+/* SOLID Cards */
+.solid-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.solid-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-height: 160px;
+  position: relative;
+}
+.solid-card:hover { border-color: #f59e0b; }
+.solid-card-front, .solid-card-back {
+  padding: 20px;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  transition: opacity 0.35s, transform 0.35s;
+  display: flex;
+  flex-direction: column;
+}
+.solid-card-back {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+  background: var(--surface2);
+}
+.solid-card.flipped .solid-card-front {
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+}
+.solid-card.flipped .solid-card-back {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+.solid-letter {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #f59e0b;
+  line-height: 1;
+}
+.solid-name { font-weight: 700; font-size: 0.95rem; margin-top: 6px; }
+.solid-sub { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+.solid-desc { font-size: 0.82rem; color: var(--text-dim); margin-top: 10px; line-height: 1.6; }
+.solid-flip-hint {
+  margin-top: auto;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  opacity: 0.6;
+}
+.solid-back-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  margin-bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  align-self: flex-start;
+}
+.solid-bad { background: rgba(255,68,102,0.15); color: var(--danger); border: 1px solid rgba(255,68,102,0.3); }
+.solid-good { background: rgba(0,255,170,0.1); color: var(--accent); border: 1px solid rgba(0,255,170,0.2); }
+.solid-code {
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  line-height: 1.75;
+  color: var(--text-dim);
+  margin-top: 8px;
+  overflow-x: auto;
+  flex: 1;
+}
+.solid-code .kw { color: #f59e0b; }
+.solid-code .cls { color: var(--accent3); }
+.solid-code .fn { color: var(--accent); }
+.solid-code .cmt { color: #4a4a6a; }
+
+/* Functional section */
+.fp-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.fp-tab {
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+}
+.fp-tab:hover { border-color: #f59e0b; color: #f59e0b; }
+.fp-tab.active { background: rgba(245,158,11,0.15); border-color: #f59e0b; color: #f59e0b; }
+.fp-panel { display: none; }
+.fp-panel.active { display: block; }
+
+.fp-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 640px) { .fp-compare { grid-template-columns: 1fr; } }
+.fp-box {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 14px;
+}
+.fp-box-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  margin-bottom: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.fp-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.73rem;
+  line-height: 1.8;
+  color: var(--text-dim);
+  white-space: pre;
+  overflow-x: auto;
+}
+.fp-code .kw { color: var(--accent3); }
+.fp-code .fn { color: var(--accent); }
+.fp-code .cmt { color: #4a4a6a; }
+.fp-code .str { color: var(--accent2); }
+.fp-code .num { color: var(--accent4); }
+.fp-code .bad { color: var(--danger); }
+.fp-code .good { color: var(--accent); }
+
+/* HOF playground */
+.hof-playground {
+  margin-top: 16px;
+}
+.hof-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.hof-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  width: 260px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.hof-input:focus { border-color: #f59e0b; }
+.hof-ops {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.hof-op-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+}
+.hof-op-btn.active { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.1); }
+.hof-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  flex-wrap: wrap;
+}
+.hof-step-label {
+  color: #f59e0b;
+  min-width: 90px;
+  font-weight: 600;
+}
+.hof-step-arrow { color: var(--text-dim); }
+.hof-step-val { color: var(--accent); }
+.hof-result {
+  padding: 12px 16px;
+  background: rgba(0,255,170,0.07);
+  border: 1px solid rgba(0,255,170,0.2);
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  margin-top: 10px;
+}
+
+/* Compose demo */
+.compose-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+.compose-fn-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  text-align: center;
+}
+.compose-fn-name { color: var(--accent3); font-weight: 600; }
+.compose-fn-desc { color: var(--text-dim); font-size: 0.65rem; margin-top: 2px; }
+.compose-arrow { color: var(--text-dim); font-size: 1.1rem; }
+.compose-input-val { color: #f59e0b; font-weight: 700; }
+.compose-output-val { color: var(--accent); font-weight: 700; }
+
+/* Paradigm comparison */
+.paradigm-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-bottom: none;
+}
+.paradigm-tab {
+  flex: 1;
+  padding: 12px;
+  background: var(--surface);
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+.paradigm-tab:last-child { border-right: none; }
+.paradigm-tab.active { background: var(--surface2); color: #f59e0b; }
+.paradigm-tab:hover:not(.active) { background: var(--surface2); color: var(--text); }
+.paradigm-panel {
+  display: none;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 20px;
+}
+.paradigm-panel.active { display: block; }
+.paradigm-code {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.85;
+  color: var(--text-dim);
+  white-space: pre;
+  overflow-x: auto;
+  margin-top: 12px;
+}
+.paradigm-code .kw { color: #f59e0b; }
+.paradigm-code .cls { color: var(--accent3); }
+.paradigm-code .fn { color: var(--accent); }
+.paradigm-code .num { color: var(--accent4); }
+.paradigm-code .cmt { color: #4a4a6a; }
+.paradigm-code .str { color: var(--accent2); }
+
+.pros-cons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+@media (max-width: 560px) { .pros-cons { grid-template-columns: 1fr; } }
+.pros-box, .cons-box {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.pros-box { border-left: 3px solid var(--accent); }
+.cons-box { border-left: 3px solid var(--danger); }
+.pc-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.pros-box .pc-title { color: var(--accent); }
+.cons-box .pc-title { color: var(--danger); }
+.pc-list { list-style: none; }
+.pc-list li {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  padding: 3px 0;
+  padding-left: 14px;
+  position: relative;
+}
+.pc-list li::before { content: '·'; position: absolute; left: 0; }
+
+/* Comparison table */
+.cmp-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 0.8rem;
+}
+.cmp-table th {
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  text-align: left;
+}
+.cmp-table th:first-child { color: var(--text-dim); }
+.cmp-table th:nth-child(2) { color: var(--accent4); }
+.cmp-table th:nth-child(3) { color: var(--accent3); }
+.cmp-table th:nth-child(4) { color: var(--accent); }
+.cmp-table td {
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.cmp-table tr:hover td { background: var(--surface2); }
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  margin-right: 4px;
+  margin-bottom: 2px;
+}
+.badge-yellow { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.badge-blue { background: rgba(107,138,255,0.15); color: var(--accent3); }
+.badge-green { background: rgba(0,255,170,0.12); color: var(--accent); }
+
+/* Toggle btn */
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.toggle-label { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; }
+.toggle-btn {
+  position: relative;
+  width: 48px; height: 26px;
+  background: var(--border);
+  border-radius: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+  outline: none;
+}
+.toggle-btn.on { background: #f59e0b; }
+.toggle-btn::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 20px; height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-btn.on::after { transform: translateX(22px); }
+
+/* Immutable demo */
+.immut-ops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.immut-state {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  margin-bottom: 8px;
+}
+.immut-label { color: var(--text-dim); font-size: 0.67rem; margin-bottom: 4px; }
+.immut-val { color: var(--accent); }
+.immut-val.old { color: var(--text-dim); text-decoration: line-through; }
+
+.btn-sm {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.73rem;
+  transition: all 0.2s;
+}
+.btn-sm:hover { border-color: #f59e0b; color: #f59e0b; }
+
+/* Run button */
+.run-btn {
+  padding: 8px 20px;
+  background: rgba(245,158,11,0.15);
+  border: 1px solid rgba(245,158,11,0.4);
+  border-radius: 8px;
+  color: #f59e0b;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.run-btn:hover { background: rgba(245,158,11,0.25); }
+
+/* Pulse anim */
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(245,158,11,0.3); }
+  50% { border-color: rgba(245,158,11,0.8); }
+}
+.oop-card.active { animation: pulse-border 2s ease infinite; }
+</style>
+</head>
+<body class="page-body">
+
+<!-- NAV -->
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:#f59e0b">Ch.11 — OOP & 패러다임</div>
+  <div class="nav-sections">
+    <a href="#oop" class="nav-sec-link">OOP 4원칙</a>
+    <a href="#solid" class="nav-sec-link">SOLID</a>
+    <a href="#functional" class="nav-sec-link">함수형</a>
+    <a href="#paradigm" class="nav-sec-link">패러다임 비교</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     SECTION 1: OOP 4원칙
+═══════════════════════════════════════════ -->
+<section id="oop">
+  <div class="section-header">
+    <div class="tag tag-ch11">01 — OBJECT ORIENTED PROGRAMMING</div>
+    <h2>객체지향 4원칙</h2>
+    <p>객체지향 프로그래밍(OOP)은 데이터와 동작을 객체라는 단위로 묶어 소프트웨어를 설계하는 패러다임입니다. 4가지 핵심 원칙을 통해 유지보수성, 재사용성, 확장성을 달성합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="oop-grid">
+
+      <!-- 캡슐화 -->
+      <div class="oop-card" id="card-encap" onclick="toggleOOP('encap')">
+        <div class="oop-card-header">
+          <div class="oop-icon" style="background:rgba(245,158,11,0.15)">🔒</div>
+          <div>
+            <div class="oop-card-title">캡슐화</div>
+            <div class="oop-card-sub">Encapsulation</div>
+          </div>
+        </div>
+        <div class="oop-card-desc">데이터(속성)와 메서드를 하나의 단위로 묶고, 내부 구현을 외부에서 직접 접근하지 못하도록 보호합니다.</div>
+        <div class="oop-expand" id="expand-encap">
+          <div class="oop-expand-inner">
+            <div class="encap-viz">
+              <div class="encap-outer">
+                <div class="encap-outer-label">BankAccount 클래스</div>
+                <div class="encap-private">🔴 private _balance = 0</div>
+                <div class="encap-private">🔴 private _pin = "1234"</div>
+                <div style="height:8px;border-top:1px dashed rgba(255,255,255,0.1);margin:8px 0;"></div>
+                <div class="encap-public">🟢 public deposit(amount)</div>
+                <div class="encap-public">🟢 public withdraw(amount)</div>
+                <div class="encap-public">🟢 public getBalance()</div>
+              </div>
+            </div>
+            <div class="oop-code">
+<span class="kw">class</span> <span class="cls">BankAccount</span> {
+  <span class="cmt">// private - 외부 직접 접근 불가</span>
+  #balance = <span class="num">0</span>;
+  #pin;
+
+  <span class="fn">constructor</span>(pin) {
+    <span class="kw">this</span>.#pin = pin;
+  }
+
+  <span class="cmt">// public - 공개 인터페이스</span>
+  <span class="fn">deposit</span>(amount) {
+    <span class="kw">if</span> (amount > <span class="num">0</span>) <span class="kw">this</span>.#balance += amount;
+  }
+
+  <span class="fn">getBalance</span>() {
+    <span class="kw">return</span> <span class="kw">this</span>.#balance;
+  }
+}
+            </div>
+            <div class="info-text" style="margin-top:10px">
+              내부 잔액(#balance)에 직접 접근 불가 → getBalance()를 통해서만 조회 가능. 데이터 무결성을 보장합니다.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 상속 -->
+      <div class="oop-card" id="card-inherit" onclick="toggleOOP('inherit')">
+        <div class="oop-card-header">
+          <div class="oop-icon" style="background:rgba(107,138,255,0.15)">🔗</div>
+          <div>
+            <div class="oop-card-title">상속</div>
+            <div class="oop-card-sub">Inheritance</div>
+          </div>
+        </div>
+        <div class="oop-card-desc">기존 클래스(부모)의 속성과 메서드를 새로운 클래스(자식)가 물려받아 코드 재사용성을 높입니다.</div>
+        <div class="oop-expand" id="expand-inherit">
+          <div class="oop-expand-inner">
+            <div class="inherit-diagram">
+              <div class="inherit-node root">🐾 Animal<br><span style="font-size:0.6rem;color:var(--text-dim)">speak() · eat()</span></div>
+              <div class="inherit-arrow"></div>
+              <div style="height:14px;"></div>
+              <div class="inherit-children">
+                <div class="inherit-child-wrap">
+                  <div class="inherit-child-connector"></div>
+                  <div class="inherit-node child">🐶 Dog<br><span style="font-size:0.6rem;color:var(--text-dim)">speak(): "멍멍"</span></div>
+                </div>
+                <div class="inherit-child-wrap">
+                  <div class="inherit-child-connector"></div>
+                  <div class="inherit-node child">🐱 Cat<br><span style="font-size:0.6rem;color:var(--text-dim)">speak(): "야옹"</span></div>
+                </div>
+                <div class="inherit-child-wrap">
+                  <div class="inherit-child-connector"></div>
+                  <div class="inherit-node child">🐦 Bird<br><span style="font-size:0.6rem;color:var(--text-dim)">speak(): "짹짹"</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="oop-code">
+<span class="kw">class</span> <span class="cls">Animal</span> {
+  <span class="fn">constructor</span>(name) { <span class="kw">this</span>.name = name; }
+  <span class="fn">eat</span>() { <span class="kw">return</span> <span class="str">`${this.name}이 먹습니다`</span>; }
+  <span class="fn">speak</span>() { <span class="kw">return</span> <span class="str">'...'</span>; }
+}
+
+<span class="kw">class</span> <span class="cls">Dog</span> <span class="kw">extends</span> <span class="cls">Animal</span> {
+  <span class="fn">speak</span>() { <span class="kw">return</span> <span class="str">`${this.name}: 멍멍!`</span>; }
+}
+
+<span class="kw">class</span> <span class="cls">Cat</span> <span class="kw">extends</span> <span class="cls">Animal</span> {
+  <span class="fn">speak</span>() { <span class="kw">return</span> <span class="str">`${this.name}: 야옹~`</span>; }
+}
+            </div>
+            <div class="info-text" style="margin-top:10px">
+              Dog/Cat 모두 eat()을 재정의 없이 사용 가능. extends 키워드로 부모 클래스를 상속합니다.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 다형성 -->
+      <div class="oop-card" id="card-poly" onclick="toggleOOP('poly')">
+        <div class="oop-card-header">
+          <div class="oop-icon" style="background:rgba(255,107,157,0.15)">🔀</div>
+          <div>
+            <div class="oop-card-title">다형성</div>
+            <div class="oop-card-sub">Polymorphism</div>
+          </div>
+        </div>
+        <div class="oop-card-desc">같은 이름의 메서드가 객체 유형에 따라 다르게 동작합니다. 하나의 인터페이스로 여러 구현을 다룹니다.</div>
+        <div class="oop-expand" id="expand-poly">
+          <div class="oop-expand-inner">
+            <div class="poly-demo">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);margin-bottom:6px;">animals.forEach(a => a.speak()) 호출 결과:</div>
+              <div class="poly-row">
+                <span class="poly-label">🐶 dog</span>
+                <span class="poly-method">.speak()</span>
+                <span class="poly-result">"멍멍!"</span>
+              </div>
+              <div class="poly-row">
+                <span class="poly-label">🐱 cat</span>
+                <span class="poly-method">.speak()</span>
+                <span class="poly-result">"야옹~"</span>
+              </div>
+              <div class="poly-row">
+                <span class="poly-label">🐦 bird</span>
+                <span class="poly-method">.speak()</span>
+                <span class="poly-result">"짹짹!"</span>
+              </div>
+            </div>
+            <div class="oop-code">
+<span class="kw">const</span> animals = [
+  <span class="kw">new</span> <span class="cls">Dog</span>(<span class="str">'바둑이'</span>),
+  <span class="kw">new</span> <span class="cls">Cat</span>(<span class="str">'나비'</span>),
+  <span class="kw">new</span> <span class="cls">Bird</span>(<span class="str">'참새'</span>),
+];
+
+<span class="cmt">// 동일한 speak() 메서드 호출</span>
+<span class="cmt">// → 각 객체 유형에 따라 다르게 동작</span>
+animals.<span class="fn">forEach</span>(a => console.<span class="fn">log</span>(a.<span class="fn">speak</span>()));
+<span class="cmt">// "바둑이: 멍멍!"</span>
+<span class="cmt">// "나비: 야옹~"</span>
+<span class="cmt">// "참새: 짹짹!"</span>
+            </div>
+            <div class="info-text" style="margin-top:10px">
+              호출 코드는 구체적 타입을 몰라도 됩니다. 새로운 Animal 하위 클래스를 추가해도 루프 코드 변경 없음.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 추상화 -->
+      <div class="oop-card" id="card-abstract" onclick="toggleOOP('abstract')">
+        <div class="oop-card-header">
+          <div class="oop-icon" style="background:rgba(0,255,170,0.12)">🎭</div>
+          <div>
+            <div class="oop-card-title">추상화</div>
+            <div class="oop-card-sub">Abstraction</div>
+          </div>
+        </div>
+        <div class="oop-card-desc">복잡한 내부 구현을 숨기고, 필요한 기능만 단순한 인터페이스로 노출합니다. 복잡성을 관리합니다.</div>
+        <div class="oop-expand" id="expand-abstract">
+          <div class="oop-expand-inner">
+            <div class="abstract-layers">
+              <div class="abstract-layer" style="border-color:#f59e0b;background:rgba(245,158,11,0.07);color:#f59e0b;">
+                사용자 코드: car.start()
+              </div>
+              <div style="text-align:center;font-size:0.7rem;color:var(--text-dim);margin:-2px 0;">↓ 추상화 경계</div>
+              <div class="abstract-layer" style="border-color:var(--accent3);background:rgba(107,138,255,0.07);color:var(--accent3);">
+                Car 인터페이스: start() / stop() / accelerate()
+              </div>
+              <div style="text-align:center;font-size:0.7rem;color:var(--text-dim);margin:-2px 0;">↓ 내부 구현 (숨김)</div>
+              <div class="abstract-layer" style="border-color:var(--text-dim);background:rgba(136,136,170,0.07);color:var(--text-dim);">
+                엔진점화 → 연료주입 → 크랭크샤프트 → 피스톤 ...
+              </div>
+            </div>
+            <div class="oop-code">
+<span class="cmt">// 추상 클래스 / 인터페이스</span>
+<span class="kw">abstract class</span> <span class="cls">Shape</span> {
+  <span class="kw">abstract</span> <span class="fn">area</span>(): number;   <span class="cmt">// 구현 강제</span>
+  <span class="kw">abstract</span> <span class="fn">perimeter</span>(): number;
+
+  <span class="fn">describe</span>() {
+    <span class="kw">return</span> <span class="str">`넓이: ${this.area()}`</span>;
+  }
+}
+
+<span class="kw">class</span> <span class="cls">Circle</span> <span class="kw">extends</span> <span class="cls">Shape</span> {
+  <span class="fn">area</span>() { <span class="kw">return</span> Math.PI * <span class="kw">this</span>.r ** <span class="num">2</span>; }
+  <span class="fn">perimeter</span>() { <span class="kw">return</span> <span class="num">2</span> * Math.PI * <span class="kw">this</span>.r; }
+}
+            </div>
+            <div class="info-text" style="margin-top:10px">
+              사용자는 area()가 어떻게 계산되는지 알 필요 없습니다. 인터페이스만 알면 됩니다.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 2: SOLID
+═══════════════════════════════════════════ -->
+<section id="solid">
+  <div class="section-header">
+    <div class="tag tag-ch11">02 — SOLID PRINCIPLES</div>
+    <h2>SOLID 원칙</h2>
+    <p>로버트 마틴이 정립한 객체지향 설계의 5가지 핵심 원칙입니다. 유지보수하기 쉽고 확장 가능한 소프트웨어 구조를 만드는 가이드라인입니다. <span style="color:#f59e0b">카드를 클릭</span>하면 나쁜 예 / 좋은 예를 비교합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="solid-grid">
+
+      <!-- S -->
+      <div class="solid-card" id="solid-S" onclick="flipSolid('S')" style="min-height:320px">
+        <div class="solid-card-front">
+          <div class="solid-letter">S</div>
+          <div class="solid-name">단일 책임 원칙</div>
+          <div class="solid-sub">Single Responsibility Principle</div>
+          <div class="solid-desc">하나의 클래스는 하나의 책임만 가져야 합니다. 클래스를 변경하는 이유는 오직 하나여야 합니다.</div>
+          <div class="solid-flip-hint">↻ 클릭해서 예시 보기</div>
+        </div>
+        <div class="solid-card-back">
+          <span class="solid-back-label solid-bad">❌ 나쁜 예</span>
+          <div class="solid-code">
+<span class="kw">class</span> <span class="cls">UserManager</span> {
+  <span class="fn">saveUser</span>(user) { <span class="cmt">/* DB 저장 */</span> }
+  <span class="fn">sendEmail</span>(user) { <span class="cmt">/* 이메일 발송 */</span> }
+  <span class="fn">generateReport</span>() { <span class="cmt">/* 보고서 생성 */</span> }
+  <span class="cmt">// 책임이 3개! → 변경 이유가 3개</span>
+}
+          </div>
+          <span class="solid-back-label solid-good" style="margin-top:10px">✅ 좋은 예</span>
+          <div class="solid-code">
+<span class="kw">class</span> <span class="cls">UserRepository</span> {
+  <span class="fn">save</span>(user) { <span class="cmt">/* DB 저장만 */</span> }
+}
+<span class="kw">class</span> <span class="cls">EmailService</span> {
+  <span class="fn">send</span>(user) { <span class="cmt">/* 이메일만 */</span> }
+}
+<span class="kw">class</span> <span class="cls">ReportGenerator</span> {
+  <span class="fn">generate</span>() { <span class="cmt">/* 보고서만 */</span> }
+}
+          </div>
+        </div>
+      </div>
+
+      <!-- O -->
+      <div class="solid-card" id="solid-O" onclick="flipSolid('O')" style="min-height:320px">
+        <div class="solid-card-front">
+          <div class="solid-letter">O</div>
+          <div class="solid-name">개방-폐쇄 원칙</div>
+          <div class="solid-sub">Open/Closed Principle</div>
+          <div class="solid-desc">소프트웨어 요소는 확장에는 열려 있고, 수정에는 닫혀 있어야 합니다. 기존 코드를 변경하지 않고 기능을 추가해야 합니다.</div>
+          <div class="solid-flip-hint">↻ 클릭해서 예시 보기</div>
+        </div>
+        <div class="solid-card-back">
+          <span class="solid-back-label solid-bad">❌ 나쁜 예</span>
+          <div class="solid-code">
+<span class="kw">function</span> <span class="fn">getArea</span>(shape) {
+  <span class="kw">if</span> (shape.type === <span class="str">'circle'</span>) {
+    <span class="kw">return</span> Math.PI * shape.r ** <span class="num">2</span>;
+  } <span class="kw">else if</span> (shape.type === <span class="str">'rect'</span>) {
+    <span class="kw">return</span> shape.w * shape.h;
+  }
+  <span class="cmt">// 새 도형 추가 → 함수 수정 필요!</span>
+}
+          </div>
+          <span class="solid-back-label solid-good" style="margin-top:10px">✅ 좋은 예</span>
+          <div class="solid-code">
+<span class="kw">class</span> <span class="cls">Circle</span> { <span class="fn">area</span>() { <span class="kw">return</span> Math.PI*<span class="kw">this</span>.r**<span class="num">2</span>; } }
+<span class="kw">class</span> <span class="cls">Rect</span>   { <span class="fn">area</span>() { <span class="kw">return this</span>.w*<span class="kw">this</span>.h; } }
+<span class="cmt">// 새 도형 → 클래스만 추가, 기존 코드 불변</span>
+<span class="kw">class</span> <span class="cls">Triangle</span> { <span class="fn">area</span>() { <span class="kw">return</span> ...; } }
+          </div>
+        </div>
+      </div>
+
+      <!-- L -->
+      <div class="solid-card" id="solid-L" onclick="flipSolid('L')" style="min-height:320px">
+        <div class="solid-card-front">
+          <div class="solid-letter">L</div>
+          <div class="solid-name">리스코프 치환 원칙</div>
+          <div class="solid-sub">Liskov Substitution Principle</div>
+          <div class="solid-desc">하위 타입은 언제나 상위 타입을 대체할 수 있어야 합니다. 자식 클래스는 부모 클래스 계약을 위반하면 안 됩니다.</div>
+          <div class="solid-flip-hint">↻ 클릭해서 예시 보기</div>
+        </div>
+        <div class="solid-card-back">
+          <span class="solid-back-label solid-bad">❌ 나쁜 예</span>
+          <div class="solid-code">
+<span class="kw">class</span> <span class="cls">Bird</span> { <span class="fn">fly</span>() { <span class="kw">return</span> <span class="str">'날아!'</span>; } }
+<span class="kw">class</span> <span class="cls">Penguin</span> <span class="kw">extends</span> <span class="cls">Bird</span> {
+  <span class="fn">fly</span>() {
+    <span class="kw">throw new</span> Error(<span class="str">'펭귄은 못 날아!'</span>);
+    <span class="cmt">// LSP 위반! Bird 대체 불가</span>
+  }
+}
+          </div>
+          <span class="solid-back-label solid-good" style="margin-top:10px">✅ 좋은 예</span>
+          <div class="solid-code">
+<span class="kw">class</span> <span class="cls">Bird</span>    { <span class="fn">move</span>() { ... } }
+<span class="kw">class</span> <span class="cls">FlyBird</span> <span class="kw">extends</span> <span class="cls">Bird</span> { <span class="fn">fly</span>() { ... } }
+<span class="kw">class</span> <span class="cls">SwimBird</span><span class="kw"> extends</span> <span class="cls">Bird</span> { <span class="fn">swim</span>() { ... } }
+<span class="cmt">// Penguin extends SwimBird → 계약 준수</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- I -->
+      <div class="solid-card" id="solid-I" onclick="flipSolid('I')" style="min-height:320px">
+        <div class="solid-card-front">
+          <div class="solid-letter">I</div>
+          <div class="solid-name">인터페이스 분리 원칙</div>
+          <div class="solid-sub">Interface Segregation Principle</div>
+          <div class="solid-desc">클라이언트는 자신이 사용하지 않는 메서드에 의존하도록 강요받지 않아야 합니다. 큰 인터페이스를 작게 분리하세요.</div>
+          <div class="solid-flip-hint">↻ 클릭해서 예시 보기</div>
+        </div>
+        <div class="solid-card-back">
+          <span class="solid-back-label solid-bad">❌ 나쁜 예</span>
+          <div class="solid-code">
+<span class="kw">interface</span> <span class="cls">Worker</span> {
+  <span class="fn">work</span>();
+  <span class="fn">eat</span>();  <span class="cmt">// 로봇은 먹지 않음!</span>
+  <span class="fn">sleep</span>(); <span class="cmt">// 로봇은 자지 않음!</span>
+}
+<span class="kw">class</span> <span class="cls">Robot</span> <span class="kw">implements</span> <span class="cls">Worker</span> {
+  <span class="fn">eat</span>() { <span class="kw">throw</span> Error(<span class="str">'미구현'</span>); } <span class="cmt">// 강제!</span>
+}
+          </div>
+          <span class="solid-back-label solid-good" style="margin-top:10px">✅ 좋은 예</span>
+          <div class="solid-code">
+<span class="kw">interface</span> <span class="cls">Workable</span>  { <span class="fn">work</span>(); }
+<span class="kw">interface</span> <span class="cls">Feedable</span>  { <span class="fn">eat</span>(); <span class="fn">sleep</span>(); }
+<span class="kw">class</span> <span class="cls">Human</span> <span class="kw">implements</span> <span class="cls">Workable</span>, <span class="cls">Feedable</span> {...}
+<span class="kw">class</span> <span class="cls">Robot</span> <span class="kw">implements</span> <span class="cls">Workable</span> {...}
+          </div>
+        </div>
+      </div>
+
+      <!-- D -->
+      <div class="solid-card" id="solid-D" onclick="flipSolid('D')" style="min-height:320px">
+        <div class="solid-card-front">
+          <div class="solid-letter">D</div>
+          <div class="solid-name">의존성 역전 원칙</div>
+          <div class="solid-sub">Dependency Inversion Principle</div>
+          <div class="solid-desc">고수준 모듈은 저수준 모듈에 직접 의존해서는 안 됩니다. 둘 다 추상화(인터페이스)에 의존해야 합니다.</div>
+          <div class="solid-flip-hint">↻ 클릭해서 예시 보기</div>
+        </div>
+        <div class="solid-card-back">
+          <span class="solid-back-label solid-bad">❌ 나쁜 예</span>
+          <div class="solid-code">
+<span class="kw">class</span> <span class="cls">OrderService</span> {
+  <span class="fn">constructor</span>() {
+    <span class="cmt">// 구체 클래스에 직접 의존!</span>
+    <span class="kw">this</span>.db = <span class="kw">new</span> <span class="cls">MySQLDatabase</span>();
+  }
+  <span class="cmt">// MySQL → PostgreSQL 변경 시 코드 수정 필요</span>
+}
+          </div>
+          <span class="solid-back-label solid-good" style="margin-top:10px">✅ 좋은 예</span>
+          <div class="solid-code">
+<span class="kw">class</span> <span class="cls">OrderService</span> {
+  <span class="fn">constructor</span>(db: <span class="cls">IDatabase</span>) {
+    <span class="kw">this</span>.db = db; <span class="cmt">// 인터페이스에 의존</span>
+  }
+}
+<span class="cmt">// new OrderService(new MySQL()) → OK</span>
+<span class="cmt">// new OrderService(new Postgres()) → OK</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 3: 함수형 프로그래밍
+═══════════════════════════════════════════ -->
+<section id="functional">
+  <div class="section-header">
+    <div class="tag tag-ch11">03 — FUNCTIONAL PROGRAMMING</div>
+    <h2>함수형 프로그래밍</h2>
+    <p>함수형 프로그래밍(FP)은 부작용을 최소화하고 순수 함수의 합성으로 프로그램을 구성하는 패러다임입니다. 데이터의 불변성과 선언적 코드 스타일이 핵심입니다.</p>
+  </div>
+  <div class="viz-box">
+
+    <!-- FP Tabs -->
+    <div class="fp-tabs">
+      <button class="fp-tab active" onclick="showFP('pure')">순수 함수</button>
+      <button class="fp-tab" onclick="showFP('immut')">불변성</button>
+      <button class="fp-tab" onclick="showFP('hof')">고차함수</button>
+      <button class="fp-tab" onclick="showFP('compose')">함수 합성</button>
+      <button class="fp-tab" onclick="showFP('playground')">🎮 플레이그라운드</button>
+    </div>
+
+    <!-- 순수 함수 -->
+    <div class="fp-panel active" id="fp-pure">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:12px;">
+        순수 함수: 같은 입력 → 항상 같은 출력, 외부 상태 변경 없음
+      </div>
+      <div class="toggle-switch">
+        <span class="toggle-label" id="pure-toggle-label" style="color:var(--danger)">❌ 부작용 함수</span>
+        <button class="toggle-btn" id="pure-toggle" onclick="togglePure()"></button>
+        <span class="toggle-label" id="pure-toggle-label2" style="color:var(--text-dim)">✅ 순수 함수</span>
+      </div>
+      <div class="fp-compare">
+        <div class="fp-box">
+          <span class="fp-box-label solid-bad">❌ 부작용 (impure)</span>
+          <div class="fp-code" id="pure-bad-code"><span class="kw">let</span> total = <span class="num">0</span>;
+
+<span class="kw">function</span> <span class="fn">addToTotal</span>(n) {
+  total += n;  <span class="cmt">// 외부 변수 변경!</span>
+  <span class="kw">return</span> total;
+}
+
+<span class="fn">addToTotal</span>(<span class="num">5</span>);  <span class="cmt">// 5</span>
+<span class="fn">addToTotal</span>(<span class="num">5</span>);  <span class="cmt">// 10 (달라짐!)</span>
+<span class="fn">addToTotal</span>(<span class="num">5</span>);  <span class="cmt">// 15 (예측 불가)</span></div>
+        </div>
+        <div class="fp-box">
+          <span class="fp-box-label solid-good">✅ 순수 함수 (pure)</span>
+          <div class="fp-code" id="pure-good-code"><span class="kw">function</span> <span class="fn">add</span>(a, b) {
+  <span class="kw">return</span> a + b;  <span class="cmt">// 외부 상태 없음</span>
+}
+
+<span class="fn">add</span>(<span class="num">10</span>, <span class="num">5</span>);  <span class="cmt">// 항상 15</span>
+<span class="fn">add</span>(<span class="num">10</span>, <span class="num">5</span>);  <span class="cmt">// 항상 15</span>
+<span class="fn">add</span>(<span class="num">10</span>, <span class="num">5</span>);  <span class="cmt">// 항상 15</span>
+
+<span class="cmt">// 테스트하기 쉽고 예측 가능!</span></div>
+        </div>
+      </div>
+      <div class="info-text" style="margin-top:14px">
+        <span style="color:#f59e0b">순수 함수의 조건:</span> ① 동일 입력 → 동일 출력 (결정론적) ② 부작용 없음 (외부 상태 변경, 콘솔 출력, 네트워크 요청 등 없음) ③ 외부 변수에 의존하지 않음
+      </div>
+    </div>
+
+    <!-- 불변성 -->
+    <div class="fp-panel" id="fp-immut">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:12px;">
+        불변성: 데이터를 직접 변경하지 않고 새 복사본을 만들어 반환합니다.
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:12px;">
+        현재 배열: <span id="immut-current" style="color:#f59e0b">[1, 2, 3, 4, 5]</span>
+      </div>
+      <div class="immut-ops">
+        <button class="btn-sm" onclick="immutOp('push')">push(6) 추가</button>
+        <button class="btn-sm" onclick="immutOp('filter')">짝수만 필터</button>
+        <button class="btn-sm" onclick="immutOp('map')">× 2 변환</button>
+        <button class="btn-sm" onclick="immutOp('sort')">정렬</button>
+        <button class="btn-sm" onclick="immutOp('reset')" style="color:var(--accent2);border-color:rgba(255,107,157,0.3)">초기화</button>
+      </div>
+      <div id="immut-history" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div class="fp-compare" style="margin-top:16px">
+        <div class="fp-box">
+          <span class="fp-box-label solid-bad">❌ 가변 (mutable)</span>
+          <div class="fp-code"><span class="kw">const</span> arr = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>];
+arr.<span class="fn">push</span>(<span class="num">4</span>);   <span class="cmt">// 원본 변경!</span>
+arr.<span class="fn">sort</span>();     <span class="cmt">// 원본 변경!</span>
+arr.<span class="fn">splice</span>(<span class="num">0</span>,<span class="num">1</span>); <span class="cmt">// 원본 변경!</span></div>
+        </div>
+        <div class="fp-box">
+          <span class="fp-box-label solid-good">✅ 불변 (immutable)</span>
+          <div class="fp-code"><span class="kw">const</span> arr = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>];
+<span class="kw">const</span> arr2 = [...arr, <span class="num">4</span>];   <span class="cmt">// 새 배열</span>
+<span class="kw">const</span> arr3 = [...arr].<span class="fn">sort</span>(); <span class="cmt">// 새 배열</span>
+<span class="kw">const</span> arr4 = arr.<span class="fn">filter</span>(x=>x!==arr[<span class="num">0</span>]);</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 고차함수 -->
+    <div class="fp-panel" id="fp-hof">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:12px;">
+        고차함수: 함수를 인자로 받거나 함수를 반환하는 함수입니다.
+      </div>
+      <div class="hof-playground">
+        <div class="hof-input-row">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim)">입력 배열:</span>
+          <input class="hof-input" id="hof-array-input" value="1, 2, 3, 4, 5, 6, 7, 8, 9, 10" placeholder="숫자를 쉼표로 구분 입력...">
+          <button class="run-btn" onclick="runHOF()">실행 ▶</button>
+        </div>
+        <div class="hof-ops">
+          <button class="hof-op-btn active" id="hof-btn-map" onclick="selectHOF('map')">map(×2)</button>
+          <button class="hof-op-btn" id="hof-btn-filter" onclick="selectHOF('filter')">filter(짝수)</button>
+          <button class="hof-op-btn" id="hof-btn-reduce" onclick="selectHOF('reduce')">reduce(합계)</button>
+          <button class="hof-op-btn" id="hof-btn-chain" onclick="selectHOF('chain')">체인: filter → map</button>
+        </div>
+        <div id="hof-steps"></div>
+        <div id="hof-code-preview" class="fp-box" style="margin-top:12px">
+          <div class="fp-code" id="hof-code-display"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 함수 합성 -->
+    <div class="fp-panel" id="fp-compose">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:12px;">
+        함수 합성: 여러 함수를 합쳐 새로운 함수를 만듭니다. compose(f, g)(x) = f(g(x))
+      </div>
+      <div class="compose-flow" id="compose-flow">
+        <div class="compose-fn-box">
+          <div class="compose-fn-name">입력</div>
+          <div class="compose-fn-desc compose-input-val" id="compose-input-display">5</div>
+        </div>
+        <div class="compose-arrow">→</div>
+        <div class="compose-fn-box">
+          <div class="compose-fn-name">double</div>
+          <div class="compose-fn-desc">x × 2</div>
+        </div>
+        <div class="compose-arrow">→</div>
+        <div class="compose-fn-box">
+          <div class="compose-fn-name">addTen</div>
+          <div class="compose-fn-desc">x + 10</div>
+        </div>
+        <div class="compose-arrow">→</div>
+        <div class="compose-fn-box">
+          <div class="compose-fn-name">square</div>
+          <div class="compose-fn-desc">x²</div>
+        </div>
+        <div class="compose-arrow">→</div>
+        <div class="compose-fn-box" style="border-color:var(--accent)">
+          <div class="compose-fn-name" style="color:var(--accent)">결과</div>
+          <div class="compose-fn-desc compose-output-val" id="compose-output-display">400</div>
+        </div>
+      </div>
+      <div class="hof-input-row" style="margin-top:10px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim)">입력값:</span>
+        <input class="hof-input" id="compose-input" value="5" type="number" style="width:100px" oninput="updateCompose()">
+      </div>
+      <div style="margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);" id="compose-trace"></div>
+      <div class="fp-box" style="margin-top:14px">
+        <div class="fp-code">
+<span class="kw">const</span> <span class="fn">double</span>  = x => x * <span class="num">2</span>;
+<span class="kw">const</span> <span class="fn">addTen</span>  = x => x + <span class="num">10</span>;
+<span class="kw">const</span> <span class="fn">square</span>  = x => x * x;
+
+<span class="cmt">// compose 유틸: 오른쪽에서 왼쪽으로 적용</span>
+<span class="kw">const</span> <span class="fn">compose</span> = (...fns) =>
+  x => fns.<span class="fn">reduceRight</span>((acc, fn) => <span class="fn">fn</span>(acc), x);
+
+<span class="kw">const</span> transform = <span class="fn">compose</span>(square, addTen, double);
+transform(<span class="num">5</span>); <span class="cmt">// square(addTen(double(5)))</span>
+             <span class="cmt">// = square(addTen(10))</span>
+             <span class="cmt">// = square(20)</span>
+             <span class="cmt">// = 400</span></div>
+      </div>
+    </div>
+
+    <!-- Playground -->
+    <div class="fp-panel" id="fp-playground">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:14px;">
+        직접 배열을 입력하고 map / filter / reduce 를 단계적으로 적용해 보세요.
+      </div>
+      <div class="hof-input-row">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim)">배열:</span>
+        <input class="hof-input" id="pg-array" value="3, 1, 4, 1, 5, 9, 2, 6, 5, 3" style="width:300px">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#f59e0b;min-width:70px">Step 1</span>
+          <select id="pg-op1" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;cursor:pointer">
+            <option value="none">-- 없음 --</option>
+            <option value="filter-even">filter: 짝수만</option>
+            <option value="filter-odd">filter: 홀수만</option>
+            <option value="filter-gt5">filter: > 5</option>
+            <option value="map-double">map: × 2</option>
+            <option value="map-square">map: 제곱</option>
+            <option value="map-negate">map: 부호 반전</option>
+            <option value="sort-asc">sort: 오름차순</option>
+            <option value="sort-desc">sort: 내림차순</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#f59e0b;min-width:70px">Step 2</span>
+          <select id="pg-op2" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;cursor:pointer">
+            <option value="none">-- 없음 --</option>
+            <option value="filter-even">filter: 짝수만</option>
+            <option value="filter-odd">filter: 홀수만</option>
+            <option value="filter-gt5">filter: > 5</option>
+            <option value="map-double">map: × 2</option>
+            <option value="map-square">map: 제곱</option>
+            <option value="map-negate">map: 부호 반전</option>
+            <option value="sort-asc">sort: 오름차순</option>
+            <option value="sort-desc">sort: 내림차순</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#f59e0b;min-width:70px">최종</span>
+          <select id="pg-op3" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;cursor:pointer">
+            <option value="none">-- 없음 (배열 반환) --</option>
+            <option value="reduce-sum">reduce: 합계</option>
+            <option value="reduce-product">reduce: 곱</option>
+            <option value="reduce-max">reduce: 최댓값</option>
+            <option value="reduce-min">reduce: 최솟값</option>
+          </select>
+        </div>
+      </div>
+      <button class="run-btn" onclick="runPlayground()" style="margin-bottom:14px">실행 ▶</button>
+      <div id="pg-output"></div>
+    </div>
+
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 4: 패러다임 비교
+═══════════════════════════════════════════ -->
+<section id="paradigm">
+  <div class="section-header">
+    <div class="tag tag-ch11">04 — PARADIGM COMPARISON</div>
+    <h2>패러다임 비교</h2>
+    <p>같은 문제를 3가지 프로그래밍 패러다임으로 해결합니다. <span style="color:#f59e0b">탭을 클릭</span>해서 각 접근 방식을 비교해 보세요.</p>
+  </div>
+  <div class="viz-box">
+
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:600;margin-bottom:14px;color:var(--text-dim)">
+      문제: 숫자 배열 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] 에서 짝수의 제곱합 계산
+    </div>
+
+    <div class="paradigm-tabs">
+      <button class="paradigm-tab active" onclick="showParadigm('proc')">절차형 (Procedural)</button>
+      <button class="paradigm-tab" onclick="showParadigm('oop')">객체지향 (OOP)</button>
+      <button class="paradigm-tab" onclick="showParadigm('fp')">함수형 (Functional)</button>
+    </div>
+
+    <!-- 절차형 -->
+    <div class="paradigm-panel active" id="para-proc">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <span class="badge badge-yellow">순차적 실행</span>
+        <span class="badge badge-yellow">명시적 반복문</span>
+        <span class="badge badge-yellow">상태 변수</span>
+      </div>
+      <div style="font-size:0.82rem;color:var(--text-dim)">단계별로 명령을 나열하여 "어떻게 할 것인가"를 기술합니다. 변수의 상태가 변화하며 결과를 도출합니다.</div>
+      <div class="paradigm-code">
+<span class="kw">const</span> numbers = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>, <span class="num">7</span>, <span class="num">8</span>, <span class="num">9</span>, <span class="num">10</span>];
+<span class="kw">let</span> sum = <span class="num">0</span>;
+
+<span class="cmt">// 단계 1: 반복문으로 각 요소 처리</span>
+<span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i < numbers.length; i++) {
+  <span class="cmt">// 단계 2: 짝수인지 확인</span>
+  <span class="kw">if</span> (numbers[i] % <span class="num">2</span> === <span class="num">0</span>) {
+    <span class="cmt">// 단계 3: 제곱을 누적합에 더함</span>
+    sum += numbers[i] * numbers[i];
+  }
+}
+
+console.<span class="fn">log</span>(sum); <span class="cmt">// 220 (4 + 16 + 36 + 64 + 100)</span></div>
+      <div class="pros-cons">
+        <div class="pros-box">
+          <div class="pc-title">PROS</div>
+          <ul class="pc-list">
+            <li>이해하기 직관적</li>
+            <li>실행 흐름이 명확</li>
+            <li>성능 최적화 용이</li>
+            <li>낮은 추상화 비용</li>
+          </ul>
+        </div>
+        <div class="cons-box">
+          <div class="pc-title">CONS</div>
+          <ul class="pc-list">
+            <li>코드가 길어짐</li>
+            <li>재사용성 낮음</li>
+            <li>상태 관리 복잡</li>
+            <li>테스트 어려움</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- OOP -->
+    <div class="paradigm-panel" id="para-oop">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <span class="badge badge-blue">클래스 기반</span>
+        <span class="badge badge-blue">캡슐화</span>
+        <span class="badge badge-blue">재사용성</span>
+      </div>
+      <div style="font-size:0.82rem;color:var(--text-dim)">데이터와 동작을 객체로 묶어 관리합니다. 문제를 객체들의 협력으로 해결하며 확장성이 높습니다.</div>
+      <div class="paradigm-code">
+<span class="kw">class</span> <span class="cls">NumberCollection</span> {
+  <span class="fn">constructor</span>(numbers) {
+    <span class="kw">this</span>.numbers = numbers;
+  }
+
+  <span class="fn">filterEvens</span>() {
+    <span class="kw">return</span> <span class="kw">this</span>.numbers.<span class="fn">filter</span>(n => n % <span class="num">2</span> === <span class="num">0</span>);
+  }
+
+  <span class="fn">squareAll</span>(arr) {
+    <span class="kw">return</span> arr.<span class="fn">map</span>(n => n * n);
+  }
+
+  <span class="fn">sum</span>(arr) {
+    <span class="kw">return</span> arr.<span class="fn">reduce</span>((acc, n) => acc + n, <span class="num">0</span>);
+  }
+
+  <span class="fn">sumOfEvenSquares</span>() {
+    <span class="kw">const</span> evens   = <span class="kw">this</span>.<span class="fn">filterEvens</span>();
+    <span class="kw">const</span> squares = <span class="kw">this</span>.<span class="fn">squareAll</span>(evens);
+    <span class="kw">return</span>         <span class="kw">this</span>.<span class="fn">sum</span>(squares);
+  }
+}
+
+<span class="kw">const</span> nums = <span class="kw">new</span> <span class="cls">NumberCollection</span>([<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>,<span class="num">5</span>,<span class="num">6</span>,<span class="num">7</span>,<span class="num">8</span>,<span class="num">9</span>,<span class="num">10</span>]);
+console.<span class="fn">log</span>(nums.<span class="fn">sumOfEvenSquares</span>()); <span class="cmt">// 220</span></div>
+      <div class="pros-cons">
+        <div class="pros-box">
+          <div class="pc-title">PROS</div>
+          <ul class="pc-list">
+            <li>코드 재사용성 높음</li>
+            <li>현실 세계 모델링</li>
+            <li>유지보수 용이</li>
+            <li>확장성 우수</li>
+          </ul>
+        </div>
+        <div class="cons-box">
+          <div class="pc-title">CONS</div>
+          <ul class="pc-list">
+            <li>보일러플레이트 코드</li>
+            <li>과도한 추상화</li>
+            <li>상태 공유 문제</li>
+            <li>학습 곡선 존재</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 함수형 -->
+    <div class="paradigm-panel" id="para-fp">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <span class="badge badge-green">선언적</span>
+        <span class="badge badge-green">불변성</span>
+        <span class="badge badge-green">합성</span>
+      </div>
+      <div style="font-size:0.82rem;color:var(--text-dim)">무엇을 할 것인가를 선언적으로 표현합니다. 순수 함수와 불변 데이터로 부작용을 최소화합니다.</div>
+      <div class="paradigm-code">
+<span class="kw">const</span> numbers = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>, <span class="num">7</span>, <span class="num">8</span>, <span class="num">9</span>, <span class="num">10</span>];
+
+<span class="cmt">// 순수 함수 정의</span>
+<span class="kw">const</span> <span class="fn">isEven</span>  = n => n % <span class="num">2</span> === <span class="num">0</span>;
+<span class="kw">const</span> <span class="fn">square</span>  = n => n * n;
+<span class="kw">const</span> <span class="fn">add</span>     = (acc, n) => acc + n;
+
+<span class="cmt">// 함수 합성으로 문제 해결 (선언적)</span>
+<span class="kw">const</span> result = numbers
+  .<span class="fn">filter</span>(isEven)   <span class="cmt">// [2, 4, 6, 8, 10]</span>
+  .<span class="fn">map</span>(square)      <span class="cmt">// [4, 16, 36, 64, 100]</span>
+  .<span class="fn">reduce</span>(add, <span class="num">0</span>); <span class="cmt">// 220</span>
+
+console.<span class="fn">log</span>(result); <span class="cmt">// 220</span>
+
+<span class="cmt">// isEven, square, add는 독립적으로 테스트 가능</span></div>
+      <div class="pros-cons">
+        <div class="pros-box">
+          <div class="pc-title">PROS</div>
+          <ul class="pc-list">
+            <li>간결하고 읽기 쉬움</li>
+            <li>테스트 용이 (순수함수)</li>
+            <li>병렬 처리 안전</li>
+            <li>버그 발생 적음</li>
+          </ul>
+        </div>
+        <div class="cons-box">
+          <div class="pc-title">CONS</div>
+          <ul class="pc-list">
+            <li>학습 곡선 높음</li>
+            <li>성능 오버헤드</li>
+            <li>I/O 처리 복잡</li>
+            <li>재귀 사용 증가</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 비교 테이블 -->
+    <div style="margin-top:28px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:600;margin-bottom:12px;color:var(--text)">패러다임 특성 비교표</div>
+      <table class="cmp-table">
+        <thead>
+          <tr>
+            <th>특성</th>
+            <th>절차형</th>
+            <th>객체지향</th>
+            <th>함수형</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>핵심 단위</td>
+            <td>함수/절차</td>
+            <td>클래스/객체</td>
+            <td>순수 함수</td>
+          </tr>
+          <tr>
+            <td>상태 관리</td>
+            <td>전역/지역 변수</td>
+            <td>객체 내부 상태</td>
+            <td>불변 데이터</td>
+          </tr>
+          <tr>
+            <td>코드 재사용</td>
+            <td>함수 호출</td>
+            <td>상속/합성</td>
+            <td>함수 합성</td>
+          </tr>
+          <tr>
+            <td>부작용</td>
+            <td>많음</td>
+            <td>캡슐화로 관리</td>
+            <td>최소화</td>
+          </tr>
+          <tr>
+            <td>테스트 난이도</td>
+            <td>중간</td>
+            <td>중간~어려움</td>
+            <td>쉬움</td>
+          </tr>
+          <tr>
+            <td>대표 언어</td>
+            <td>C, Pascal</td>
+            <td>Java, C++, Python</td>
+            <td>Haskell, Clojure</td>
+          </tr>
+          <tr>
+            <td>사고 방식</td>
+            <td>어떻게(How)</td>
+            <td>무엇이(What is)</td>
+            <td>무엇을(What)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
+
+<footer>CS Visualizer · <a href="index.html" style="color:#f59e0b;text-decoration:none;">목차로 돌아가기</a></footer>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+<script>
+/* ───────────────────────────────────────────
+   SECTION 1: OOP 4원칙
+─────────────────────────────────────────── */
+function toggleOOP(id) {
+  const expand = document.getElementById('expand-' + id);
+  const card   = document.getElementById('card-' + id);
+  const isOpen = expand.classList.contains('open');
+
+  // Close all
+  document.querySelectorAll('.oop-expand').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.oop-card').forEach(el => el.classList.remove('active'));
+
+  if (!isOpen) {
+    expand.classList.add('open');
+    card.classList.add('active');
+  }
+}
+
+/* ───────────────────────────────────────────
+   SECTION 2: SOLID
+─────────────────────────────────────────── */
+function flipSolid(letter) {
+  const card = document.getElementById('solid-' + letter);
+  card.classList.toggle('flipped');
+}
+
+/* ───────────────────────────────────────────
+   SECTION 3: 함수형 탭
+─────────────────────────────────────────── */
+function showFP(id) {
+  document.querySelectorAll('.fp-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.fp-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('fp-' + id).classList.add('active');
+
+  // Match tab button
+  const tabs = document.querySelectorAll('.fp-tab');
+  const map = { pure: 0, immut: 1, hof: 2, compose: 3, playground: 4 };
+  if (map[id] !== undefined) tabs[map[id]].classList.add('active');
+
+  if (id === 'hof') { selectHOF('map'); runHOF(); }
+  if (id === 'compose') updateCompose();
+}
+
+/* ─── 순수 함수 toggle ─── */
+let pureOn = false;
+function togglePure() {
+  pureOn = !pureOn;
+  const btn = document.getElementById('pure-toggle');
+  btn.classList.toggle('on', pureOn);
+
+  const l1 = document.getElementById('pure-toggle-label');
+  const l2 = document.getElementById('pure-toggle-label2');
+  l1.style.color = pureOn ? 'var(--text-dim)' : 'var(--danger)';
+  l2.style.color = pureOn ? 'var(--accent)' : 'var(--text-dim)';
+}
+
+/* ─── 불변성 demo ─── */
+let immutHistory = [[1, 2, 3, 4, 5]];
+
+function renderImmutHistory() {
+  const hist = document.getElementById('immut-history');
+  hist.innerHTML = '';
+  const current = document.getElementById('immut-current');
+  current.textContent = JSON.stringify(immutHistory[immutHistory.length - 1]);
+
+  immutHistory.forEach((arr, i) => {
+    const isLatest = i === immutHistory.length - 1;
+    const div = document.createElement('div');
+    div.className = 'immut-state';
+    div.innerHTML = `
+      <div class="immut-label">버전 ${i}</div>
+      <div class="immut-val${isLatest ? '' : ' old'}">${JSON.stringify(arr)}</div>
+    `;
+    hist.appendChild(div);
+  });
+}
+
+function immutOp(op) {
+  const arr = immutHistory[immutHistory.length - 1];
+  let next;
+  if (op === 'push')   next = [...arr, arr[arr.length - 1] + 1];
+  else if (op === 'filter') next = arr.filter(x => x % 2 === 0);
+  else if (op === 'map')    next = arr.map(x => x * 2);
+  else if (op === 'sort')   next = [...arr].sort((a, b) => a - b);
+  else if (op === 'reset') {
+    immutHistory = [[1, 2, 3, 4, 5]];
+    renderImmutHistory();
+    return;
+  }
+  if (next && JSON.stringify(next) !== JSON.stringify(arr)) {
+    immutHistory.push(next);
+  }
+  renderImmutHistory();
+}
+
+renderImmutHistory();
+
+/* ─── 고차함수 demo ─── */
+let currentHOF = 'map';
+
+function selectHOF(op) {
+  currentHOF = op;
+  document.querySelectorAll('.hof-op-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('hof-btn-' + op);
+  if (btn) btn.classList.add('active');
+  runHOF();
+}
+
+const hofCodes = {
+  map:    `const input = [INPUT];\n\n// map: 각 요소를 변환\nconst result = input.map(x => x * 2);\n// result: [OUTPUT]`,
+  filter: `const input = [INPUT];\n\n// filter: 조건에 맞는 요소만 선택\nconst result = input.filter(x => x % 2 === 0);\n// result: [OUTPUT]`,
+  reduce: `const input = [INPUT];\n\n// reduce: 배열을 하나의 값으로 축약\nconst result = input.reduce((acc, x) => acc + x, 0);\n// result: OUTPUT`,
+  chain:  `const input = [INPUT];\n\n// 체인: filter → map\nconst result = input\n  .filter(x => x % 2 === 0)  // 짝수만\n  .map(x => x * 2);           // × 2\n// result: [OUTPUT]`,
+};
+
+function runHOF() {
+  const rawInput = document.getElementById('hof-array-input').value;
+  const arr = rawInput.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+  const stepsDiv = document.getElementById('hof-steps');
+  const codeDiv  = document.getElementById('hof-code-display');
+
+  let steps = [];
+  let result;
+
+  if (currentHOF === 'map') {
+    result = arr.map(x => x * 2);
+    steps = arr.map((x, i) => ({ label: `arr[${i}]`, from: x, to: x * 2 }));
+  } else if (currentHOF === 'filter') {
+    result = arr.filter(x => x % 2 === 0);
+    steps = arr.map((x, i) => ({
+      label: `arr[${i}]`,
+      from: x,
+      to: x % 2 === 0 ? x : null,
+      filtered: x % 2 !== 0
+    }));
+  } else if (currentHOF === 'reduce') {
+    let acc = 0;
+    steps = arr.map((x, i) => {
+      const prev = acc;
+      acc += x;
+      return { label: `step ${i + 1}`, from: `acc(${prev}) + ${x}`, to: acc };
+    });
+    result = acc;
+  } else if (currentHOF === 'chain') {
+    const filtered = arr.filter(x => x % 2 === 0);
+    result = filtered.map(x => x * 2);
+    steps = [
+      { label: 'filter(짝수)', from: JSON.stringify(arr), to: JSON.stringify(filtered) },
+      { label: 'map(×2)', from: JSON.stringify(filtered), to: JSON.stringify(result) },
+    ];
+  }
+
+  // Render steps
+  stepsDiv.innerHTML = '';
+  steps.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'hof-step';
+    let valHtml;
+    if (s.filtered) {
+      valHtml = `<span style="color:var(--danger);text-decoration:line-through">${s.from}</span> <span style="color:var(--text-dim);font-size:0.68rem">(제외)</span>`;
+    } else if (s.to === null) {
+      valHtml = `<span style="color:var(--text-dim)">${s.from}</span>`;
+    } else {
+      valHtml = `<span style="color:var(--text-dim)">${s.from}</span> <span class="hof-step-arrow">→</span> <span class="hof-step-val">${s.to}</span>`;
+    }
+    row.innerHTML = `<span class="hof-step-label">${s.label}</span> ${valHtml}`;
+    stepsDiv.appendChild(row);
+  });
+
+  // Result
+  const resStr = Array.isArray(result) ? JSON.stringify(result) : result;
+  const resDiv = document.createElement('div');
+  resDiv.className = 'hof-result';
+  resDiv.innerHTML = `<span style="color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:0.75rem">결과: </span><span style="color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:600">${resStr}</span>`;
+  stepsDiv.appendChild(resDiv);
+
+  // Code preview
+  const code = hofCodes[currentHOF]
+    .replace('INPUT', arr.join(', '))
+    .replace('OUTPUT', Array.isArray(result) ? result.join(', ') : result)
+    .replace('OUTPUT', Array.isArray(result) ? result.join(', ') : result);
+  codeDiv.textContent = code;
+}
+
+// Init HOF
+selectHOF('map');
+
+/* ─── 함수 합성 ─── */
+function updateCompose() {
+  const raw = parseFloat(document.getElementById('compose-input').value) || 0;
+  const d1  = raw * 2;
+  const d2  = d1 + 10;
+  const d3  = d2 * d2;
+
+  document.getElementById('compose-input-display').textContent = raw;
+  document.getElementById('compose-output-display').textContent = d3;
+  document.getElementById('compose-trace').textContent =
+    `double(${raw}) = ${d1}  →  addTen(${d1}) = ${d2}  →  square(${d2}) = ${d3}`;
+}
+
+updateCompose();
+
+/* ─── 플레이그라운드 ─── */
+function applyOp(arr, op) {
+  if (op === 'none')          return arr;
+  if (op === 'filter-even')   return arr.filter(x => x % 2 === 0);
+  if (op === 'filter-odd')    return arr.filter(x => x % 2 !== 0);
+  if (op === 'filter-gt5')    return arr.filter(x => x > 5);
+  if (op === 'map-double')    return arr.map(x => x * 2);
+  if (op === 'map-square')    return arr.map(x => x * x);
+  if (op === 'map-negate')    return arr.map(x => -x);
+  if (op === 'sort-asc')      return [...arr].sort((a, b) => a - b);
+  if (op === 'sort-desc')     return [...arr].sort((a, b) => b - a);
+  return arr;
+}
+
+function applyFinal(arr, op) {
+  if (op === 'none')            return { val: arr, isArr: true };
+  if (op === 'reduce-sum')      return { val: arr.reduce((a, b) => a + b, 0), isArr: false };
+  if (op === 'reduce-product')  return { val: arr.reduce((a, b) => a * b, 1), isArr: false };
+  if (op === 'reduce-max')      return { val: arr.length ? Math.max(...arr) : 'N/A', isArr: false };
+  if (op === 'reduce-min')      return { val: arr.length ? Math.min(...arr) : 'N/A', isArr: false };
+  return { val: arr, isArr: true };
+}
+
+function opLabel(op) {
+  const labels = {
+    'none': '(없음)', 'filter-even': 'filter(짝수)', 'filter-odd': 'filter(홀수)',
+    'filter-gt5': 'filter(>5)', 'map-double': 'map(×2)', 'map-square': 'map(제곱)',
+    'map-negate': 'map(부호반전)', 'sort-asc': 'sort(오름차순)', 'sort-desc': 'sort(내림차순)',
+    'reduce-sum': 'reduce(합계)', 'reduce-product': 'reduce(곱)', 'reduce-max': 'reduce(최대)', 'reduce-min': 'reduce(최소)'
+  };
+  return labels[op] || op;
+}
+
+function runPlayground() {
+  const raw   = document.getElementById('pg-array').value;
+  const input = raw.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+  const op1   = document.getElementById('pg-op1').value;
+  const op2   = document.getElementById('pg-op2').value;
+  const op3   = document.getElementById('pg-op3').value;
+
+  const after1 = applyOp(input, op1);
+  const after2 = applyOp(after1, op2);
+  const final  = applyFinal(after2, op3);
+
+  const out = document.getElementById('pg-output');
+  const mkStep = (label, val, isArr) => {
+    const display = isArr ? JSON.stringify(val) : val;
+    return `<div class="hof-step">
+      <span class="hof-step-label" style="min-width:140px;color:#f59e0b">${label}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent)">${display}</span>
+    </div>`;
+  };
+
+  out.innerHTML = `
+    ${mkStep('원본 배열', input, true)}
+    ${op1 !== 'none' ? mkStep(opLabel(op1), after1, true) : ''}
+    ${op2 !== 'none' ? mkStep(opLabel(op2), after2, true) : ''}
+    <div class="hof-result" style="margin-top:6px">
+      <span style="color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:0.75rem">${opLabel(op3)}: </span>
+      <span style="color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:700">${final.isArr ? JSON.stringify(final.val) : final.val}</span>
+    </div>
+  `;
+}
+
+runPlayground();
+
+/* ───────────────────────────────────────────
+   SECTION 4: 패러다임 탭
+─────────────────────────────────────────── */
+function showParadigm(id) {
+  document.querySelectorAll('.paradigm-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.paradigm-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('para-' + id).classList.add('active');
+
+  const tabs = document.querySelectorAll('.paradigm-tab');
+  const map = { proc: 0, oop: 1, fp: 2 };
+  if (map[id] !== undefined) tabs[map[id]].classList.add('active');
+}
+</script>
+<script src="sidebar.js"></script>
+</body>
+</html>

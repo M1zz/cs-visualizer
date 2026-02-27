@@ -1,0 +1,1977 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.14 Git & 버전관리 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── Ch14 accent ─────────────────────────── */
+:root { --ch14: #06b6d4; --ch14-dim: rgba(6,182,212,0.15); --ch14-glow: 0 0 20px rgba(6,182,212,0.3); }
+.tag-ch14 { background: var(--ch14-dim); color: var(--ch14); border: 1px solid rgba(6,182,212,0.35); }
+
+/* ── Git area diagram ────────────────────── */
+.git-areas {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+  gap: 0;
+  align-items: center;
+  margin: 24px 0;
+  min-width: 0;
+}
+.git-area {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 10px;
+  text-align: center;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  position: relative;
+}
+.git-area.active { border-color: var(--ch14); box-shadow: var(--ch14-glow); }
+.git-area-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.git-area-icon { font-size: 1.6rem; margin: 4px 0; }
+.git-area-items { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.git-file-node {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+.git-file-node.wdir  { background: rgba(255,68,102,0.15); border-color: var(--danger); color: var(--danger); }
+.git-file-node.stage { background: rgba(255,170,0,0.15); border-color: var(--accent4); color: var(--accent4); }
+.git-file-node.repo  { background: rgba(0,255,170,0.15); border-color: var(--accent); color: var(--accent); }
+.git-file-node.remote{ background: rgba(6,182,212,0.15); border-color: var(--ch14); color: var(--ch14); }
+.git-area-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+}
+.arrow-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1.3;
+}
+.arrow-sym { font-size: 1.2rem; color: var(--text-dim); }
+.commit-node {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: default;
+  transition: all 0.2s;
+  animation: fadeIn 0.3s ease;
+  flex-shrink: 0;
+}
+.commit-node:hover { box-shadow: 0 0 12px rgba(0,255,170,0.4); }
+.commit-node.remote-node { border-color: var(--ch14); color: var(--ch14); }
+
+/* ── git status terminal ─────────────────── */
+.git-status-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  min-height: 80px;
+  transition: all 0.3s;
+}
+.git-status-box .s-red    { color: var(--danger); }
+.git-status-box .s-green  { color: var(--accent); }
+.git-status-box .s-yellow { color: var(--accent4); }
+.git-status-box .s-cyan   { color: var(--ch14); }
+.git-status-box .s-dim    { color: var(--text-dim); }
+
+/* ── command ref ─────────────────────────── */
+.cmd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.cmd-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.cmd-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--ch14);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.cmd-desc {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+/* ── branch graph ────────────────────────── */
+.branch-graph-container {
+  position: relative;
+  overflow-x: auto;
+  padding: 20px 0 12px;
+}
+.branch-graph-svg {
+  display: block;
+  margin: 0 auto;
+}
+.branch-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.branch-label.main    { background: rgba(0,255,170,0.15); color: var(--accent); border: 1px solid rgba(0,255,170,0.4); }
+.branch-label.feature { background: rgba(107,138,255,0.15); color: var(--accent3); border: 1px solid rgba(107,138,255,0.4); }
+.branch-label.head    { background: rgba(255,170,0,0.15); color: var(--accent4); border: 1px solid rgba(255,170,0,0.4); }
+
+#branchCanvas {
+  background: var(--surface2);
+  border-radius: 8px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* ── conflict viz ────────────────────────── */
+.conflict-file {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  overflow: hidden;
+}
+.conflict-line {
+  padding: 4px 16px;
+  transition: all 0.3s;
+  line-height: 1.6;
+}
+.conflict-line.marker { color: var(--accent4); font-weight: 700; }
+.conflict-line.ours   { background: rgba(0,255,170,0.08); color: var(--accent); }
+.conflict-line.sep    { color: var(--accent4); font-weight: 700; background: rgba(255,170,0,0.06); }
+.conflict-line.theirs { background: rgba(107,138,255,0.08); color: var(--accent3); }
+.conflict-line.normal { color: var(--text); }
+.conflict-line.resolved { background: rgba(0,255,170,0.12); color: var(--accent); }
+.conflict-resolved-banner {
+  background: rgba(0,255,170,0.15);
+  border-top: 1px solid rgba(0,255,170,0.3);
+  padding: 8px 16px;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: none;
+}
+
+/* ── cherry-pick canvas ──────────────────── */
+#cherryCanvas {
+  background: var(--surface2);
+  border-radius: 8px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* ── stash ───────────────────────────────── */
+.stash-area {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.stash-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  flex: 1;
+  min-width: 160px;
+}
+.stash-box-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.stash-item {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 5px 10px;
+  background: rgba(255,170,0,0.12);
+  border: 1px solid rgba(255,170,0,0.3);
+  border-radius: 4px;
+  color: var(--accent4);
+  margin-bottom: 4px;
+  animation: fadeIn 0.3s ease;
+}
+
+/* ── workflow tabs ───────────────────────── */
+.workflow-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.wf-tab {
+  padding: 8px 20px;
+  border-radius: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+.wf-tab.active { background: var(--ch14-dim); border-color: var(--ch14); color: var(--ch14); }
+.wf-tab:hover:not(.active) { border-color: var(--text-dim); color: var(--text); }
+.wf-panel { display: none; }
+.wf-panel.active { display: block; }
+
+.wf-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+.wf-info-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.wf-info-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.wf-info-title.pros { color: var(--accent); }
+.wf-info-title.cons { color: var(--danger); }
+.wf-info-title.when { color: var(--accent4); }
+.wf-info-li {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.7;
+  padding-left: 12px;
+  position: relative;
+}
+.wf-info-li::before { content: '·'; position: absolute; left: 0; }
+
+/* ── PR flow ─────────────────────────────── */
+.pr-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin: 20px 0;
+  justify-content: center;
+}
+.pr-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 80px;
+  text-align: center;
+  transition: all 0.2s;
+}
+.pr-step:hover { border-color: var(--ch14); }
+.pr-step-icon { font-size: 1.4rem; }
+.pr-step-label { font-size: 0.72rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+.pr-arrow { font-size: 1.2rem; color: var(--border); padding: 0 4px; }
+
+/* ── commit conventions ──────────────────── */
+.commit-conv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.conv-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.conv-type {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ch14);
+  margin-bottom: 4px;
+}
+.conv-desc {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+.msg-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+.msg-good, .msg-bad {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+}
+.msg-good { border: 1px solid rgba(0,255,170,0.3); }
+.msg-bad  { border: 1px solid rgba(255,68,102,0.3); }
+.msg-label { font-size: 0.68rem; letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; }
+.msg-label.good { color: var(--accent); }
+.msg-label.bad  { color: var(--danger); }
+.msg-example { color: var(--text); line-height: 1.7; }
+.msg-example .good-line { color: var(--accent); }
+.msg-example .bad-line  { color: var(--danger); opacity: 0.8; }
+
+/* ── btn row ─────────────────────────────── */
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+
+/* ── animations ──────────────────────────── */
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+@keyframes slideRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* ── responsive ──────────────────────────── */
+@media (max-width: 700px) {
+  .git-areas { grid-template-columns: 1fr; gap: 8px; }
+  .git-area-arrow { flex-direction: row; transform: none; }
+  .arrow-sym { transform: rotate(90deg); }
+  .wf-info-grid { grid-template-columns: 1fr; }
+  .msg-compare { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body class="page-body">
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:#06b6d4">Ch.14 — Git & 버전관리</div>
+  <div class="nav-sections">
+    <a href="#gitbasic" class="nav-sec-link">Git 기초</a>
+    <a href="#branch" class="nav-sec-link">브랜치</a>
+    <a href="#conflict" class="nav-sec-link">충돌해결</a>
+    <a href="#workflow" class="nav-sec-link">협업 전략</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 1: Git 기초 & 영역
+═══════════════════════════════════════════════════════ -->
+<section id="gitbasic">
+  <div class="section-header">
+    <div class="tag tag-ch14">01 — GIT BASICS</div>
+    <h2>Git 기초 &amp; 영역</h2>
+    <p>Git은 파일 변경 이력을 관리하는 분산 버전 관리 시스템입니다. Working Directory, Staging Area, Local Repository, Remote Repository 네 영역을 통해 코드 변경사항을 추적·공유합니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <!-- Area Diagram -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">GIT 4대 영역</div>
+    <div class="git-areas" id="gitAreas">
+      <!-- Working Directory -->
+      <div class="git-area" id="areaWdir">
+        <div class="git-area-title">Working Directory</div>
+        <div class="git-area-icon">📁</div>
+        <div class="git-area-items" id="wdirItems">
+          <div style="font-size:0.68rem;color:var(--text-dim);">파일을 수정하는 공간</div>
+        </div>
+      </div>
+
+      <div class="git-area-arrow">
+        <div class="arrow-label" style="color:var(--accent4);">git add</div>
+        <div class="arrow-sym">→</div>
+        <div class="arrow-label" style="color:var(--text-dim);font-size:0.55rem;">(스테이징)</div>
+      </div>
+
+      <!-- Staging Area -->
+      <div class="git-area" id="areaStage">
+        <div class="git-area-title">Staging Area</div>
+        <div class="git-area-icon">📋</div>
+        <div class="git-area-items" id="stageItems">
+          <div style="font-size:0.68rem;color:var(--text-dim);">커밋 대기 중인 변경</div>
+        </div>
+      </div>
+
+      <div class="git-area-arrow">
+        <div class="arrow-label" style="color:var(--accent);">git commit</div>
+        <div class="arrow-sym">→</div>
+      </div>
+
+      <!-- Local Repo -->
+      <div class="git-area" id="areaRepo">
+        <div class="git-area-title">Local Repository</div>
+        <div class="git-area-icon">🗄️</div>
+        <div class="git-area-items" id="repoItems" style="flex-direction:row;flex-wrap:wrap;justify-content:center;gap:4px;">
+          <div style="font-size:0.68rem;color:var(--text-dim);">커밋 히스토리</div>
+        </div>
+      </div>
+
+      <div class="git-area-arrow">
+        <div class="arrow-label" style="color:var(--ch14);">git push ↑</div>
+        <div class="arrow-sym">⇄</div>
+        <div class="arrow-label" style="color:var(--accent3);">↓ git pull</div>
+      </div>
+
+      <!-- Remote Repo -->
+      <div class="git-area" id="areaRemote">
+        <div class="git-area-title">Remote Repository</div>
+        <div class="git-area-icon">☁️</div>
+        <div class="git-area-items" id="remoteItems" style="flex-direction:row;flex-wrap:wrap;justify-content:center;gap:4px;">
+          <div style="font-size:0.68rem;color:var(--text-dim);">GitHub / GitLab 등</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btn-row">
+      <button class="btn" onclick="gitAction('modify')" id="btnModify">📝 파일 수정</button>
+      <button class="btn" onclick="gitAction('add')" id="btnAdd" disabled>+ git add</button>
+      <button class="btn" onclick="gitAction('commit')" id="btnCommit" disabled>✓ git commit</button>
+      <button class="btn" onclick="gitAction('push')" id="btnPush" disabled>↑ git push</button>
+      <button class="btn" onclick="gitAction('pull')" id="btnPull" style="background:rgba(6,182,212,0.15);color:var(--ch14);border-color:rgba(6,182,212,0.4);">↓ git pull</button>
+      <button class="btn" onclick="gitAction('reset')" style="background:rgba(255,68,102,0.1);color:var(--danger);border-color:rgba(255,68,102,0.3);">↺ 리셋</button>
+    </div>
+
+    <!-- git status output -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);letter-spacing:1px;margin:12px 0 6px;">git status</div>
+    <div class="git-status-box" id="gitStatusBox">
+      <span class="s-dim">On branch main</span><br>
+      <span class="s-dim">nothing to commit, working tree clean</span>
+    </div>
+
+    <!-- Commands Reference -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);letter-spacing:1px;margin:20px 0 8px;">주요 명령어 레퍼런스</div>
+    <div class="cmd-grid">
+      <div class="cmd-item"><span class="cmd-name">git init</span><span class="cmd-desc">새 저장소 초기화</span></div>
+      <div class="cmd-item"><span class="cmd-name">git clone</span><span class="cmd-desc">원격 저장소 복제</span></div>
+      <div class="cmd-item"><span class="cmd-name">git add</span><span class="cmd-desc">변경사항 스테이징</span></div>
+      <div class="cmd-item"><span class="cmd-name">git commit</span><span class="cmd-desc">스냅샷으로 저장</span></div>
+      <div class="cmd-item"><span class="cmd-name">git push</span><span class="cmd-desc">원격 저장소로 업로드</span></div>
+      <div class="cmd-item"><span class="cmd-name">git pull</span><span class="cmd-desc">fetch + merge 결합</span></div>
+      <div class="cmd-item"><span class="cmd-name">git fetch</span><span class="cmd-desc">변경사항 가져오기만</span></div>
+      <div class="cmd-item"><span class="cmd-name">git status</span><span class="cmd-desc">현재 상태 확인</span></div>
+      <div class="cmd-item"><span class="cmd-name">git log</span><span class="cmd-desc">커밋 히스토리 조회</span></div>
+      <div class="cmd-item"><span class="cmd-name">git diff</span><span class="cmd-desc">변경사항 비교</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 2: 브랜치 & 병합
+═══════════════════════════════════════════════════════ -->
+<section id="branch">
+  <div class="section-header">
+    <div class="tag tag-ch14">02 — BRANCH & MERGE</div>
+    <h2>브랜치 &amp; 병합</h2>
+    <p>브랜치는 독립적인 작업 흐름을 만들어 여러 기능을 병렬로 개발할 수 있게 합니다. Merge는 두 브랜치를 합치고, Rebase는 커밋을 재배치하여 히스토리를 선형으로 만듭니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <!-- Legend -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+      <span class="branch-label main">● main</span>
+      <span class="branch-label feature">● feature</span>
+      <span class="branch-label head">⬡ HEAD</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-left:4px;">현재 브랜치: <span id="currentBranchLabel" style="color:var(--accent4);">main</span></span>
+    </div>
+
+    <!-- Canvas -->
+    <div class="branch-graph-container">
+      <canvas id="branchCanvas" width="720" height="200"></canvas>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn" onclick="branchAction('create')">🌿 브랜치 생성</button>
+      <button class="btn" onclick="branchAction('commit')">+ 커밋 추가</button>
+      <button class="btn" onclick="branchAction('merge')" id="btnMerge">⚡ Merge</button>
+      <button class="btn" onclick="branchAction('rebase')" id="btnRebase">↰ Rebase</button>
+      <button class="btn" onclick="branchAction('switch')">⇄ 브랜치 전환</button>
+      <button class="btn" onclick="branchAction('reset')" style="background:rgba(255,68,102,0.1);color:var(--danger);border-color:rgba(255,68,102,0.3);">↺ 리셋</button>
+    </div>
+
+    <!-- Info panel -->
+    <div class="git-status-box" id="branchInfoBox" style="margin-top:8px;">
+      <span class="s-dim">main: C1 → C2 → C3 &nbsp;|&nbsp; HEAD → main</span><br>
+      <span class="s-dim">feature 브랜치를 생성해보세요.</span>
+    </div>
+
+    <!-- Merge vs Rebase explanation -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;">
+      <div style="background:var(--surface2);border:1px solid rgba(0,255,170,0.25);border-radius:8px;padding:14px 16px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;font-weight:700;color:var(--accent);margin-bottom:8px;">MERGE</div>
+        <div style="font-size:0.8rem;color:var(--text-dim);line-height:1.7;">
+          두 브랜치를 합쳐 <strong style="color:var(--text);">머지 커밋</strong>을 생성합니다.<br>
+          히스토리가 다이아몬드 형태로 남아 <strong style="color:var(--text);">비선형</strong>이 됩니다.<br>
+          <span style="color:var(--accent);">장점:</span> 실제 병합 이력이 보존됩니다.
+        </div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid rgba(107,138,255,0.25);border-radius:8px;padding:14px 16px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;font-weight:700;color:var(--accent3);margin-bottom:8px;">REBASE</div>
+        <div style="font-size:0.8rem;color:var(--text-dim);line-height:1.7;">
+          커밋을 base 브랜치 위에 <strong style="color:var(--text);">재배치</strong>합니다.<br>
+          히스토리가 <strong style="color:var(--text);">선형</strong>으로 정렬됩니다.<br>
+          <span style="color:var(--accent3);">주의:</span> 공유 브랜치에선 사용 금지.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 3: 충돌 해결 & Cherry-pick
+═══════════════════════════════════════════════════════ -->
+<section id="conflict">
+  <div class="section-header">
+    <div class="tag tag-ch14">03 — CONFLICT & CHERRY-PICK</div>
+    <h2>충돌 해결 &amp; Cherry-pick</h2>
+    <p>같은 파일의 같은 부분을 두 브랜치가 다르게 수정하면 충돌(conflict)이 발생합니다. Cherry-pick은 특정 커밋만 선택적으로 다른 브랜치에 적용하는 기법입니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <!-- Conflict subsection -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:700;color:var(--accent4);margin-bottom:12px;letter-spacing:0.5px;">MERGE CONFLICT</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);margin-bottom:6px;">충돌 파일 내용</div>
+        <div class="conflict-file" id="conflictFile">
+          <div class="conflict-line normal">// app.js</div>
+          <div class="conflict-line normal">function greet(name) {</div>
+          <div class="conflict-line marker" id="cl-marker1">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</div>
+          <div class="conflict-line ours" id="cl-ours">  return `안녕하세요, ${name}!`;</div>
+          <div class="conflict-line sep" id="cl-sep">=======</div>
+          <div class="conflict-line theirs" id="cl-theirs">  return `Hello, ${name}!`;</div>
+          <div class="conflict-line marker" id="cl-marker2">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/i18n</div>
+          <div class="conflict-line normal">}</div>
+          <div class="conflict-resolved-banner" id="conflictBanner">✓ 충돌 해결됨 — merge commit 생성</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);margin-bottom:6px;">충돌 상태 설명</div>
+        <div class="git-status-box" id="conflictStatus" style="min-height:150px;">
+          <span class="s-red">CONFLICT (content): Merge conflict in app.js</span><br><br>
+          <span class="s-dim">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span> — 현재 브랜치 내용<br>
+          <span class="s-dim">=======</span> — 구분선<br>
+          <span class="s-dim">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature</span> — 병합 브랜치 내용<br><br>
+          <span class="s-yellow">원하는 내용을 선택하고 마커를 제거하세요.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="resolveConflict('ours')" id="btnOurs">✓ HEAD 내용 선택 (한국어)</button>
+      <button class="btn" onclick="resolveConflict('theirs')" id="btnTheirs">✓ feature 내용 선택 (영어)</button>
+      <button class="btn" onclick="resolveConflict('both')" id="btnBoth" style="background:rgba(107,138,255,0.15);color:var(--accent3);border-color:rgba(107,138,255,0.4);">⊕ 두 내용 모두 유지</button>
+      <button class="btn" onclick="resolveConflict('reset')" style="background:rgba(255,68,102,0.1);color:var(--danger);border-color:rgba(255,68,102,0.3);">↺ 리셋</button>
+    </div>
+
+    <div style="height:1px;background:var(--border);margin:24px 0;"></div>
+
+    <!-- Cherry-pick subsection -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:700;color:var(--accent3);margin-bottom:12px;letter-spacing:0.5px;">CHERRY-PICK</div>
+
+    <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:14px;line-height:1.7;">
+      feature 브랜치의 특정 커밋(C4)만 main 브랜치에 적용합니다. 커밋이 복사되어 새 해시(C4')로 적용됩니다.
+    </div>
+
+    <canvas id="cherryCanvas" width="680" height="160"></canvas>
+
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn" onclick="cherryPickAction()">🍒 Cherry-pick C4</button>
+      <button class="btn" onclick="cherryPickReset()" style="background:rgba(255,68,102,0.1);color:var(--danger);border-color:rgba(255,68,102,0.3);">↺ 리셋</button>
+    </div>
+
+    <div class="git-status-box" id="cherryStatus" style="margin-top:10px;">
+      <span class="s-dim">$ git cherry-pick &lt;commit-hash&gt;</span><br>
+      <span class="s-dim">feature 브랜치의 C4 커밋을 선택할 수 있습니다.</span>
+    </div>
+
+    <div style="height:1px;background:var(--border);margin:24px 0;"></div>
+
+    <!-- Stash subsection -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:700;color:var(--ch14);margin-bottom:12px;letter-spacing:0.5px;">GIT STASH</div>
+
+    <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:14px;line-height:1.7;">
+      작업 중인 변경사항을 임시로 저장(stash)하고 나중에 복원할 수 있습니다. 급히 다른 브랜치로 전환할 때 유용합니다.
+    </div>
+
+    <div class="stash-area">
+      <div class="stash-box" style="border-color:rgba(255,68,102,0.3);">
+        <div class="stash-box-title">WORKING DIRECTORY</div>
+        <div id="stashWdir">
+          <div class="git-file-node wdir">feature.js (수정됨)</div>
+          <div class="git-file-node wdir">utils.js (수정됨)</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;justify-content:center;">
+        <button class="btn" onclick="stashAction('stash')" id="btnStash" style="font-size:0.75rem;padding:8px 14px;">작업 중단 →<br>git stash</button>
+        <button class="btn" onclick="stashAction('pop')" id="btnPop" style="font-size:0.75rem;padding:8px 14px;" disabled>← 작업 재개<br>git stash pop</button>
+      </div>
+      <div class="stash-box" style="border-color:rgba(255,170,0,0.3);">
+        <div class="stash-box-title">STASH</div>
+        <div id="stashList"><div style="font-size:0.72rem;color:var(--text-dim);">(비어있음)</div></div>
+      </div>
+    </div>
+
+    <div class="git-status-box" id="stashStatus" style="margin-top:12px;">
+      <span class="s-dim">현재 변경사항이 있습니다. "작업 중단"으로 stash에 저장하세요.</span>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 4: Git 협업 전략
+═══════════════════════════════════════════════════════ -->
+<section id="workflow">
+  <div class="section-header">
+    <div class="tag tag-ch14">04 — WORKFLOW & COLLABORATION</div>
+    <h2>Git 협업 전략</h2>
+    <p>팀의 규모와 배포 전략에 따라 적합한 Git 워크플로우를 선택합니다. GitHub Flow는 단순하고 빠르며, Git Flow는 체계적이고, Trunk Based는 지속적 배포에 최적화됩니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <!-- Workflow Tabs -->
+    <div class="workflow-tabs">
+      <button class="wf-tab active" onclick="switchWorkflow('github')">GitHub Flow</button>
+      <button class="wf-tab" onclick="switchWorkflow('gitflow')">Git Flow</button>
+      <button class="wf-tab" onclick="switchWorkflow('trunk')">Trunk Based</button>
+    </div>
+
+    <!-- GitHub Flow Panel -->
+    <div class="wf-panel active" id="wf-github">
+      <canvas id="githubFlowCanvas" width="680" height="130"></canvas>
+      <div class="wf-info-grid">
+        <div class="wf-info-card">
+          <div class="wf-info-title when">사용 시기</div>
+          <div class="wf-info-li">소규모~중간 팀</div>
+          <div class="wf-info-li">지속적 배포(CI/CD) 환경</div>
+          <div class="wf-info-li">단일 프로덕션 버전 유지</div>
+          <div class="wf-info-li">SaaS, 웹 서비스</div>
+        </div>
+        <div style="display:grid;grid-template-rows:1fr 1fr;gap:8px;">
+          <div class="wf-info-card">
+            <div class="wf-info-title pros">장점</div>
+            <div class="wf-info-li">매우 단순한 규칙</div>
+            <div class="wf-info-li">빠른 배포 사이클</div>
+            <div class="wf-info-li">PR 기반 코드 리뷰</div>
+          </div>
+          <div class="wf-info-card">
+            <div class="wf-info-title cons">단점</div>
+            <div class="wf-info-li">여러 프로덕션 버전 관리 어려움</div>
+            <div class="wf-info-li">릴리즈 스케줄링이 없음</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Git Flow Panel -->
+    <div class="wf-panel" id="wf-gitflow">
+      <canvas id="gitFlowCanvas" width="680" height="200"></canvas>
+      <div class="wf-info-grid">
+        <div class="wf-info-card">
+          <div class="wf-info-title when">사용 시기</div>
+          <div class="wf-info-li">버전이 명확한 소프트웨어</div>
+          <div class="wf-info-li">정기 릴리즈 일정이 있는 프로젝트</div>
+          <div class="wf-info-li">대형 팀 / 엔터프라이즈</div>
+          <div class="wf-info-li">모바일 앱, 패키지 라이브러리</div>
+        </div>
+        <div style="display:grid;grid-template-rows:1fr 1fr;gap:8px;">
+          <div class="wf-info-card">
+            <div class="wf-info-title pros">장점</div>
+            <div class="wf-info-li">체계적인 릴리즈 관리</div>
+            <div class="wf-info-li">hotfix, release 분리</div>
+            <div class="wf-info-li">명확한 브랜치 역할</div>
+          </div>
+          <div class="wf-info-card">
+            <div class="wf-info-title cons">단점</div>
+            <div class="wf-info-li">복잡한 브랜치 구조</div>
+            <div class="wf-info-li">CI/CD에 부적합</div>
+            <div class="wf-info-li">배포 사이클이 느림</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trunk Based Panel -->
+    <div class="wf-panel" id="wf-trunk">
+      <canvas id="trunkCanvas" width="680" height="120"></canvas>
+      <div class="wf-info-grid">
+        <div class="wf-info-card">
+          <div class="wf-info-title when">사용 시기</div>
+          <div class="wf-info-li">고성능 엔지니어링 팀</div>
+          <div class="wf-info-li">하루 여러 번 배포하는 환경</div>
+          <div class="wf-info-li">Feature Flag 사용 가능 시</div>
+          <div class="wf-info-li">Google, Meta 등 빅테크</div>
+        </div>
+        <div style="display:grid;grid-template-rows:1fr 1fr;gap:8px;">
+          <div class="wf-info-card">
+            <div class="wf-info-title pros">장점</div>
+            <div class="wf-info-li">최소한의 브랜치 복잡도</div>
+            <div class="wf-info-li">머지 충돌 최소화</div>
+            <div class="wf-info-li">빠른 피드백 루프</div>
+          </div>
+          <div class="wf-info-card">
+            <div class="wf-info-title cons">단점</div>
+            <div class="wf-info-li">강한 CI/CD 인프라 필요</div>
+            <div class="wf-info-li">Feature Flag 관리 필요</div>
+            <div class="wf-info-li">미완성 코드 노출 위험</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:1px;background:var(--border);margin:28px 0;"></div>
+
+    <!-- PR Flow -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:700;color:var(--ch14);margin-bottom:16px;letter-spacing:0.5px;">PULL REQUEST / CODE REVIEW 흐름</div>
+
+    <div class="pr-flow">
+      <div class="pr-step">
+        <div class="pr-step-icon">🍴</div>
+        <div class="pr-step-label">Fork</div>
+      </div>
+      <div class="pr-arrow">→</div>
+      <div class="pr-step">
+        <div class="pr-step-icon">🌿</div>
+        <div class="pr-step-label">feature<br>branch</div>
+      </div>
+      <div class="pr-arrow">→</div>
+      <div class="pr-step">
+        <div class="pr-step-icon">✏️</div>
+        <div class="pr-step-label">코드 작성<br>& 커밋</div>
+      </div>
+      <div class="pr-arrow">→</div>
+      <div class="pr-step" style="border-color:rgba(6,182,212,0.4);">
+        <div class="pr-step-icon">📬</div>
+        <div class="pr-step-label" style="color:var(--ch14);">PR 생성</div>
+      </div>
+      <div class="pr-arrow">→</div>
+      <div class="pr-step">
+        <div class="pr-step-icon">👀</div>
+        <div class="pr-step-label">Code<br>Review</div>
+      </div>
+      <div class="pr-arrow">→</div>
+      <div class="pr-step">
+        <div class="pr-step-icon">✅</div>
+        <div class="pr-step-label">승인<br>Approve</div>
+      </div>
+      <div class="pr-arrow">→</div>
+      <div class="pr-step" style="border-color:rgba(0,255,170,0.4);">
+        <div class="pr-step-icon">🔀</div>
+        <div class="pr-step-label" style="color:var(--accent);">Merge</div>
+      </div>
+    </div>
+
+    <div style="height:1px;background:var(--border);margin:28px 0;"></div>
+
+    <!-- Commit Message Convention -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:700;color:var(--accent4);margin-bottom:12px;letter-spacing:0.5px;">커밋 메시지 컨벤션</div>
+
+    <div class="commit-conv-grid">
+      <div class="conv-item">
+        <div class="conv-type">feat:</div>
+        <div class="conv-desc">새로운 기능 추가</div>
+      </div>
+      <div class="conv-item">
+        <div class="conv-type">fix:</div>
+        <div class="conv-desc">버그 수정</div>
+      </div>
+      <div class="conv-item">
+        <div class="conv-type">docs:</div>
+        <div class="conv-desc">문서 변경</div>
+      </div>
+      <div class="conv-item">
+        <div class="conv-type">style:</div>
+        <div class="conv-desc">코드 포맷팅 (로직 변경 없음)</div>
+      </div>
+      <div class="conv-item">
+        <div class="conv-type">refactor:</div>
+        <div class="conv-desc">코드 리팩터링</div>
+      </div>
+      <div class="conv-item">
+        <div class="conv-type">test:</div>
+        <div class="conv-desc">테스트 코드 추가/수정</div>
+      </div>
+      <div class="conv-item">
+        <div class="conv-type">chore:</div>
+        <div class="conv-desc">빌드/설정 등 기타 변경</div>
+      </div>
+      <div class="conv-item">
+        <div class="conv-type">perf:</div>
+        <div class="conv-desc">성능 개선</div>
+      </div>
+    </div>
+
+    <!-- Good vs Bad messages -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);margin:20px 0 8px;letter-spacing:1px;">좋은 vs 나쁜 커밋 메시지</div>
+    <div class="msg-compare">
+      <div class="msg-good">
+        <div class="msg-label good">GOOD</div>
+        <div class="msg-example">
+          <span class="good-line">feat: 사용자 로그인 기능 구현</span><br>
+          <span class="good-line">fix: 결제 금액 소수점 오류 수정</span><br>
+          <span class="good-line">refactor: API 응답 처리 함수 분리</span><br>
+          <span class="good-line">docs: README 설치 가이드 업데이트</span>
+        </div>
+      </div>
+      <div class="msg-bad">
+        <div class="msg-label bad">BAD</div>
+        <div class="msg-example">
+          <span class="bad-line">수정함</span><br>
+          <span class="bad-line">WIP</span><br>
+          <span class="bad-line">fix bug</span><br>
+          <span class="bad-line">asdfgh</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-text" style="margin-top:16px;">
+      좋은 커밋 메시지는 <strong>무엇을(what)</strong>이 아닌 <strong>왜(why)</strong>를 설명합니다.
+      컨벤션을 따르면 자동 changelog 생성, 빠른 코드 리뷰, 이슈 트래킹이 용이해집니다.
+    </div>
+  </div>
+</section>
+
+<footer>CS Visualizer · <a href="index.html" style="color:#06b6d4;text-decoration:none;">목차로 돌아가기</a></footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// SECTION 1: GIT AREAS
+// ═══════════════════════════════════════════════════════
+let gitState = {
+  wdir: [],
+  stage: [],
+  repo: [],
+  remote: [],
+  fileCount: 0
+};
+
+function gitAction(action) {
+  const statusBox = document.getElementById('gitStatusBox');
+
+  if (action === 'reset') {
+    gitState = { wdir: [], stage: [], repo: [], remote: [], fileCount: 0 };
+    renderGitAreas();
+    ['btnAdd','btnCommit','btnPush'].forEach(id => document.getElementById(id).disabled = true);
+    document.getElementById('btnModify').disabled = false;
+    statusBox.innerHTML = '<span class="s-dim">On branch main</span><br><span class="s-dim">nothing to commit, working tree clean</span>';
+    ['areaWdir','areaStage','areaRepo','areaRemote'].forEach(id => document.getElementById(id).classList.remove('active'));
+    return;
+  }
+
+  if (action === 'modify') {
+    gitState.fileCount++;
+    const fname = `file${gitState.fileCount}.js`;
+    gitState.wdir.push(fname);
+    document.getElementById('btnAdd').disabled = false;
+    document.getElementById('areaWdir').classList.add('active');
+    document.getElementById('areaStage').classList.remove('active');
+    statusBox.innerHTML =
+      `<span class="s-red">On branch main</span><br>` +
+      `<span class="s-red">Changes not staged for commit:</span><br>` +
+      `<span class="s-red">&nbsp;&nbsp;modified: ${fname}</span><br><br>` +
+      `<span class="s-dim">use "git add &lt;file&gt;" to stage</span>`;
+    renderGitAreas();
+    return;
+  }
+
+  if (action === 'add') {
+    if (gitState.wdir.length === 0) return;
+    const moved = gitState.wdir.splice(0);
+    gitState.stage.push(...moved);
+    document.getElementById('btnCommit').disabled = false;
+    if (gitState.wdir.length === 0) document.getElementById('btnAdd').disabled = true;
+    document.getElementById('areaStage').classList.add('active');
+    document.getElementById('areaWdir').classList.remove('active');
+    statusBox.innerHTML =
+      `<span class="s-yellow">On branch main</span><br>` +
+      `<span class="s-yellow">Changes to be committed:</span><br>` +
+      moved.map(f => `<span class="s-yellow">&nbsp;&nbsp;modified: ${f}</span>`).join('<br>') +
+      `<br><br><span class="s-dim">use "git commit" to save</span>`;
+    renderGitAreas();
+    return;
+  }
+
+  if (action === 'commit') {
+    if (gitState.stage.length === 0) return;
+    const files = gitState.stage.splice(0);
+    const hash = Math.random().toString(36).slice(2, 9);
+    gitState.repo.push({ hash: hash.slice(0,7), files });
+    document.getElementById('btnPush').disabled = false;
+    document.getElementById('btnCommit').disabled = true;
+    document.getElementById('areaRepo').classList.add('active');
+    document.getElementById('areaStage').classList.remove('active');
+    statusBox.innerHTML =
+      `<span class="s-green">On branch main</span><br>` +
+      `<span class="s-green">[main ${hash.slice(0,7)}] feat: ${files.join(', ')} 추가</span><br>` +
+      `<span class="s-green">&nbsp;${files.length} file(s) changed</span><br><br>` +
+      `<span class="s-dim">nothing to commit, working tree clean</span>`;
+    renderGitAreas();
+    return;
+  }
+
+  if (action === 'push') {
+    if (gitState.repo.length === 0) return;
+    const lastCommit = gitState.repo[gitState.repo.length - 1];
+    const alreadyPushed = gitState.remote.find(c => c.hash === lastCommit.hash);
+    if (!alreadyPushed) gitState.remote.push({...lastCommit});
+    document.getElementById('areaRemote').classList.add('active');
+    document.getElementById('areaRepo').classList.remove('active');
+    statusBox.innerHTML =
+      `<span class="s-cyan">Enumerating objects: ${lastCommit.files.length + 2}, done.</span><br>` +
+      `<span class="s-cyan">Writing objects: 100% — done</span><br>` +
+      `<span class="s-cyan">To https://github.com/user/repo.git</span><br>` +
+      `<span class="s-cyan">&nbsp;&nbsp;main → main</span>`;
+    renderGitAreas();
+    return;
+  }
+
+  if (action === 'pull') {
+    statusBox.innerHTML =
+      `<span class="s-cyan">remote: Enumerating objects done.</span><br>` +
+      `<span class="s-cyan">Updating &nbsp;abc123..def456</span><br>` +
+      `<span class="s-green">Fast-forward</span><br>` +
+      `<span class="s-dim">Already up to date.</span>`;
+    document.getElementById('areaRemote').classList.add('active');
+    setTimeout(() => document.getElementById('areaRemote').classList.remove('active'), 1000);
+  }
+}
+
+function renderGitAreas() {
+  // Working Dir
+  const wdEl = document.getElementById('wdirItems');
+  if (gitState.wdir.length === 0) {
+    wdEl.innerHTML = '<div style="font-size:0.68rem;color:var(--text-dim);">파일을 수정하는 공간</div>';
+  } else {
+    wdEl.innerHTML = gitState.wdir.map(f =>
+      `<div class="git-file-node wdir">${f}</div>`
+    ).join('');
+  }
+
+  // Stage
+  const stEl = document.getElementById('stageItems');
+  if (gitState.stage.length === 0) {
+    stEl.innerHTML = '<div style="font-size:0.68rem;color:var(--text-dim);">커밋 대기 중인 변경</div>';
+  } else {
+    stEl.innerHTML = gitState.stage.map(f =>
+      `<div class="git-file-node stage">${f}</div>`
+    ).join('');
+  }
+
+  // Repo
+  const rpEl = document.getElementById('repoItems');
+  if (gitState.repo.length === 0) {
+    rpEl.innerHTML = '<div style="font-size:0.68rem;color:var(--text-dim);">커밋 히스토리</div>';
+  } else {
+    rpEl.innerHTML = gitState.repo.map(c =>
+      `<div class="commit-node" title="${c.files.join(', ')}">${c.hash.slice(0,4)}</div>`
+    ).join('');
+  }
+
+  // Remote
+  const rmEl = document.getElementById('remoteItems');
+  if (gitState.remote.length === 0) {
+    rmEl.innerHTML = '<div style="font-size:0.68rem;color:var(--text-dim);">GitHub / GitLab 등</div>';
+  } else {
+    rmEl.innerHTML = gitState.remote.map(c =>
+      `<div class="commit-node remote-node" title="${c.files.join(', ')}">${c.hash.slice(0,4)}</div>`
+    ).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 2: BRANCH GRAPH
+// ═══════════════════════════════════════════════════════
+let branchState = {
+  mainCommits: ['C1','C2','C3'],
+  featureCommits: [],    // commits after branch point (index in main)
+  featureBranchPoint: 1, // branches from main[1] = C2
+  hasBranch: false,
+  currentBranch: 'main',
+  mergeCommit: null,
+  rebaseMode: false,
+  rebasedCommits: []
+};
+
+const BCOLORS = {
+  main: '#00ffaa',
+  feature: '#6b8aff',
+  merge: '#ff6b9d',
+  head: '#ffaa00',
+  text: '#e0e0f0',
+  dim: '#8888aa',
+  bg: '#1a1a28',
+  node: '#12121a'
+};
+
+function drawBranchGraph() {
+  const canvas = document.getElementById('branchCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = BCOLORS.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  const bs = branchState;
+  const nodeR = 18;
+  const startX = 50;
+  const mainY = bs.hasBranch ? 80 : H / 2;
+  const featureY = 150;
+  const stepX = 90;
+
+  // Helper: draw node
+  function drawNode(x, y, label, color, isHead=false, glow=false) {
+    if (glow) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 14;
+    }
+    ctx.beginPath();
+    ctx.arc(x, y, nodeR, 0, Math.PI * 2);
+    ctx.fillStyle = BCOLORS.node;
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = color;
+    ctx.font = 'bold 10px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, y);
+
+    if (isHead) {
+      ctx.fillStyle = BCOLORS.head;
+      ctx.font = 'bold 8px JetBrains Mono, monospace';
+      ctx.fillText('HEAD', x, y - nodeR - 8);
+    }
+  }
+
+  // Helper: draw arrow
+  function drawArrow(x1, y1, x2, y2, color, dashed=false) {
+    ctx.beginPath();
+    if (dashed) {
+      ctx.setLineDash([5, 3]);
+    } else {
+      ctx.setLineDash([]);
+    }
+    ctx.moveTo(x1 + nodeR, y1);
+    ctx.lineTo(x2 - nodeR, y2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // arrowhead
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const ax = x2 - nodeR;
+    const ay = y2;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - 8 * Math.cos(angle - 0.4), ay - 8 * Math.sin(angle - 0.4));
+    ctx.lineTo(ax - 8 * Math.cos(angle + 0.4), ay - 8 * Math.sin(angle + 0.4));
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  // Draw main branch commits
+  const mainNodes = bs.mainCommits.map((label, i) => ({
+    x: startX + i * stepX,
+    y: mainY,
+    label
+  }));
+
+  // Draw main arrows
+  for (let i = 0; i < mainNodes.length - 1; i++) {
+    const isDashed = false;
+    drawArrow(mainNodes[i].x, mainNodes[i].y, mainNodes[i+1].x, mainNodes[i+1].y, BCOLORS.main, isDashed);
+  }
+
+  // Draw merge commit if present
+  if (bs.mergeCommit) {
+    const mergeX = startX + mainNodes.length * stepX;
+    const mergeY = mainY;
+    drawArrow(mainNodes[mainNodes.length-1].x, mainY, mergeX, mergeY, BCOLORS.main);
+
+    // Arrow from last feature commit to merge
+    if (bs.featureCommits.length > 0) {
+      const lastFC = bs.featureCommits[bs.featureCommits.length - 1];
+      const fcX = startX + (bs.featureBranchPoint + 1 + (bs.featureCommits.length - 1)) * stepX;
+      // Curved arrow from feature to merge
+      ctx.beginPath();
+      ctx.moveTo(fcX + nodeR, featureY);
+      ctx.quadraticCurveTo(mergeX - 20, featureY, mergeX - nodeR, mergeY + nodeR);
+      ctx.strokeStyle = BCOLORS.feature;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    drawNode(mergeX, mergeY, bs.mergeCommit, BCOLORS.merge, bs.currentBranch === 'main', true);
+    // Branch label
+    ctx.fillStyle = BCOLORS.main;
+    ctx.font = 'bold 11px JetBrains Mono, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('main', mergeX + nodeR + 4, mergeY - 4);
+  }
+
+  // Draw main nodes
+  mainNodes.forEach((n, i) => {
+    const isHead = bs.currentBranch === 'main' && !bs.mergeCommit && i === mainNodes.length - 1;
+    drawNode(n.x, n.y, n.label, BCOLORS.main, isHead);
+  });
+
+  // Branch label for main (if no merge commit)
+  if (!bs.mergeCommit) {
+    const lastMain = mainNodes[mainNodes.length - 1];
+    ctx.fillStyle = BCOLORS.main;
+    ctx.font = 'bold 11px JetBrains Mono, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('main', lastMain.x + nodeR + 4, lastMain.y - 4);
+  }
+
+  // Draw feature branch
+  if (bs.hasBranch && bs.featureCommits.length > 0) {
+    const branchOrigin = mainNodes[bs.featureBranchPoint];
+
+    if (bs.rebaseMode && bs.rebasedCommits.length > 0) {
+      // Draw rebase: feature commits replayed onto main
+      const mainEnd = mainNodes[mainNodes.length - 1];
+      let prevX = mainEnd.x;
+      let prevY = mainY;
+
+      bs.rebasedCommits.forEach((label, i) => {
+        const rx = mainEnd.x + (i + 1) * stepX;
+        const ry = mainY;
+        drawArrow(prevX, prevY, rx, ry, BCOLORS.feature);
+        drawNode(rx, ry, label, BCOLORS.feature, i === bs.rebasedCommits.length - 1 && bs.currentBranch === 'feature');
+        prevX = rx;
+        prevY = ry;
+      });
+
+      ctx.fillStyle = BCOLORS.feature;
+      ctx.font = 'bold 11px JetBrains Mono, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText("feature (rebased)", prevX + nodeR + 4, prevY - 4);
+
+      // Show ghost of old commits
+      let gPrevX = branchOrigin.x;
+      let gPrevY = branchOrigin.y;
+      bs.featureCommits.forEach((label, i) => {
+        const fx = startX + (bs.featureBranchPoint + 1 + i) * stepX;
+        const fy = featureY;
+        ctx.beginPath();
+        ctx.moveTo(gPrevX + (gPrevY === mainY ? nodeR : nodeR), gPrevY);
+        if (i === 0) {
+          ctx.moveTo(branchOrigin.x, branchOrigin.y + nodeR);
+          ctx.lineTo(fx - nodeR, fy);
+        } else {
+          ctx.moveTo(startX + (bs.featureBranchPoint + i) * stepX + nodeR, featureY);
+          ctx.lineTo(fx - nodeR, fy);
+        }
+        ctx.strokeStyle = BCOLORS.dim;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        ctx.arc(fx, fy, nodeR, 0, Math.PI * 2);
+        ctx.fillStyle = BCOLORS.bg;
+        ctx.fill();
+        ctx.strokeStyle = BCOLORS.dim;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = BCOLORS.dim;
+        ctx.font = 'bold 10px JetBrains Mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, fx, fy);
+        gPrevX = fx;
+      });
+
+    } else {
+      // Normal feature branch
+      let prevX = branchOrigin.x;
+      let prevY = branchOrigin.y;
+
+      bs.featureCommits.forEach((label, i) => {
+        const fx = startX + (bs.featureBranchPoint + 1 + i) * stepX;
+        const fy = featureY;
+
+        ctx.beginPath();
+        if (i === 0) {
+          ctx.moveTo(branchOrigin.x, branchOrigin.y + nodeR);
+          ctx.lineTo(fx - nodeR, fy - nodeR);
+        } else {
+          ctx.moveTo(prevX + nodeR, featureY);
+          ctx.lineTo(fx - nodeR, featureY);
+        }
+        ctx.strokeStyle = BCOLORS.feature;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // arrowhead
+        const ax = fx - nodeR;
+        const ay = i === 0 ? fy - nodeR : fy;
+        const angle = i === 0 ? Math.atan2(fy - nodeR - (branchOrigin.y + nodeR), fx - nodeR - branchOrigin.x)
+                              : 0;
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        if (i === 0) {
+          ctx.lineTo(ax - 8 * Math.cos(angle - 0.4), ay - 8 * Math.sin(angle - 0.4));
+          ctx.lineTo(ax - 8 * Math.cos(angle + 0.4), ay - 8 * Math.sin(angle + 0.4));
+        } else {
+          ctx.lineTo(ax - 8, ay - 4);
+          ctx.lineTo(ax - 8, ay + 4);
+        }
+        ctx.closePath();
+        ctx.fillStyle = BCOLORS.feature;
+        ctx.fill();
+
+        const isHead = bs.currentBranch === 'feature' && i === bs.featureCommits.length - 1 && !bs.mergeCommit;
+        drawNode(fx, fy, label, BCOLORS.feature, isHead);
+
+        if (i === bs.featureCommits.length - 1) {
+          ctx.fillStyle = BCOLORS.feature;
+          ctx.font = 'bold 11px JetBrains Mono, monospace';
+          ctx.textAlign = 'left';
+          ctx.fillText('feature', fx + nodeR + 4, fy - 4);
+        }
+
+        prevX = fx;
+        prevY = fy;
+      });
+    }
+  }
+}
+
+let featureCommitIdx = 0;
+let mainCommitIdx = 4;
+
+function branchAction(action) {
+  const bs = branchState;
+  const info = document.getElementById('branchInfoBox');
+  const btnMerge = document.getElementById('btnMerge');
+  const btnRebase = document.getElementById('btnRebase');
+
+  if (action === 'reset') {
+    branchState = {
+      mainCommits: ['C1','C2','C3'],
+      featureCommits: [],
+      featureBranchPoint: 1,
+      hasBranch: false,
+      currentBranch: 'main',
+      mergeCommit: null,
+      rebaseMode: false,
+      rebasedCommits: []
+    };
+    featureCommitIdx = 0;
+    mainCommitIdx = 4;
+    document.getElementById('currentBranchLabel').textContent = 'main';
+    info.innerHTML = '<span class="s-dim">main: C1 → C2 → C3 &nbsp;|&nbsp; HEAD → main</span><br><span class="s-dim">feature 브랜치를 생성해보세요.</span>';
+    drawBranchGraph();
+    return;
+  }
+
+  if (action === 'create') {
+    if (bs.hasBranch) {
+      info.innerHTML = '<span class="s-yellow">feature 브랜치가 이미 존재합니다.</span>';
+      return;
+    }
+    bs.hasBranch = true;
+    bs.currentBranch = 'feature';
+    const letter = String.fromCharCode(65 + featureCommitIdx);
+    featureCommitIdx++;
+    bs.featureCommits.push(`C${String.fromCharCode(52 + featureCommitIdx - 1)}`);
+    document.getElementById('currentBranchLabel').textContent = 'feature';
+    info.innerHTML =
+      `<span class="s-green">$ git checkout -b feature</span><br>` +
+      `<span class="s-green">Switched to a new branch 'feature'</span><br>` +
+      `<span class="s-dim">HEAD → feature (C${String.fromCharCode(52 + featureCommitIdx - 1)}로 첫 커밋 추가됨)</span>`;
+    drawBranchGraph();
+    return;
+  }
+
+  if (action === 'commit') {
+    if (!bs.hasBranch && bs.currentBranch === 'main') {
+      mainCommitIdx++;
+      const label = `C${mainCommitIdx}`;
+      bs.mainCommits.push(label);
+      info.innerHTML =
+        `<span class="s-green">$ git commit -m "feat: ${label}"</span><br>` +
+        `<span class="s-green">[main] ${label} added</span><br>` +
+        `<span class="s-dim">HEAD → main</span>`;
+    } else if (bs.currentBranch === 'feature' && bs.hasBranch && !bs.mergeCommit) {
+      featureCommitIdx++;
+      const label = `C${4 + featureCommitIdx}`;
+      bs.featureCommits.push(label);
+      info.innerHTML =
+        `<span class="s-green">$ git commit -m "feat: ${label}"</span><br>` +
+        `<span class="s-green">[feature] ${label} added</span><br>` +
+        `<span class="s-dim">HEAD → feature</span>`;
+    } else {
+      info.innerHTML = '<span class="s-yellow">브랜치를 먼저 생성하고 전환하세요.</span>';
+    }
+    drawBranchGraph();
+    return;
+  }
+
+  if (action === 'switch') {
+    if (!bs.hasBranch) {
+      info.innerHTML = '<span class="s-yellow">브랜치를 먼저 생성하세요.</span>';
+      return;
+    }
+    bs.currentBranch = bs.currentBranch === 'main' ? 'feature' : 'main';
+    document.getElementById('currentBranchLabel').textContent = bs.currentBranch;
+    info.innerHTML =
+      `<span class="s-green">$ git checkout ${bs.currentBranch}</span><br>` +
+      `<span class="s-green">Switched to branch '${bs.currentBranch}'</span><br>` +
+      `<span class="s-dim">HEAD → ${bs.currentBranch}</span>`;
+    drawBranchGraph();
+    return;
+  }
+
+  if (action === 'merge') {
+    if (!bs.hasBranch || bs.featureCommits.length === 0) {
+      info.innerHTML = '<span class="s-yellow">feature 브랜치에 커밋이 필요합니다.</span>';
+      return;
+    }
+    if (bs.mergeCommit) {
+      info.innerHTML = '<span class="s-yellow">이미 머지되었습니다.</span>';
+      return;
+    }
+    bs.currentBranch = 'main';
+    bs.mergeCommit = 'M';
+    bs.rebaseMode = false;
+    document.getElementById('currentBranchLabel').textContent = 'main';
+    info.innerHTML =
+      `<span class="s-green">$ git checkout main && git merge feature</span><br>` +
+      `<span class="s-green">Merge made by 'ort' strategy.</span><br>` +
+      `<span class="s-dim">머지 커밋(M) 생성됨 — 다이아몬드 형태의 히스토리</span><br>` +
+      `<span class="s-dim">3-way merge: main + feature + 공통 조상(C2)</span>`;
+    drawBranchGraph();
+    return;
+  }
+
+  if (action === 'rebase') {
+    if (!bs.hasBranch || bs.featureCommits.length === 0) {
+      info.innerHTML = '<span class="s-yellow">feature 브랜치에 커밋이 필요합니다.</span>';
+      return;
+    }
+    if (bs.mergeCommit) {
+      info.innerHTML = '<span class="s-yellow">이미 머지되었습니다. 리셋 후 시도하세요.</span>';
+      return;
+    }
+    bs.rebaseMode = true;
+    bs.currentBranch = 'feature';
+    bs.rebasedCommits = bs.featureCommits.map((c, i) => `${c}'`);
+    document.getElementById('currentBranchLabel').textContent = 'feature';
+    info.innerHTML =
+      `<span class="s-green">$ git checkout feature && git rebase main</span><br>` +
+      `<span class="s-green">Successfully rebased and updated refs/heads/feature.</span><br>` +
+      `<span class="s-dim">커밋들이 main 위에 재배치됨 (선형 히스토리)</span><br>` +
+      `<span class="s-dim">기존 커밋은 점선으로 표시 (더 이상 참조 없음)</span>`;
+    drawBranchGraph();
+    return;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 3: CONFLICT
+// ═══════════════════════════════════════════════════════
+function resolveConflict(choice) {
+  const file = document.getElementById('conflictFile');
+  const status = document.getElementById('conflictStatus');
+  const banner = document.getElementById('conflictBanner');
+
+  if (choice === 'reset') {
+    document.getElementById('cl-marker1').style.display = '';
+    document.getElementById('cl-ours').style.display = '';
+    document.getElementById('cl-sep').style.display = '';
+    document.getElementById('cl-theirs').style.display = '';
+    document.getElementById('cl-marker2').style.display = '';
+    document.getElementById('cl-ours').textContent = '  return `안녕하세요, ${name}!`;';
+    document.getElementById('cl-theirs').textContent = '  return `Hello, ${name}!`;';
+    document.getElementById('cl-ours').className = 'conflict-line ours';
+    document.getElementById('cl-theirs').className = 'conflict-line theirs';
+    banner.style.display = 'none';
+    status.innerHTML =
+      '<span class="s-red">CONFLICT (content): Merge conflict in app.js</span><br><br>' +
+      '<span class="s-dim">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span> — 현재 브랜치 내용<br>' +
+      '<span class="s-dim">=======</span> — 구분선<br>' +
+      '<span class="s-dim">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature</span> — 병합 브랜치 내용<br><br>' +
+      '<span class="s-yellow">원하는 내용을 선택하고 마커를 제거하세요.</span>';
+    ['btnOurs','btnTheirs','btnBoth'].forEach(id => document.getElementById(id).disabled = false);
+    return;
+  }
+
+  ['btnOurs','btnTheirs','btnBoth'].forEach(id => document.getElementById(id).disabled = true);
+  document.getElementById('cl-marker1').style.display = 'none';
+  document.getElementById('cl-sep').style.display = 'none';
+  document.getElementById('cl-marker2').style.display = 'none';
+
+  if (choice === 'ours') {
+    document.getElementById('cl-theirs').style.display = 'none';
+    document.getElementById('cl-ours').className = 'conflict-line resolved';
+    status.innerHTML =
+      '<span class="s-green">HEAD 내용 선택 완료</span><br>' +
+      '<span class="s-green">$ git add app.js && git commit</span><br><br>' +
+      '<span class="s-dim">[main] Merge branch \'feature/i18n\'</span><br>' +
+      '<span class="s-green">머지 완료!</span>';
+  } else if (choice === 'theirs') {
+    document.getElementById('cl-ours').style.display = 'none';
+    document.getElementById('cl-theirs').className = 'conflict-line resolved';
+    status.innerHTML =
+      '<span class="s-green">feature 내용 선택 완료</span><br>' +
+      '<span class="s-green">$ git add app.js && git commit</span><br><br>' +
+      '<span class="s-dim">[main] Merge branch \'feature/i18n\'</span><br>' +
+      '<span class="s-green">머지 완료!</span>';
+  } else if (choice === 'both') {
+    document.getElementById('cl-ours').className = 'conflict-line resolved';
+    document.getElementById('cl-ours').textContent = '  const ko = `안녕하세요, ${name}!`;';
+    document.getElementById('cl-theirs').className = 'conflict-line resolved';
+    document.getElementById('cl-theirs').textContent = '  return `Hello, ${name}! (${ko})`;';
+    status.innerHTML =
+      '<span class="s-green">두 내용 모두 병합 완료</span><br>' +
+      '<span class="s-green">$ git add app.js && git commit</span><br><br>' +
+      '<span class="s-dim">[main] Merge branch \'feature/i18n\'</span><br>' +
+      '<span class="s-green">머지 완료!</span>';
+  }
+
+  banner.style.display = 'block';
+}
+
+// ─── Cherry-pick ─────────────────────────────────────
+let cherryPicked = false;
+
+function drawCherryGraph(picked) {
+  const canvas = document.getElementById('cherryCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = BCOLORS.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  const nodeR = 18;
+  const mainY = 50;
+  const featureY = 115;
+
+  // Main commits: C1 C2 C3
+  const mainCommits = [
+    { x: 60, y: mainY, label: 'C1', color: BCOLORS.main },
+    { x: 160, y: mainY, label: 'C2', color: BCOLORS.main },
+    { x: 260, y: mainY, label: 'C3', color: BCOLORS.main },
+  ];
+
+  if (picked) {
+    mainCommits.push({ x: 400, y: mainY, label: "C4'", color: '#ff6b9d' });
+  }
+
+  // Feature commits: C2 → C4 → C5
+  const featureCommits = [
+    { x: 160, y: featureY, label: 'C2', color: BCOLORS.dim, ghost: true },
+    { x: 260, y: featureY, label: 'C4', color: picked ? BCOLORS.dim : '#ff6b9d', highlight: !picked },
+    { x: 360, y: featureY, label: 'C5', color: BCOLORS.feature },
+  ];
+
+  // Draw branch labels
+  ctx.font = 'bold 10px JetBrains Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = BCOLORS.main;
+  ctx.fillText('main', mainCommits[mainCommits.length - 1].x + nodeR + 6, mainY - 4);
+  ctx.fillStyle = BCOLORS.feature;
+  ctx.fillText('feature', featureCommits[featureCommits.length - 1].x + nodeR + 6, featureY - 4);
+
+  // Arrows main
+  for (let i = 0; i < mainCommits.length - 1; i++) {
+    ctx.beginPath();
+    ctx.moveTo(mainCommits[i].x + nodeR, mainY);
+    ctx.lineTo(mainCommits[i + 1].x - nodeR, mainY);
+    ctx.strokeStyle = picked && i === mainCommits.length - 2 ? '#ff6b9d' : BCOLORS.main;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Arrows feature
+  ctx.beginPath();
+  ctx.moveTo(featureCommits[0].x, featureCommits[0].y - nodeR);
+  ctx.lineTo(featureCommits[1].x - nodeR, featureY);
+  ctx.strokeStyle = BCOLORS.dim;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  for (let i = 1; i < featureCommits.length - 1; i++) {
+    ctx.beginPath();
+    ctx.moveTo(featureCommits[i].x + nodeR, featureY);
+    ctx.lineTo(featureCommits[i + 1].x - nodeR, featureY);
+    ctx.strokeStyle = BCOLORS.feature;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Cherry-pick arrow animation
+  if (picked) {
+    const src = featureCommits[1];
+    const dst = mainCommits[mainCommits.length - 1];
+    ctx.beginPath();
+    ctx.moveTo(src.x, src.y - nodeR);
+    ctx.quadraticCurveTo((src.x + dst.x) / 2, mainY - 55, dst.x, dst.y + nodeR);
+    ctx.strokeStyle = '#ff6b9d';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Arrow label
+    ctx.fillStyle = '#ff6b9d';
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('cherry-pick', (src.x + dst.x) / 2, mainY - 38);
+  }
+
+  // Draw nodes
+  function drawCN(x, y, label, color, highlight) {
+    if (highlight) {
+      ctx.shadowColor = '#ff6b9d';
+      ctx.shadowBlur = 12;
+    }
+    ctx.beginPath();
+    ctx.arc(x, y, nodeR, 0, Math.PI * 2);
+    ctx.fillStyle = BCOLORS.node;
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = highlight ? 3 : 2;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = color;
+    ctx.font = 'bold 10px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, y);
+  }
+
+  mainCommits.forEach(n => drawCN(n.x, n.y, n.label, n.color, n.label === "C4'"));
+  featureCommits.forEach(n => drawCN(n.x, n.y, n.label, n.color, n.highlight));
+}
+
+function cherryPickAction() {
+  cherryPicked = true;
+  drawCherryGraph(true);
+  document.getElementById('cherryStatus').innerHTML =
+    '<span class="s-green">$ git cherry-pick &lt;C4-hash&gt;</span><br>' +
+    '<span class="s-green">[main] C4\' — feature의 C4가 main에 적용됨</span><br>' +
+    '<span class="s-dim">새 해시로 커밋이 복사되었습니다 (C4 → C4\')</span>';
+}
+
+function cherryPickReset() {
+  cherryPicked = false;
+  drawCherryGraph(false);
+  document.getElementById('cherryStatus').innerHTML =
+    '<span class="s-dim">$ git cherry-pick &lt;commit-hash&gt;</span><br>' +
+    '<span class="s-dim">feature 브랜치의 C4 커밋을 선택할 수 있습니다.</span>';
+}
+
+// ─── Stash ────────────────────────────────────────────
+let stashItems = [];
+
+function stashAction(action) {
+  const wdirEl = document.getElementById('stashWdir');
+  const listEl = document.getElementById('stashList');
+  const statusEl = document.getElementById('stashStatus');
+  const btnStash = document.getElementById('btnStash');
+  const btnPop = document.getElementById('btnPop');
+
+  if (action === 'stash') {
+    const ts = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'});
+    stashItems.unshift(`stash@{${stashItems.length}}: WIP on main (${ts})`);
+    wdirEl.innerHTML = '<div style="font-size:0.72rem;color:var(--text-dim);">(깨끗한 상태)</div>';
+    listEl.innerHTML = stashItems.map(s =>
+      `<div class="stash-item">${s}</div>`
+    ).join('');
+    btnStash.disabled = true;
+    btnPop.disabled = false;
+    statusEl.innerHTML =
+      '<span class="s-green">$ git stash</span><br>' +
+      '<span class="s-green">Saved working directory and index state WIP on main</span><br>' +
+      '<span class="s-dim">작업 내용이 stash에 저장되었습니다. 이제 브랜치를 자유롭게 전환할 수 있습니다.</span>';
+  } else {
+    if (stashItems.length === 0) return;
+    stashItems.shift();
+    wdirEl.innerHTML =
+      '<div class="git-file-node wdir">feature.js (수정됨)</div>' +
+      '<div class="git-file-node wdir">utils.js (수정됨)</div>';
+    listEl.innerHTML = stashItems.length > 0
+      ? stashItems.map(s => `<div class="stash-item">${s}</div>`).join('')
+      : '<div style="font-size:0.72rem;color:var(--text-dim);">(비어있음)</div>';
+    btnStash.disabled = false;
+    if (stashItems.length === 0) btnPop.disabled = true;
+    statusEl.innerHTML =
+      '<span class="s-green">$ git stash pop</span><br>' +
+      '<span class="s-green">On branch main</span><br>' +
+      '<span class="s-green">Changes not staged for commit:</span><br>' +
+      '<span class="s-red">&nbsp;&nbsp;modified: feature.js</span><br>' +
+      '<span class="s-red">&nbsp;&nbsp;modified: utils.js</span><br>' +
+      '<span class="s-dim">작업 내용이 복원되었습니다!</span>';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SECTION 4: WORKFLOW CANVASES
+// ═══════════════════════════════════════════════════════
+function switchWorkflow(name) {
+  document.querySelectorAll('.wf-tab').forEach((t, i) => {
+    const names = ['github', 'gitflow', 'trunk'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.wf-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`wf-${name}`).classList.add('active');
+  // Redraw the canvas of the newly visible panel
+  setTimeout(() => {
+    if (name === 'github') drawGithubFlow();
+    if (name === 'gitflow') drawGitFlow();
+    if (name === 'trunk') drawTrunkBased();
+  }, 10);
+}
+
+// ─── GitHub Flow ──────────────────────────────────────
+function drawGithubFlow() {
+  const canvas = document.getElementById('githubFlowCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = BCOLORS.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  const mainY = 65;
+  const featY = 100;
+  const nodeR = 14;
+
+  // main commits
+  const mainC = [
+    {x:60, label:'C1'}, {x:200, label:'C2'}, {x:380, label:'C3'},
+    {x:520, label:'M', color:'#ff6b9d'}, {x:620, label:'C4'}
+  ];
+
+  // feature branch from C2 → two commits → merge back
+  const featC = [
+    {x:260, label:'F1'}, {x:340, label:'F2'}
+  ];
+
+  // Draw main line
+  for (let i = 0; i < mainC.length - 1; i++) {
+    ctx.beginPath();
+    ctx.moveTo(mainC[i].x + nodeR, mainY);
+    ctx.lineTo(mainC[i+1].x - nodeR, mainY);
+    ctx.strokeStyle = mainC[i+1].color || BCOLORS.main;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Feature branch from C2 down to featY
+  ctx.beginPath();
+  ctx.moveTo(mainC[1].x, mainY + nodeR);
+  ctx.lineTo(featC[0].x - nodeR, featY - nodeR);
+  ctx.strokeStyle = BCOLORS.feature;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Feature commits line
+  ctx.beginPath();
+  ctx.moveTo(featC[0].x + nodeR, featY);
+  ctx.lineTo(featC[1].x - nodeR, featY);
+  ctx.strokeStyle = BCOLORS.feature;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Feature back to merge commit
+  ctx.beginPath();
+  ctx.moveTo(featC[1].x, featY - nodeR);
+  ctx.lineTo(mainC[3].x - nodeR, mainY + nodeR);
+  ctx.strokeStyle = BCOLORS.feature;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Draw main nodes
+  mainC.forEach(n => {
+    ctx.beginPath();
+    ctx.arc(n.x, mainY, nodeR, 0, Math.PI*2);
+    ctx.fillStyle = BCOLORS.node;
+    ctx.fill();
+    ctx.strokeStyle = n.color || BCOLORS.main;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = n.color || BCOLORS.main;
+    ctx.font = 'bold 9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(n.label, n.x, mainY);
+  });
+
+  // Draw feature nodes
+  featC.forEach(n => {
+    ctx.beginPath();
+    ctx.arc(n.x, featY, nodeR, 0, Math.PI*2);
+    ctx.fillStyle = BCOLORS.node;
+    ctx.fill();
+    ctx.strokeStyle = BCOLORS.feature;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = BCOLORS.feature;
+    ctx.font = 'bold 9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(n.label, n.x, featY);
+  });
+
+  // Labels
+  ctx.font = 'bold 10px JetBrains Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = BCOLORS.main;
+  ctx.fillText('main', mainC[mainC.length-1].x + nodeR + 4, mainY - 3);
+  ctx.fillStyle = BCOLORS.feature;
+  ctx.fillText('feature/login', featC[0].x - 10, featY + nodeR + 13);
+
+  ctx.fillStyle = BCOLORS.dim;
+  ctx.font = '9px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('PR & Review', mainC[3].x, mainY - nodeR - 8);
+}
+
+// ─── Git Flow ────────────────────────────────────────
+function drawGitFlow() {
+  const canvas = document.getElementById('gitFlowCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = BCOLORS.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  const nodeR = 12;
+  const rows = {
+    main:    { y: 30,  color: BCOLORS.main,   label: 'main' },
+    hotfix:  { y: 65,  color: '#ff4466',       label: 'hotfix' },
+    release: { y: 100, color: '#ffaa00',        label: 'release' },
+    develop: { y: 135, color: '#00cc88',        label: 'develop' },
+    feature: { y: 170, color: BCOLORS.feature,  label: 'feature' }
+  };
+
+  function drawBranch(x1, x2, y, color, commits) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y);
+    ctx.lineTo(x2, y);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    commits.forEach(cx => {
+      ctx.beginPath();
+      ctx.arc(cx, y, nodeR, 0, Math.PI*2);
+      ctx.fillStyle = BCOLORS.node;
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+  }
+
+  function drawConnect(x1, y1, x2, y2, color, dashed=false) {
+    ctx.beginPath();
+    if (dashed) ctx.setLineDash([4,3]);
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Lanes
+  drawBranch(40,  640, rows.main.y,    rows.main.color,    [80, 280, 500, 620]);
+  drawBranch(280, 500, rows.hotfix.y,  rows.hotfix.color,  [320, 460]);
+  drawBranch(200, 500, rows.release.y, rows.release.color, [240, 380, 460]);
+  drawBranch(40,  640, rows.develop.y, rows.develop.color, [80, 160, 280, 420, 560]);
+  drawBranch(120, 420, rows.feature.y, rows.feature.color, [160, 260, 360]);
+
+  // Connections
+  drawConnect(80,  rows.main.y,    80,  rows.develop.y, rows.develop.color);
+  drawConnect(160, rows.feature.y, 160, rows.develop.y, rows.feature.color, true);
+  drawConnect(360, rows.feature.y, 420, rows.develop.y, rows.feature.color, true);
+  drawConnect(280, rows.develop.y, 240, rows.release.y, rows.release.color, true);
+  drawConnect(460, rows.release.y, 500, rows.main.y,    rows.main.color, true);
+  drawConnect(460, rows.release.y, 560, rows.develop.y, rows.develop.color, true);
+  drawConnect(280, rows.main.y,    320, rows.hotfix.y,  rows.hotfix.color, true);
+  drawConnect(460, rows.hotfix.y,  500, rows.main.y,    rows.main.color, true);
+
+  // Labels
+  Object.values(rows).forEach(r => {
+    ctx.fillStyle = r.color;
+    ctx.font = 'bold 9px JetBrains Mono, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(r.label, 10, r.y + 4);
+  });
+}
+
+// ─── Trunk Based ─────────────────────────────────────
+function drawTrunkBased() {
+  const canvas = document.getElementById('trunkCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = BCOLORS.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  const mainY = 40;
+  const shortY = 85;
+  const nodeR = 14;
+
+  // trunk commits
+  const trunks = [50,130,210,290,400,480,570,640];
+  for (let i = 0; i < trunks.length-1; i++) {
+    ctx.beginPath();
+    ctx.moveTo(trunks[i] + nodeR, mainY);
+    ctx.lineTo(trunks[i+1] - nodeR, mainY);
+    ctx.strokeStyle = BCOLORS.main;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+
+  // short-lived branches
+  const branches = [
+    { from: 130, to: 290, fcs: [170, 250], color: BCOLORS.feature },
+    { from: 400, to: 480, fcs: [440], color: '#ff6b9d' }
+  ];
+
+  branches.forEach(b => {
+    ctx.beginPath();
+    ctx.moveTo(b.from, mainY + nodeR);
+    ctx.lineTo(b.fcs[0] - nodeR, shortY - nodeR);
+    ctx.strokeStyle = b.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    for (let i = 0; i < b.fcs.length-1; i++) {
+      ctx.beginPath();
+      ctx.moveTo(b.fcs[i] + nodeR, shortY);
+      ctx.lineTo(b.fcs[i+1] - nodeR, shortY);
+      ctx.strokeStyle = b.color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(b.fcs[b.fcs.length-1], shortY - nodeR);
+    ctx.lineTo(b.to - nodeR, mainY + nodeR);
+    ctx.strokeStyle = b.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    b.fcs.forEach(fx => {
+      ctx.beginPath();
+      ctx.arc(fx, shortY, nodeR, 0, Math.PI*2);
+      ctx.fillStyle = BCOLORS.node;
+      ctx.fill();
+      ctx.strokeStyle = b.color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+  });
+
+  trunks.forEach((x, i) => {
+    ctx.beginPath();
+    ctx.arc(x, mainY, nodeR, 0, Math.PI*2);
+    ctx.fillStyle = BCOLORS.node;
+    ctx.fill();
+    ctx.strokeStyle = BCOLORS.main;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    ctx.fillStyle = BCOLORS.main;
+    ctx.font = 'bold 8px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`c${i+1}`, x, mainY);
+  });
+
+  ctx.font = 'bold 10px JetBrains Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = BCOLORS.main;
+  ctx.fillText('trunk/main', trunks[trunks.length-1] + nodeR + 4, mainY - 2);
+
+  ctx.fillStyle = BCOLORS.dim;
+  ctx.font = '9px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('단기 브랜치 (1-2일)', 220, shortY + nodeR + 12);
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  drawBranchGraph();
+  drawCherryGraph(false);
+  drawGithubFlow();
+  // gitflow and trunk are hidden, draw when tab opened
+});
+</script>
+<script src="sidebar.js"></script>
+</body>
+</html>

@@ -115,6 +115,8 @@
     <a href="#virtualmem"  class="nav-sec-link">가상메모리</a>
     <a href="#scheduling"  class="nav-sec-link">스케줄링</a>
     <a href="#deadlock"    class="nav-sec-link">데드락</a>
+    <a href="#thread"     class="nav-sec-link">프로세스 vs 스레드</a>
+    <a href="#sync"       class="nav-sec-link">동기화</a>
   </div>
 </nav>
 
@@ -502,6 +504,197 @@
     </div>
     <div class="info-text" style="margin-top:16px;">
       💡 <strong>해결책:</strong> (1) 순환 대기 제거 — 홀수 철학자는 오른쪽 먼저, 짝수는 왼쪽 먼저 집기. (2) 한 번에 두 포크 모두 집거나 아무것도 안 집기 (Hold &amp; Wait 제거). (3) 철학자 수를 N-1명으로 제한 (동시 착석 제한).
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SECTION 8: 프로세스 vs 스레드 -->
+<section id="thread">
+  <div class="section-header">
+    <div class="tag tag-ch6">08 — PROCESS vs THREAD</div>
+    <h2>프로세스 vs 스레드</h2>
+    <p>프로세스는 실행 중인 프로그램의 독립적인 인스턴스이고, 스레드는 프로세스 내에서 실행되는 가장 작은 실행 단위입니다.</p>
+  </div>
+  <div class="viz-box">
+    <!-- 메모리 구조 비교 다이어그램 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+      <!-- 프로세스 -->
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;color:var(--accent);margin-bottom:10px;">프로세스 A</div>
+        <div style="border:2px solid var(--accent);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;">
+          <div style="background:rgba(0,255,170,0.08);border:1px solid rgba(0,255,170,0.3);border-radius:4px;padding:6px 10px;margin-bottom:6px;">
+            <div style="color:var(--accent);font-weight:600;">스레드 1</div>
+            <div style="color:var(--text-dim);font-size:0.68rem;">Stack · Registers · PC</div>
+          </div>
+          <div style="background:rgba(0,255,170,0.08);border:1px solid rgba(0,255,170,0.3);border-radius:4px;padding:6px 10px;margin-bottom:6px;">
+            <div style="color:var(--accent);font-weight:600;">스레드 2</div>
+            <div style="color:var(--text-dim);font-size:0.68rem;">Stack · Registers · PC</div>
+          </div>
+          <div style="border-top:1px dashed var(--border);margin:8px 0;"></div>
+          <div style="color:var(--text-dim);font-size:0.7rem;">공유 영역</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+            <span style="background:rgba(107,138,255,0.15);border:1px solid var(--accent3);border-radius:4px;padding:3px 8px;color:var(--accent3);font-size:0.68rem;">Code</span>
+            <span style="background:rgba(107,138,255,0.15);border:1px solid var(--accent3);border-radius:4px;padding:3px 8px;color:var(--accent3);font-size:0.68rem;">Data</span>
+            <span style="background:rgba(107,138,255,0.15);border:1px solid var(--accent3);border-radius:4px;padding:3px 8px;color:var(--accent3);font-size:0.68rem;">Heap</span>
+            <span style="background:rgba(107,138,255,0.15);border:1px solid var(--accent3);border-radius:4px;padding:3px 8px;color:var(--accent3);font-size:0.68rem;">Files</span>
+          </div>
+        </div>
+      </div>
+      <!-- 멀티 프로세스 -->
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;color:var(--accent2);margin-bottom:10px;">프로세스 B (독립)</div>
+        <div style="border:2px solid var(--accent2);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;">
+          <div style="background:rgba(255,107,157,0.08);border:1px solid rgba(255,107,157,0.3);border-radius:4px;padding:6px 10px;margin-bottom:6px;">
+            <div style="color:var(--accent2);font-weight:600;">스레드 1 (Main)</div>
+            <div style="color:var(--text-dim);font-size:0.68rem;">Stack · Registers · PC</div>
+          </div>
+          <div style="border-top:1px dashed var(--border);margin:8px 0;"></div>
+          <div style="color:var(--text-dim);font-size:0.7rem;">독립 메모리 공간</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+            <span style="background:rgba(255,107,157,0.1);border:1px solid var(--accent2);border-radius:4px;padding:3px 8px;color:var(--accent2);font-size:0.68rem;">Code</span>
+            <span style="background:rgba(255,107,157,0.1);border:1px solid var(--accent2);border-radius:4px;padding:3px 8px;color:var(--accent2);font-size:0.68rem;">Data</span>
+            <span style="background:rgba(255,107,157,0.1);border:1px solid var(--accent2);border-radius:4px;padding:3px 8px;color:var(--accent2);font-size:0.68rem;">Heap</span>
+            <span style="background:rgba(255,107,157,0.1);border:1px solid var(--accent2);border-radius:4px;padding:3px 8px;color:var(--accent2);font-size:0.68rem;">Files</span>
+          </div>
+          <div style="margin-top:8px;font-size:0.68rem;color:var(--danger);">⚠ 프로세스 간 직접 메모리 접근 불가 → IPC 필요</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 비교 표 -->
+    <table style="width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:0.78rem;margin-bottom:20px;">
+      <tr>
+        <th style="padding:10px 14px;background:var(--surface2);color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border);font-size:0.7rem;letter-spacing:1px;">항목</th>
+        <th style="padding:10px 14px;background:rgba(0,255,170,0.06);color:var(--accent);text-align:left;border-bottom:1px solid var(--border);">프로세스</th>
+        <th style="padding:10px 14px;background:rgba(107,138,255,0.06);color:var(--accent3);text-align:left;border-bottom:1px solid var(--border);">스레드</th>
+      </tr>
+      <tr>
+        <td style="padding:8px 14px;color:var(--text-dim);border-bottom:1px solid var(--border);">메모리</td>
+        <td style="padding:8px 14px;color:var(--text);border-bottom:1px solid var(--border);">독립된 메모리 공간</td>
+        <td style="padding:8px 14px;color:var(--text);border-bottom:1px solid var(--border);">같은 프로세스 메모리 공유</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 14px;color:var(--text-dim);border-bottom:1px solid var(--border);">생성 비용</td>
+        <td style="padding:8px 14px;color:var(--danger);border-bottom:1px solid var(--border);">높음 (fork/exec)</td>
+        <td style="padding:8px 14px;color:var(--accent);border-bottom:1px solid var(--border);">낮음 (경량)</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 14px;color:var(--text-dim);border-bottom:1px solid var(--border);">통신 방법</td>
+        <td style="padding:8px 14px;color:var(--text);border-bottom:1px solid var(--border);">IPC (파이프, 소켓, 공유메모리)</td>
+        <td style="padding:8px 14px;color:var(--text);border-bottom:1px solid var(--border);">공유 변수 직접 접근</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 14px;color:var(--text-dim);border-bottom:1px solid var(--border);">격리성</td>
+        <td style="padding:8px 14px;color:var(--accent);border-bottom:1px solid var(--border);">높음 (하나 죽어도 영향 없음)</td>
+        <td style="padding:8px 14px;color:var(--danger);border-bottom:1px solid var(--border);">낮음 (하나 오류 → 전체 영향)</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 14px;color:var(--text-dim);border-bottom:1px solid var(--border);">컨텍스트 스위칭</td>
+        <td style="padding:8px 14px;color:var(--danger);border-bottom:1px solid var(--border);">느림 (TLB flush 등)</td>
+        <td style="padding:8px 14px;color:var(--accent);border-bottom:1px solid var(--border);">빠름 (메모리 공유)</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 14px;color:var(--text-dim);">동기화</td>
+        <td style="padding:8px 14px;color:var(--text);">불필요 (독립)</td>
+        <td style="padding:8px 14px;color:var(--accent4);">필요! (Race condition 주의)</td>
+      </tr>
+    </table>
+
+    <!-- fork/exec 시뮬레이션 -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;margin-bottom:10px;">fork() / exec() 동작</div>
+    <div class="controls">
+      <button class="btn" onclick="animFork()">fork() 실행</button>
+      <button class="btn" onclick="animExec()">exec() 실행</button>
+      <button class="btn danger" onclick="resetFork()">초기화</button>
+    </div>
+    <div id="forkViz" style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;padding:16px;background:var(--surface2);border-radius:8px;min-height:80px;line-height:2;"></div>
+
+    <div class="info-text" style="margin-top:16px;">
+      <strong style="color:var(--accent)">멀티스레딩</strong>: 하나의 프로세스에서 여러 스레드가 동시에 실행. CPU 코어를 최대 활용하지만 <strong style="color:var(--danger)">Race Condition</strong>에 주의 필요. Chrome은 탭마다 별도 프로세스(안정성↑), Node.js는 단일 스레드 + 이벤트 루프.
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SECTION 9: 동기화 -->
+<section id="sync">
+  <div class="section-header">
+    <div class="tag tag-ch6">09 — SYNCHRONIZATION</div>
+    <h2>동기화 — Race Condition & 뮤텍스/세마포어</h2>
+    <p>여러 스레드가 같은 자원을 동시에 접근할 때 발생하는 문제와 해결 방법입니다. 임계구역(Critical Section)을 보호하는 것이 핵심입니다.</p>
+  </div>
+  <div class="viz-box">
+    <!-- Race Condition 시뮬레이션 -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;margin-bottom:12px;color:var(--danger)">① Race Condition</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.76rem;color:var(--text-dim);margin-bottom:14px;">
+      두 스레드가 공유 변수 counter를 동시에 증가시킬 때, 예상과 다른 결과가 나올 수 있습니다.
+    </div>
+    <div class="controls">
+      <button class="btn danger" onclick="runRace()">Race Condition 실행</button>
+      <button class="btn" onclick="runSafe()">뮤텍스로 보호 실행</button>
+      <button class="btn danger" onclick="resetRace()">초기화</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:16px 0;">
+      <div style="background:var(--surface2);border:1px solid rgba(0,255,170,0.3);border-radius:8px;padding:14px;text-align:center;font-family:'JetBrains Mono',monospace;">
+        <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:6px;">Thread 1</div>
+        <div id="t1Val" style="font-size:1.6rem;font-weight:700;color:var(--accent);">-</div>
+        <div id="t1Status" style="font-size:0.7rem;color:var(--text-dim);margin-top:4px;">대기</div>
+      </div>
+      <div style="background:var(--surface2);border:2px solid var(--accent4);border-radius:8px;padding:14px;text-align:center;font-family:'JetBrains Mono',monospace;">
+        <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:6px;">공유 Counter</div>
+        <div id="counterVal" style="font-size:2rem;font-weight:700;color:var(--accent4);">0</div>
+        <div id="counterExpect" style="font-size:0.7rem;color:var(--text-dim);margin-top:4px;">기대값: -</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid rgba(255,107,157,0.3);border-radius:8px;padding:14px;text-align:center;font-family:'JetBrains Mono',monospace;">
+        <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:6px;">Thread 2</div>
+        <div id="t2Val" style="font-size:1.6rem;font-weight:700;color:var(--accent2);">-</div>
+        <div id="t2Status" style="font-size:0.7rem;color:var(--text-dim);margin-top:4px;">대기</div>
+      </div>
+    </div>
+    <div id="raceLog" style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;background:var(--surface2);border-radius:8px;padding:12px;max-height:140px;overflow-y:auto;color:var(--text-dim);line-height:1.9;"></div>
+
+    <!-- Mutex / Semaphore -->
+    <div style="border-top:1px solid var(--border);padding-top:24px;margin-top:24px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;margin-bottom:12px;color:var(--accent)">② 뮤텍스 vs 세마포어</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">
+          <div style="color:var(--accent);font-weight:700;margin-bottom:8px;">Mutex (상호배제)</div>
+          <div style="color:var(--text-dim);font-size:0.72rem;line-height:1.8;">
+            · 값: 0 또는 1 (이진 잠금)<br>
+            · 소유자가 lock/unlock<br>
+            · 한 번에 1개 스레드만 진입<br>
+            · 사용: 임계구역 보호<br>
+          </div>
+          <div id="mutexViz" style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;"></div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">
+          <div style="color:var(--accent3);font-weight:700;margin-bottom:8px;">Semaphore (세마포어)</div>
+          <div style="color:var(--text-dim);font-size:0.72rem;line-height:1.8;">
+            · 값: 0~N (정수 카운터)<br>
+            · 여러 스레드가 사용 가능<br>
+            · wait(P) / signal(V) 연산<br>
+            · 사용: 자원 개수 제한<br>
+          </div>
+          <div id="semViz" style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn" onclick="mutexLock()">Mutex Lock</button>
+        <button class="btn" onclick="mutexUnlock()">Mutex Unlock</button>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);margin:0 8px;">|</span>
+        <button class="btn" onclick="semWait()">Semaphore wait()</button>
+        <button class="btn" onclick="semSignal()">Semaphore signal()</button>
+        <button class="btn danger" onclick="resetSync()">초기화</button>
+      </div>
+      <div id="syncLog" style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;background:var(--surface2);border-radius:8px;padding:12px;max-height:100px;overflow-y:auto;color:var(--text-dim);line-height:1.9;margin-top:12px;"></div>
+    </div>
+
+    <div class="info-text" style="margin-top:16px;">
+      <strong style="color:var(--accent)">임계구역 (Critical Section)</strong>: 공유 자원에 접근하는 코드 구간. 보호를 위해 <strong style="color:var(--accent4)">상호배제(Mutex)</strong>, <strong style="color:var(--accent3)">세마포어</strong>, <strong style="color:var(--accent2)">모니터</strong> 사용.
+      교착상태(Deadlock)를 피하려면 락 획득 순서를 일관되게 유지해야 합니다.
     </div>
   </div>
 </section>
@@ -1581,6 +1774,216 @@ async function runDLPhase(phase) {
 /* ── INIT ── */
 psInit();
 initDL();
+
+// ════════════════════════════════════════════
+// SECTION 8: PROCESS vs THREAD
+// ════════════════════════════════════════════
+let forkDone = false, execDone = false;
+
+function animFork() {
+  const v = document.getElementById('forkViz');
+  v.innerHTML = '<span style="color:var(--accent)">Parent</span> [PID:100] code/data/heap/stack<br>';
+  setTimeout(() => {
+    v.innerHTML += '<span style="color:var(--text-dim)">fork() 호출...</span><br>';
+  }, 400);
+  setTimeout(() => {
+    v.innerHTML +=
+      '<span style="color:var(--accent)">Parent</span> [PID:100] — 계속 실행 (반환값: 자식 PID=101)<br>' +
+      '<span style="color:var(--accent3)">Child </span> [PID:101] — 부모 메모리 <strong style="color:var(--accent4)">복사</strong> (CoW) (반환값: 0)<br>';
+    forkDone = true;
+  }, 900);
+}
+
+function animExec() {
+  const v = document.getElementById('forkViz');
+  if (!forkDone) {
+    v.innerHTML = '<span style="color:var(--danger)">먼저 fork()를 실행하세요</span>';
+    return;
+  }
+  setTimeout(() => {
+    v.innerHTML += '<span style="color:var(--text-dim)">Child에서 exec("/bin/ls") 호출...</span><br>';
+  }, 100);
+  setTimeout(() => {
+    v.innerHTML +=
+      '<span style="color:var(--accent3)">Child </span> [PID:101] — 새 프로그램(/bin/ls)으로 <strong style="color:var(--accent2)">교체</strong> 됨!<br>' +
+      '<span style="color:var(--text-dim);font-size:0.72rem;">  → 기존 코드/데이터/힙/스택 전부 새 프로그램으로 대체.</span>';
+  }, 600);
+}
+
+function resetFork() {
+  forkDone = false; execDone = false;
+  document.getElementById('forkViz').innerHTML = '<span style="color:var(--text-dim)">fork() 버튼을 눌러 프로세스 생성을 시작하세요.</span>';
+}
+
+// ════════════════════════════════════════════
+// SECTION 9: SYNCHRONIZATION
+// ════════════════════════════════════════════
+let raceRunning = false;
+let mutexLocked = false;
+let semCount = 3;
+
+function raceLog(msg, color) {
+  const log = document.getElementById('raceLog');
+  log.innerHTML += `<span style="color:${color||'var(--text-dim)'}">${msg}</span><br>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+function syncLog(msg, color) {
+  const log = document.getElementById('syncLog');
+  log.innerHTML += `<span style="color:${color||'var(--text-dim)'}">${msg}</span><br>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+function resetRace() {
+  raceRunning = false;
+  document.getElementById('counterVal').textContent = '0';
+  document.getElementById('counterExpect').textContent = '기대값: -';
+  document.getElementById('t1Val').textContent = '-';
+  document.getElementById('t2Val').textContent = '-';
+  document.getElementById('t1Status').textContent = '대기';
+  document.getElementById('t2Status').textContent = '대기';
+  document.getElementById('counterVal').style.color = 'var(--accent4)';
+  document.getElementById('raceLog').innerHTML = '';
+}
+
+async function runRace() {
+  if (raceRunning) return;
+  raceRunning = true;
+  resetRace();
+  const LOOPS = 5;
+  let counter = 0;
+  const dl = ms => new Promise(r => setTimeout(r, ms));
+  raceLog('🔴 Race Condition 시뮬레이션 시작 (동기화 없음)', 'var(--danger)');
+  raceLog(`각 스레드가 counter를 ${LOOPS}번 증가 → 기대: ${LOOPS*2}`, 'var(--text-dim)');
+  document.getElementById('counterExpect').textContent = `기대값: ${LOOPS*2}`;
+
+  for (let i = 0; i < LOOPS; i++) {
+    // Simulate race: both read old value, both write
+    const old = counter;
+    document.getElementById('t1Status').textContent = `읽기: ${old}`;
+    document.getElementById('t2Status').textContent = `읽기: ${old}`;
+    document.getElementById('t1Val').textContent = old;
+    document.getElementById('t2Val').textContent = old;
+    await dl(180);
+    // T1 writes first
+    counter = old + 1;
+    document.getElementById('t1Status').textContent = `쓰기: ${counter}`;
+    document.getElementById('counterVal').textContent = counter;
+    await dl(100);
+    // T2 overwrites with old+1 (not old+2)
+    counter = old + 1;
+    document.getElementById('t2Status').textContent = `쓰기: ${counter} ⚠`;
+    document.getElementById('counterVal').textContent = counter;
+    document.getElementById('counterVal').style.color = 'var(--danger)';
+    raceLog(`  Round ${i+1}: T1·T2 둘 다 ${old} 읽음 → 둘 다 ${old+1} 씀 (손실!)`, 'var(--accent4)');
+    await dl(200);
+  }
+  raceLog(`❌ 최종 counter=${counter} (기대: ${LOOPS*2}) — ${LOOPS*2-counter}번 손실!`, 'var(--danger)');
+  document.getElementById('t1Status').textContent = '완료';
+  document.getElementById('t2Status').textContent = '완료';
+  raceRunning = false;
+}
+
+async function runSafe() {
+  if (raceRunning) return;
+  raceRunning = true;
+  resetRace();
+  const LOOPS = 5;
+  let counter = 0;
+  const dl = ms => new Promise(r => setTimeout(r, ms));
+  let lock = false;
+  raceLog('🟢 Mutex 보호 시뮬레이션 시작', 'var(--accent)');
+  document.getElementById('counterExpect').textContent = `기대값: ${LOOPS*2}`;
+
+  for (let i = 0; i < LOOPS; i++) {
+    // T1
+    document.getElementById('t1Status').textContent = 'mutex 대기...';
+    await dl(80);
+    lock = true;
+    document.getElementById('t1Status').textContent = '🔒 lock 획득';
+    const old1 = counter;
+    document.getElementById('t1Val').textContent = old1;
+    await dl(100);
+    counter = old1 + 1;
+    document.getElementById('counterVal').textContent = counter;
+    document.getElementById('counterVal').style.color = 'var(--accent)';
+    lock = false;
+    document.getElementById('t1Status').textContent = '🔓 unlock';
+    await dl(60);
+
+    // T2
+    document.getElementById('t2Status').textContent = 'mutex 대기...';
+    await dl(60);
+    lock = true;
+    document.getElementById('t2Status').textContent = '🔒 lock 획득';
+    const old2 = counter;
+    document.getElementById('t2Val').textContent = old2;
+    await dl(100);
+    counter = old2 + 1;
+    document.getElementById('counterVal').textContent = counter;
+    lock = false;
+    document.getElementById('t2Status').textContent = '🔓 unlock';
+    raceLog(`  Round ${i+1}: counter = ${counter}`, 'var(--text-dim)');
+    await dl(100);
+  }
+  raceLog(`✅ 최종 counter=${counter} (기대: ${LOOPS*2}) — 정확!`, 'var(--accent)');
+  document.getElementById('t1Status').textContent = '완료';
+  document.getElementById('t2Status').textContent = '완료';
+  raceRunning = false;
+}
+
+function renderMutex() {
+  const v = document.getElementById('mutexViz');
+  v.innerHTML = `
+    <div style="font-size:1.5rem;">${mutexLocked ? '🔒' : '🔓'}</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:${mutexLocked?'var(--danger)':'var(--accent)'}">
+      ${mutexLocked ? 'LOCKED' : 'FREE'}
+    </div>`;
+}
+
+function renderSem() {
+  const v = document.getElementById('semViz');
+  let dots = '';
+  for (let i = 0; i < 3; i++) {
+    dots += `<div style="width:28px;height:28px;border-radius:50%;border:2px solid ${i<semCount?'var(--accent3)':'var(--border)'};background:${i<semCount?'rgba(107,138,255,0.2)':'transparent'};"></div>`;
+  }
+  v.innerHTML = dots + `<span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--accent3);margin-left:8px;">count=${semCount}</span>`;
+}
+
+function mutexLock() {
+  if (mutexLocked) { syncLog('⚠ 이미 잠겨 있습니다. Deadlock 위험!', 'var(--danger)'); return; }
+  mutexLocked = true; renderMutex();
+  syncLog('🔒 Mutex Lock 획득 — 임계구역 진입', 'var(--accent)');
+}
+
+function mutexUnlock() {
+  if (!mutexLocked) { syncLog('⚠ 이미 열려 있습니다.', 'var(--text-dim)'); return; }
+  mutexLocked = false; renderMutex();
+  syncLog('🔓 Mutex Unlock — 임계구역 해제', 'var(--accent2)');
+}
+
+function semWait() {
+  if (semCount <= 0) { syncLog('⚠ 세마포어=0, 대기 (Blocking)', 'var(--danger)'); return; }
+  semCount--; renderSem();
+  syncLog(`P(wait): 자원 획득 → count=${semCount}`, 'var(--accent3)');
+}
+
+function semSignal() {
+  if (semCount >= 3) { syncLog('세마포어 최대치', 'var(--text-dim)'); return; }
+  semCount++; renderSem();
+  syncLog(`V(signal): 자원 반납 → count=${semCount}`, 'var(--accent)');
+}
+
+function resetSync() {
+  mutexLocked = false; semCount = 3;
+  renderMutex(); renderSem();
+  document.getElementById('syncLog').innerHTML = '';
+}
+
+// INIT new sections
+resetFork();
+renderMutex();
+renderSem();
 </script>
 <script src="sidebar.js"></script>
 </body>

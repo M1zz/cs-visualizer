@@ -44,6 +44,7 @@
     <a href="#unionfind" class="nav-sec-link">Union-Find</a>
     <a href="#segtree" class="nav-sec-link">세그먼트트리</a>
     <a href="#fenwick" class="nav-sec-link">펜윅트리</a>
+    <a href="#trie" class="nav-sec-link">트라이</a>
   </div>
 </nav>
 
@@ -293,6 +294,44 @@
       </div>
     </div>
     <div class="bit-result-box" id="bit-result">업데이트 또는 쿼리를 실행하면 결과가 표시됩니다.</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SECTION 9: 트라이 (Trie) -->
+<section id="trie">
+  <div class="section-header">
+    <div class="tag tag-ch2">09 — TRIE</div>
+    <h2>트라이 (Trie / Prefix Tree)</h2>
+    <p>문자열을 트리 구조로 저장하여 접두사 검색을 O(L) (L=문자열 길이)에 처리합니다. 자동완성, 사전, IP 라우팅에 사용됩니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <input type="text" id="trieInput" class="sa-input" placeholder="단어 입력..." maxlength="10"
+        style="width:160px;" onkeydown="if(event.key==='Enter')trieInsert()">
+      <button class="btn" onclick="trieInsert()">삽입</button>
+      <button class="btn" onclick="trieSearch()">검색</button>
+      <button class="btn danger" onclick="trieReset()">초기화</button>
+    </div>
+    <div id="trieMsg" style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);margin-bottom:12px;min-height:20px;"></div>
+    <div id="trieViz" style="overflow-x:auto;padding:10px 0;"></div>
+
+    <!-- 자동완성 데모 -->
+    <div style="border-top:1px solid var(--border);padding-top:20px;margin-top:20px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;margin-bottom:10px;">자동완성 시뮬레이션</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+        <input type="text" id="acInput" class="sa-input" placeholder="접두사 입력..." maxlength="8"
+          style="width:160px;" oninput="autocomplete()">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.76rem;color:var(--text-dim)">현재 단어:</span>
+        <div id="acWords" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+
+    <div class="info-text" style="margin-top:16px;">
+      트라이는 각 노드가 한 글자를 나타내는 트리. 삽입/검색 O(L). 해시테이블보다 접두사 검색에 유리.
+      단점: 메모리 사용량 ↑. 활용: 검색 자동완성, 맞춤법 검사, IP 라우팅 테이블.
+    </div>
   </div>
 </section>
 
@@ -1248,6 +1287,140 @@ function bitDoQuery() {
 }
 
 bitInit();
+
+// ════════════════════════════════════════════
+// SECTION 9: TRIE
+// ════════════════════════════════════════════
+
+class TrieNode {
+  constructor() { this.children = {}; this.isEnd = false; }
+}
+
+class Trie {
+  constructor() { this.root = new TrieNode(); }
+
+  insert(word) {
+    let node = this.root;
+    for (const ch of word.toLowerCase()) {
+      if (!node.children[ch]) node.children[ch] = new TrieNode();
+      node = node.children[ch];
+    }
+    node.isEnd = true;
+  }
+
+  search(word) {
+    let node = this.root;
+    for (const ch of word.toLowerCase()) {
+      if (!node.children[ch]) return false;
+      node = node.children[ch];
+    }
+    return node.isEnd;
+  }
+
+  startsWith(prefix) {
+    let node = this.root;
+    for (const ch of prefix.toLowerCase()) {
+      if (!node.children[ch]) return [];
+      node = node.children[ch];
+    }
+    // collect all words from this node
+    const results = [];
+    const dfs = (n, path) => {
+      if (n.isEnd) results.push(prefix.toLowerCase() + path);
+      for (const [ch, child] of Object.entries(n.children)) dfs(child, path + ch);
+    };
+    dfs(node, '');
+    return results;
+  }
+
+  getAllWords() {
+    const words = [];
+    const dfs = (node, path) => {
+      if (node.isEnd) words.push(path);
+      for (const [ch, child] of Object.entries(node.children)) dfs(child, path + ch);
+    };
+    dfs(this.root, '');
+    return words;
+  }
+}
+
+let trie = new Trie();
+const defaultWords = ['apple','app','application','apply','apt','bat','ball','band','cat','car','card'];
+defaultWords.forEach(w => trie.insert(w));
+
+function trieInsert() {
+  const w = document.getElementById('trieInput').value.trim().toLowerCase();
+  if (!w) return;
+  trie.insert(w);
+  document.getElementById('trieMsg').innerHTML = `<span style="color:var(--accent)">✓ "${w}" 삽입됨</span>`;
+  document.getElementById('trieInput').value = '';
+  renderTrie();
+}
+
+function trieSearch() {
+  const w = document.getElementById('trieInput').value.trim().toLowerCase();
+  if (!w) return;
+  const found = trie.search(w);
+  document.getElementById('trieMsg').innerHTML = found
+    ? `<span style="color:var(--accent)">✓ "${w}" 존재함</span>`
+    : `<span style="color:var(--danger)">✗ "${w}" 없음</span>`;
+}
+
+function trieReset() {
+  trie = new Trie();
+  defaultWords.forEach(w => trie.insert(w));
+  document.getElementById('trieMsg').textContent = '기본 단어로 초기화됨';
+  document.getElementById('acInput').value = '';
+  document.getElementById('acWords').innerHTML = '';
+  renderTrie();
+}
+
+function renderTrie() {
+  const words = trie.getAllWords().sort();
+  const viz = document.getElementById('trieViz');
+  // build a simple visual: word grid showing all inserted words + prefix tree text
+  let html = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">';
+  words.forEach(w => {
+    html += `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--accent3);">${w}</span>`;
+  });
+  html += '</div>';
+
+  // draw the trie prefix tree visually (root → first level)
+  html += '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;overflow-x:auto;">';
+  html += renderTrieNode(trie.root, '', 0);
+  html += '</div>';
+  viz.innerHTML = html;
+}
+
+function renderTrieNode(node, char, depth) {
+  if (depth > 4) return ''; // limit display depth
+  const keys = Object.keys(node.children).sort();
+  if (keys.length === 0 && !char) return '';
+
+  let html = '';
+  if (char) {
+    const indent = '&nbsp;&nbsp;&nbsp;'.repeat(depth - 1);
+    const color = node.isEnd ? 'var(--accent)' : 'var(--text-dim)';
+    html += `<div>${indent}<span style="color:${color};font-weight:${node.isEnd?'700':'400'};">${char}${node.isEnd ? ' ●' : ''}</span></div>`;
+  }
+  for (const k of keys) {
+    html += renderTrieNode(node.children[k], k, depth + 1);
+  }
+  return html;
+}
+
+function autocomplete() {
+  const prefix = document.getElementById('acInput').value.trim().toLowerCase();
+  const container = document.getElementById('acWords');
+  if (!prefix) { container.innerHTML = ''; return; }
+  const matches = trie.startsWith(prefix).slice(0, 8);
+  container.innerHTML = matches.map(w =>
+    `<span style="background:rgba(107,138,255,0.15);border:1px solid var(--accent3);border-radius:5px;padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--accent3);">${w}</span>`
+  ).join('');
+  if (!matches.length) container.innerHTML = '<span style="color:var(--danger);font-family:\'JetBrains Mono\',monospace;font-size:0.78rem;">결과 없음</span>';
+}
+
+renderTrie();
 </script>
 <script src="sidebar.js"></script>
 </body>

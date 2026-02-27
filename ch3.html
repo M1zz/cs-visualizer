@@ -53,6 +53,7 @@
     <a href="#bigo" class="nav-sec-link">빅오</a>
     <a href="#bitmask" class="nav-sec-link">비트마스크</a>
     <a href="#suffixarray" class="nav-sec-link">접미사배열</a>
+    <a href="#dp" class="nav-sec-link">동적프로그래밍</a>
   </div>
 </nav>
 
@@ -271,6 +272,65 @@
     </div>
     <div class="info-text" style="margin-top:16px">
       LCP = 인접한 정렬된 접미사 간의 최장 공통 접두사 길이. 첫 번째 항목은 정의되지 않습니다(—).
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SECTION 7: 동적 프로그래밍 -->
+<section id="dp">
+  <div class="section-header">
+    <div class="tag tag-ch3">07 — DYNAMIC PROGRAMMING</div>
+    <h2>동적 프로그래밍 (DP)</h2>
+    <p>복잡한 문제를 부분 문제로 나누고, 그 결과를 저장(메모이제이션)하여 중복 계산을 피하는 알고리즘 기법입니다. 최적 부분 구조 + 중복 부분 문제가 핵심 조건입니다.</p>
+  </div>
+  <div class="viz-box">
+    <!-- Fibonacci Memoization -->
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;margin-bottom:12px;color:var(--accent4)">① 피보나치 — 메모이제이션 vs 단순 재귀</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);">n =</label>
+        <input type="range" id="fibN" min="1" max="12" value="7"
+          style="width:140px;-webkit-appearance:none;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer;"
+          oninput="runFib()">
+        <span id="fibNVal" style="font-family:'JetBrains Mono',monospace;color:var(--accent4);font-weight:700;font-size:1.1rem;">7</span>
+      </div>
+      <div id="fibMemoTable" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
+      <div class="info-text" id="fibInfo"></div>
+    </div>
+
+    <!-- LCS -->
+    <div style="border-top:1px solid var(--border);padding-top:24px;margin-top:24px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;margin-bottom:12px;color:var(--accent4)">② 최장 공통 부분 수열 (LCS)</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+        <input type="text" id="lcsA" value="ABCBDAB" maxlength="9" class="sa-input" style="width:130px;text-transform:uppercase;" oninput="runLCS()">
+        <span style="font-family:'JetBrains Mono',monospace;color:var(--text-dim);">vs</span>
+        <input type="text" id="lcsB" value="BDCABA" maxlength="9" class="sa-input" style="width:130px;text-transform:uppercase;" oninput="runLCS()">
+      </div>
+      <div id="lcsTable" style="overflow-x:auto;"></div>
+      <div class="info-text" style="margin-top:10px;" id="lcsInfo"></div>
+    </div>
+
+    <!-- Knapsack -->
+    <div style="border-top:1px solid var(--border);padding-top:24px;margin-top:24px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;margin-bottom:8px;color:var(--accent4)">③ 0/1 배낭 문제 (Knapsack)</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.76rem;color:var(--text-dim);margin-bottom:12px;">용량 W 이하에서 최대 가치를 선택하는 문제. DP[i][w] = 아이템 i까지 고려 시 용량 w에서 최대 가치.</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);">용량 W =</label>
+        <input type="range" id="ksW" min="5" max="15" value="10"
+          style="width:120px;-webkit-appearance:none;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer;"
+          oninput="runKnapsack()">
+        <span id="ksWVal" style="font-family:'JetBrains Mono',monospace;color:var(--accent4);font-weight:700;font-size:1.1rem;">10</span>
+      </div>
+      <div id="ksItemList" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"></div>
+      <div id="ksTable" style="overflow-x:auto;"></div>
+      <div class="info-text" style="margin-top:10px;" id="ksInfo"></div>
+    </div>
+
+    <div class="info-text" style="margin-top:20px;">
+      DP 핵심 조건: <strong style="color:var(--accent)">최적 부분 구조</strong> (큰 문제의 최적해 = 부분 문제 최적해 조합) &amp; <strong style="color:var(--accent2)">중복 부분 문제</strong> (같은 계산 반복).
+      접근법: <strong style="color:var(--accent4)">탑다운</strong>(재귀+메모이제이션) vs <strong style="color:var(--accent3)">바텀업</strong>(반복문+테이블).
     </div>
   </div>
 </section>
@@ -862,6 +922,151 @@ window.addEventListener('load', () => {
 });
 
 window.addEventListener('resize', () => { drawBigO(); });
+
+// ═══════════════════════════════════════════════
+// SECTION 7: DYNAMIC PROGRAMMING
+// ═══════════════════════════════════════════════
+
+// --- ① Fibonacci Memoization ---
+let fibMemo = {};
+let fibCallsWithMemo = 0;
+
+function fibM(n) {
+  fibCallsWithMemo++;
+  if (n <= 1) return n;
+  if (fibMemo[n] !== undefined) return fibMemo[n];
+  fibMemo[n] = fibM(n-1) + fibM(n-2);
+  return fibMemo[n];
+}
+
+function naiveCalls(n) {
+  // rough estimate: T(n) = T(n-1)+T(n-2)+1, approx 2^n
+  return Math.round(Math.pow(1.618, n+1) / Math.sqrt(5));
+}
+
+function runFib() {
+  const n = parseInt(document.getElementById('fibN').value);
+  document.getElementById('fibNVal').textContent = n;
+  fibMemo = {}; fibCallsWithMemo = 0;
+  const result = fibM(n);
+  const memoDiv = document.getElementById('fibMemoTable');
+  memoDiv.innerHTML = '';
+  for (let i = 0; i <= n; i++) {
+    const v = i <= 1 ? i : fibMemo[i];
+    const cell = document.createElement('div');
+    cell.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:"JetBrains Mono",monospace;font-size:0.8rem;text-align:center;min-width:50px;';
+    cell.innerHTML = `<div style="color:var(--text-dim);font-size:0.6rem;margin-bottom:2px;">F(${i})</div><div style="color:${i<=1?'var(--accent2)':'var(--accent)'};font-weight:700;">${v}</div>`;
+    memoDiv.appendChild(cell);
+  }
+  const naive = naiveCalls(n);
+  document.getElementById('fibInfo').innerHTML =
+    `F(${n}) = <span style="color:var(--accent);font-weight:700;">${result}</span> &nbsp;|&nbsp; `+
+    `메모이제이션 호출: <span style="color:var(--accent)">${fibCallsWithMemo}회</span> &nbsp;|&nbsp; `+
+    `단순 재귀 호출: <span style="color:var(--danger)">~${naive.toLocaleString()}회</span> &nbsp;|&nbsp; `+
+    `절약: <span style="color:var(--accent4)">${Math.round((1-fibCallsWithMemo/Math.max(naive,1))*100)}%</span>`;
+}
+
+// --- ② LCS ---
+function runLCS() {
+  const a = document.getElementById('lcsA').value.toUpperCase().replace(/[^A-Z]/g,'');
+  const b = document.getElementById('lcsB').value.toUpperCase().replace(/[^A-Z]/g,'');
+  const m = a.length, n = b.length;
+  if (!m || !n) { document.getElementById('lcsTable').innerHTML=''; return; }
+  const dp = Array.from({length:m+1}, ()=>Array(n+1).fill(0));
+  for (let i=1;i<=m;i++) for (let j=1;j<=n;j++)
+    dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1]+1 : Math.max(dp[i-1][j],dp[i][j-1]);
+
+  // backtrack LCS
+  let lcs='', ci=m, cj=n;
+  while(ci>0&&cj>0){
+    if(a[ci-1]===b[cj-1]){lcs=a[ci-1]+lcs;ci--;cj--;}
+    else if(dp[ci-1][cj]>dp[ci][cj-1])ci--;else cj--;
+  }
+
+  // highlight LCS path cells
+  const path = new Set();
+  ci=m;cj=n;
+  while(ci>0&&cj>0){
+    if(a[ci-1]===b[cj-1]){path.add(`${ci},${cj}`);ci--;cj--;}
+    else if(dp[ci-1][cj]>dp[ci][cj-1])ci--;else cj--;
+  }
+
+  let html='<table style="border-collapse:collapse;font-family:\'JetBrains Mono\',monospace;font-size:0.72rem;">';
+  html+=`<tr><th style="padding:5px 8px;color:var(--text-dim);"></th><th style="padding:5px 8px;color:var(--text-dim);">ε</th>`;
+  for(let j=0;j<n;j++) html+=`<th style="padding:5px 8px;color:var(--accent2);">${b[j]}</th>`;
+  html+='</tr>';
+  for(let i=0;i<=m;i++){
+    html+=`<tr><th style="padding:5px 8px;color:var(--accent);">${i===0?'ε':a[i-1]}</th>`;
+    for(let j=0;j<=n;j++){
+      const isPath=path.has(`${i},${j}`);
+      html+=`<td style="padding:5px 8px;text-align:center;border:1px solid var(--border);${isPath?'color:var(--accent);font-weight:700;background:rgba(0,255,170,0.12);':'color:var(--text-dim);'}">${dp[i][j]}</td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</table>';
+  document.getElementById('lcsTable').innerHTML=html;
+  document.getElementById('lcsInfo').innerHTML=
+    `LCS 길이: <span style="color:var(--accent);font-weight:700;">${dp[m][n]}</span> &nbsp;|&nbsp; `+
+    `LCS: <span style="color:var(--accent2);font-weight:700;">"${lcs}"</span>`;
+}
+
+// --- ③ 0/1 Knapsack ---
+const ksItems=[
+  {name:'A',w:2,v:6},{name:'B',w:2,v:10},{name:'C',w:3,v:12},{name:'D',w:5,v:15},{name:'E',w:7,v:20}
+];
+
+function runKnapsack(){
+  const W=parseInt(document.getElementById('ksW').value);
+  document.getElementById('ksWVal').textContent=W;
+  const n=ksItems.length;
+  // item list display
+  document.getElementById('ksItemList').innerHTML=ksItems.map(it=>
+    `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 12px;font-family:'JetBrains Mono',monospace;font-size:0.76rem;">
+      <span style="color:var(--accent2);font-weight:700;">${it.name}</span>
+      <span style="color:var(--text-dim);"> 무게=${it.w} 가치=${it.v}</span></div>`
+  ).join('');
+  // DP
+  const dp=Array.from({length:n+1},()=>Array(W+1).fill(0));
+  for(let i=1;i<=n;i++) for(let w=0;w<=W;w++)
+    dp[i][w]=ksItems[i-1].w<=w
+      ?Math.max(dp[i-1][w],dp[i-1][w-ksItems[i-1].w]+ksItems[i-1].v)
+      :dp[i-1][w];
+  // backtrack
+  const sel=[];let ci=n,cw=W;
+  while(ci>0&&cw>0){
+    if(dp[ci][cw]!==dp[ci-1][cw]){sel.push(ksItems[ci-1].name);cw-=ksItems[ci-1].w;}ci--;
+  }
+  // render table
+  const maxW=Math.min(W,12);
+  let html='<table style="border-collapse:collapse;font-family:\'JetBrains Mono\',monospace;font-size:0.72rem;">';
+  html+='<tr><th style="padding:4px 8px;color:var(--text-dim);white-space:nowrap;">아이템\\용량</th>';
+  for(let w=0;w<=maxW;w++) html+=`<th style="padding:4px 8px;color:var(--text-dim);">${w}</th>`;
+  if(W>maxW) html+=`<th style="padding:4px 8px;color:var(--accent4);">W=${W}</th>`;
+  html+='</tr>';
+  for(let i=0;i<=n;i++){
+    const label=i===0?'(없음)':`${ksItems[i-1].name}(w=${ksItems[i-1].w},v=${ksItems[i-1].v})`;
+    html+=`<tr><td style="padding:4px 8px;color:var(--accent2);white-space:nowrap;font-size:0.7rem;">${label}</td>`;
+    for(let w=0;w<=maxW;w++){
+      const isOpt=i===n&&w===W&&W<=maxW;
+      html+=`<td style="padding:4px 8px;text-align:center;border:1px solid var(--border);${isOpt?'color:var(--accent);font-weight:700;background:rgba(0,255,170,0.12);':'color:var(--text-dim);'}">${dp[i][w]}</td>`;
+    }
+    if(W>maxW){
+      const isOpt=i===n;
+      html+=`<td style="padding:4px 8px;text-align:center;border:1px solid var(--border);${isOpt?'color:var(--accent);font-weight:700;background:rgba(0,255,170,0.12);':'color:var(--text-dim);'}">${dp[i][W]}</td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</table>';
+  document.getElementById('ksTable').innerHTML=html;
+  document.getElementById('ksInfo').innerHTML=
+    `최대 가치: <span style="color:var(--accent);font-weight:700;">${dp[n][W]}</span> &nbsp;|&nbsp; `+
+    `선택 아이템: <span style="color:var(--accent2);">[${sel.join(', ')}]</span>`;
+}
+
+// DP INIT
+runFib();
+runLCS();
+runKnapsack();
 </script>
 <script src="sidebar.js"></script>
 </body>

@@ -137,6 +137,8 @@
     <a href="#tls" class="nav-sec-link">HTTPS/TLS</a>
     <a href="#http" class="nav-sec-link">HTTP</a>
     <a href="#dns" class="nav-sec-link">DNS</a>
+    <a href="#web" class="nav-sec-link">웹 기초</a>
+    <a href="#tcpudp" class="nav-sec-link">TCP vs UDP</a>
   </div>
 </nav>
 
@@ -450,6 +452,216 @@
         <div class="rvi-step"><span>클라이언트</span> → Auth (최종 IP)</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);margin-top:6px;">클라이언트가 직접 각 서버에 질의. 서버 간 통신에 사용.</div>
       </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SECTION 8: 웹 기초 -->
+<section id="web">
+  <div class="section-header">
+    <div class="tag tag-ch8">08 — WEB BASICS</div>
+    <h2>웹 기초 — 쿠키/세션/JWT & CORS</h2>
+    <p>웹 인증 방식과 브라우저 보안 정책의 핵심 개념입니다. 면접에서 가장 자주 나오는 웹 지식입니다.</p>
+  </div>
+  <div class="viz-box">
+
+    <!-- Cookie vs Session vs JWT -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;margin-bottom:14px;color:#22d3ee">① 인증 방식 비교: Cookie vs Session vs JWT</div>
+
+    <!-- 탭 선택 -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn active" id="authTabCookie" onclick="showAuthTab('cookie')">Cookie</button>
+      <button class="btn" id="authTabSession" onclick="showAuthTab('session')">Session</button>
+      <button class="btn" id="authTabJWT" onclick="showAuthTab('jwt')">JWT</button>
+    </div>
+
+    <!-- Cookie Panel -->
+    <div id="panelCookie">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;">
+        <div style="background:var(--surface2);border-radius:8px;padding:14px;">
+          <div style="color:#22d3ee;font-weight:700;margin-bottom:8px;">클라이언트 (브라우저)</div>
+          <div style="background:var(--bg);border-radius:4px;padding:8px;font-size:0.72rem;line-height:1.8;color:var(--text-dim);">
+            Set-Cookie 수신 후 저장<br>
+            <span style="color:var(--accent4)">user=alice</span><br>
+            <span style="color:var(--accent4)">token=xyz123</span><br>
+            <br>요청마다 자동으로 전송
+          </div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:14px;">
+          <div style="color:#22d3ee;font-weight:700;margin-bottom:8px;">서버</div>
+          <div style="background:var(--bg);border-radius:4px;padding:8px;font-size:0.72rem;line-height:1.8;color:var(--text-dim);">
+            응답 시 Set-Cookie 헤더<br>
+            쿠키 값으로 사용자 식별<br>
+            <span style="color:var(--danger)">⚠ XSS/CSRF 취약점 주의</span><br>
+            HttpOnly, Secure 옵션 필수
+          </div>
+        </div>
+      </div>
+      <div class="info-text" style="margin-top:12px;">
+        쿠키: 브라우저에 저장되는 작은 데이터(≤4KB). 만료일, 도메인, 경로, HttpOnly, Secure, SameSite 속성으로 제어. 서버 상태를 클라이언트에 저장 → <strong style="color:var(--accent4)">Stateless 서버</strong> 가능.
+      </div>
+    </div>
+
+    <!-- Session Panel -->
+    <div id="panelSession" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:0.75rem;margin-bottom:12px;">
+        <div style="background:var(--surface2);border-radius:8px;padding:12px;">
+          <div style="color:#22d3ee;font-weight:700;margin-bottom:6px;">브라우저</div>
+          <div style="background:var(--bg);border-radius:4px;padding:6px;color:var(--text-dim);font-size:0.7rem;line-height:1.7;">
+            쿠키: <span style="color:var(--accent4)">sessionId=abc</span><br>
+            (세션 ID만 저장)
+          </div>
+        </div>
+        <div style="text-align:center;color:var(--text-dim);">⟷</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:12px;">
+          <div style="color:#22d3ee;font-weight:700;margin-bottom:6px;">서버 메모리/Redis</div>
+          <div style="background:var(--bg);border-radius:4px;padding:6px;color:var(--text-dim);font-size:0.7rem;line-height:1.7;">
+            <span style="color:var(--accent4)">abc</span> → {user: alice, role: admin, ...}<br>
+            <span style="color:var(--accent2)">xyz</span> → {user: bob, ...}
+          </div>
+        </div>
+      </div>
+      <div class="info-text">
+        세션: 실제 데이터는 서버에, 브라우저는 ID만 보유. <strong style="color:var(--accent)">보안↑</strong> (데이터 서버 저장). 단점: 서버 메모리 사용, <strong style="color:var(--danger)">수평 확장 어려움</strong> (세션 공유 필요 → Redis 사용).
+      </div>
+    </div>
+
+    <!-- JWT Panel -->
+    <div id="panelJWT" style="display:none;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.76rem;margin-bottom:12px;">
+        <div style="margin-bottom:8px;color:var(--text-dim);">JWT = Header.Payload.Signature (Base64 인코딩)</div>
+        <div style="display:flex;gap:0;flex-wrap:wrap;border-radius:8px;overflow:hidden;font-size:0.72rem;">
+          <div style="background:rgba(255,107,157,0.2);border:1px solid var(--accent2);padding:10px 14px;flex:1;">
+            <div style="color:var(--accent2);font-weight:700;margin-bottom:4px;">Header</div>
+            <div style="color:var(--text-dim);">알고리즘 & 타입<br>{"alg":"HS256","typ":"JWT"}</div>
+          </div>
+          <div style="background:rgba(107,138,255,0.2);border:1px solid var(--accent3);padding:10px 14px;flex:1;">
+            <div style="color:var(--accent3);font-weight:700;margin-bottom:4px;">Payload</div>
+            <div style="color:var(--text-dim);">{"sub":"alice","role":"admin","exp":1234567}</div>
+          </div>
+          <div style="background:rgba(0,255,170,0.12);border:1px solid var(--accent);padding:10px 14px;flex:1;">
+            <div style="color:var(--accent);font-weight:700;margin-bottom:4px;">Signature</div>
+            <div style="color:var(--text-dim);">HMACSHA256(b64(H)+"."+b64(P), secret)</div>
+          </div>
+        </div>
+      </div>
+      <div class="info-text">
+        JWT: <strong style="color:var(--accent)">Stateless</strong> 인증 (서버가 상태 저장 불필요). 서명으로 위변조 감지. <strong style="color:var(--danger)">단점</strong>: 토큰 무효화 어려움(만료 전까지 유효), Payload는 암호화 아님(Base64 디코딩 가능). 보통 Access Token(15분) + Refresh Token(7일) 조합 사용.
+      </div>
+    </div>
+
+    <!-- CORS -->
+    <div style="border-top:1px solid var(--border);padding-top:24px;margin-top:24px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;margin-bottom:12px;color:#22d3ee">② CORS (Cross-Origin Resource Sharing)</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.76rem;color:var(--text-dim);margin-bottom:14px;">
+        브라우저의 <strong style="color:var(--accent4)">Same-Origin Policy</strong>: 다른 출처(도메인/포트/프로토콜)의 리소스 접근 차단. CORS는 서버가 명시적으로 허용하는 메커니즘.
+      </div>
+      <div class="controls">
+        <button class="btn" onclick="corsDemo('same')">같은 출처 요청</button>
+        <button class="btn danger" onclick="corsDemo('cross-block')">다른 출처 차단</button>
+        <button class="btn" onclick="corsDemo('cross-allow')">CORS 허용 요청</button>
+        <button class="btn" onclick="corsDemo('preflight')">Preflight 요청</button>
+      </div>
+      <div id="corsViz" style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;background:var(--surface2);border-radius:8px;padding:16px;margin-top:12px;min-height:90px;line-height:2;"></div>
+    </div>
+
+    <!-- REST -->
+    <div style="border-top:1px solid var(--border);padding-top:24px;margin-top:24px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;margin-bottom:12px;color:#22d3ee">③ REST API 설계 원칙</div>
+      <table style="width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:0.76rem;">
+        <tr>
+          <th style="padding:8px 12px;background:var(--surface2);color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border);font-size:0.68rem;">HTTP 메서드</th>
+          <th style="padding:8px 12px;background:var(--surface2);color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border);">URI 예시</th>
+          <th style="padding:8px 12px;background:var(--surface2);color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border);">동작</th>
+          <th style="padding:8px 12px;background:var(--surface2);color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border);">멱등성</th>
+        </tr>
+        <tr><td style="padding:7px 12px;color:var(--accent);border-bottom:1px solid var(--border);">GET</td><td style="padding:7px 12px;color:var(--text-dim);border-bottom:1px solid var(--border);">/users /users/1</td><td style="padding:7px 12px;color:var(--text);border-bottom:1px solid var(--border);">조회</td><td style="padding:7px 12px;color:var(--accent);border-bottom:1px solid var(--border);">✓ 멱등</td></tr>
+        <tr><td style="padding:7px 12px;color:var(--accent3);border-bottom:1px solid var(--border);">POST</td><td style="padding:7px 12px;color:var(--text-dim);border-bottom:1px solid var(--border);">/users</td><td style="padding:7px 12px;color:var(--text);border-bottom:1px solid var(--border);">생성</td><td style="padding:7px 12px;color:var(--danger);border-bottom:1px solid var(--border);">✗ 비멱등</td></tr>
+        <tr><td style="padding:7px 12px;color:var(--accent4);border-bottom:1px solid var(--border);">PUT</td><td style="padding:7px 12px;color:var(--text-dim);border-bottom:1px solid var(--border);">/users/1</td><td style="padding:7px 12px;color:var(--text);border-bottom:1px solid var(--border);">전체 수정</td><td style="padding:7px 12px;color:var(--accent);border-bottom:1px solid var(--border);">✓ 멱등</td></tr>
+        <tr><td style="padding:7px 12px;color:var(--accent2);border-bottom:1px solid var(--border);">PATCH</td><td style="padding:7px 12px;color:var(--text-dim);border-bottom:1px solid var(--border);">/users/1</td><td style="padding:7px 12px;color:var(--text);border-bottom:1px solid var(--border);">부분 수정</td><td style="padding:7px 12px;color:var(--accent4);border-bottom:1px solid var(--border);">△ 경우에 따라</td></tr>
+        <tr><td style="padding:7px 12px;color:var(--danger);">DELETE</td><td style="padding:7px 12px;color:var(--text-dim);">/users/1</td><td style="padding:7px 12px;color:var(--text);">삭제</td><td style="padding:7px 12px;color:var(--accent);">✓ 멱등</td></tr>
+      </table>
+      <div class="info-text" style="margin-top:12px;">
+        REST 6원칙: <strong style="color:var(--accent)">Stateless</strong>(서버 상태 미보존) · <strong style="color:var(--accent3)">Uniform Interface</strong>(표준 HTTP) · <strong style="color:var(--accent4)">Cacheable</strong> · Client-Server · Layered System · Code on Demand(선택).
+        URI는 명사 사용, 동사 금지. 버전은 /v1/users 형식.
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SECTION 9: TCP vs UDP -->
+<section id="tcpudp">
+  <div class="section-header">
+    <div class="tag tag-ch8">09 — TCP vs UDP</div>
+    <h2>TCP vs UDP</h2>
+    <p>두 전송 계층 프로토콜의 핵심 차이입니다. 신뢰성이 필요하면 TCP, 속도가 중요하면 UDP를 선택합니다.</p>
+  </div>
+  <div class="viz-box">
+    <!-- 비교 표 -->
+    <table style="width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:0.78rem;margin-bottom:24px;">
+      <tr>
+        <th style="padding:10px 14px;background:var(--surface2);color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border);font-size:0.7rem;letter-spacing:1px;">항목</th>
+        <th style="padding:10px 14px;background:rgba(0,255,170,0.06);color:var(--accent);text-align:center;border-bottom:1px solid var(--border);">TCP</th>
+        <th style="padding:10px 14px;background:rgba(107,138,255,0.06);color:var(--accent3);text-align:center;border-bottom:1px solid var(--border);">UDP</th>
+      </tr>
+      <tr><td style="padding:8px 14px;color:var(--text-dim);border-bottom:1px solid var(--border);">연결 방식</td><td style="padding:8px 14px;text-align:center;color:var(--accent);border-bottom:1px solid var(--border);">연결지향 (3-way handshake)</td><td style="padding:8px 14px;text-align:center;color:var(--accent3);border-bottom:1px solid var(--border);">비연결 (connectionless)</td></tr>
+      <tr><td style="padding:8px 14px;color:var(--text-dim);border-bottom:1px solid var(--border);">신뢰성</td><td style="padding:8px 14px;text-align:center;color:var(--accent);border-bottom:1px solid var(--border);">✓ 보장 (ACK, 재전송)</td><td style="padding:8px 14px;text-align:center;color:var(--danger);border-bottom:1px solid var(--border);">✗ 보장 안됨</td></tr>
+      <tr><td style="padding:8px 14px;color:var(--text-dim);border-bottom:1px solid var(--border);">순서 보장</td><td style="padding:8px 14px;text-align:center;color:var(--accent);border-bottom:1px solid var(--border);">✓ 순서 보장</td><td style="padding:8px 14px;text-align:center;color:var(--danger);border-bottom:1px solid var(--border);">✗ 순서 보장 안됨</td></tr>
+      <tr><td style="padding:8px 14px;color:var(--text-dim);border-bottom:1px solid var(--border);">속도</td><td style="padding:8px 14px;text-align:center;color:var(--accent4);border-bottom:1px solid var(--border);">느림 (오버헤드 있음)</td><td style="padding:8px 14px;text-align:center;color:var(--accent);border-bottom:1px solid var(--border);">빠름 (오버헤드 없음)</td></tr>
+      <tr><td style="padding:8px 14px;color:var(--text-dim);border-bottom:1px solid var(--border);">헤더 크기</td><td style="padding:8px 14px;text-align:center;color:var(--text);border-bottom:1px solid var(--border);">20~60 bytes</td><td style="padding:8px 14px;text-align:center;color:var(--accent);border-bottom:1px solid var(--border);">8 bytes</td></tr>
+      <tr><td style="padding:8px 14px;color:var(--text-dim);border-bottom:1px solid var(--border);">흐름/혼잡 제어</td><td style="padding:8px 14px;text-align:center;color:var(--accent);border-bottom:1px solid var(--border);">✓ 있음</td><td style="padding:8px 14px;text-align:center;color:var(--text-dim);border-bottom:1px solid var(--border);">✗ 없음</td></tr>
+      <tr><td style="padding:8px 14px;color:var(--text-dim);">주요 사용처</td><td style="padding:8px 14px;text-align:center;color:var(--text);">HTTP/S, 이메일, 파일전송</td><td style="padding:8px 14px;text-align:center;color:var(--text);">DNS, 스트리밍, 게임, VoIP</td></tr>
+    </table>
+
+    <!-- 전송 시뮬레이션 -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;margin-bottom:12px;">전송 시뮬레이션</div>
+    <div class="controls">
+      <button class="btn" onclick="simTCP()">TCP 전송</button>
+      <button class="btn" onclick="simUDP()">UDP 전송</button>
+      <button class="btn danger" onclick="simReset()">초기화</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent);margin-bottom:6px;">TCP</div>
+        <div id="tcpLog" style="background:var(--surface2);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;min-height:120px;line-height:1.9;color:var(--text-dim);"></div>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent3);margin-bottom:6px;">UDP</div>
+        <div id="udpLog" style="background:var(--surface2);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;min-height:120px;line-height:1.9;color:var(--text-dim);"></div>
+      </div>
+    </div>
+
+    <!-- 흐름 제어 / 혼잡 제어 -->
+    <div style="border-top:1px solid var(--border);padding-top:20px;margin-top:20px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;margin-bottom:10px;">TCP 흐름/혼잡 제어</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-family:'JetBrains Mono',monospace;font-size:0.76rem;">
+        <div style="background:var(--surface2);border-radius:8px;padding:14px;">
+          <div style="color:var(--accent);font-weight:700;margin-bottom:8px;">흐름 제어 (Flow Control)</div>
+          <div style="color:var(--text-dim);line-height:1.8;font-size:0.72rem;">
+            · 수신자 처리 속도에 맞게 전송 속도 조절<br>
+            · 슬라이딩 윈도우 (Sliding Window) 방식<br>
+            · 수신자가 rwnd(수신 윈도우 크기) 알림<br>
+            · rwnd=0이면 전송 중단
+          </div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:14px;">
+          <div style="color:var(--accent3);font-weight:700;margin-bottom:8px;">혼잡 제어 (Congestion Control)</div>
+          <div style="color:var(--text-dim);line-height:1.8;font-size:0.72rem;">
+            · 네트워크 혼잡 감지 및 전송량 조절<br>
+            · Slow Start: cwnd 1부터 지수 증가<br>
+            · Congestion Avoidance: 선형 증가<br>
+            · 패킷 손실 시 cwnd 감소
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-text" style="margin-top:16px;">
+      <strong style="color:var(--accent4)">QUIC</strong>: Google이 개발한 UDP 기반 프로토콜. TCP의 신뢰성 + UDP의 속도. HTTP/3의 기반. 연결 설정이 0-RTT로 가능.
     </div>
   </div>
 </section>
@@ -1102,6 +1314,128 @@ function dnsReset() {
 }
 
 renderDNS();
+
+// ════════════════════════════════════════════
+// SECTION 8: WEB BASICS
+// ════════════════════════════════════════════
+
+function showAuthTab(tab) {
+  ['cookie','session','jwt'].forEach(t => {
+    document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t===tab?'block':'none';
+    const btn = document.getElementById('authTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    btn.classList.toggle('active', t===tab);
+  });
+}
+
+function corsDemo(type) {
+  const v = document.getElementById('corsViz');
+  const cases = {
+    'same': [
+      '<span style="color:var(--text-dim)">브라우저: https://example.com/page</span>',
+      '<span style="color:var(--accent4)">→ fetch("https://example.com/api/data")</span>',
+      '<span style="color:var(--accent)">✅ 같은 출처! (프로토콜+도메인+포트 동일) → 허용</span>'
+    ],
+    'cross-block': [
+      '<span style="color:var(--text-dim)">브라우저: https://my-app.com/page</span>',
+      '<span style="color:var(--accent4)">→ fetch("https://api.other.com/data")</span>',
+      '<span style="color:var(--accent4)">→ 요청 전송...</span>',
+      '<span style="color:var(--text-dim)">서버 응답: 200 OK (응답은 왔음)</span>',
+      '<span style="color:var(--danger)">❌ 브라우저: Access-Control-Allow-Origin 헤더 없음!</span>',
+      '<span style="color:var(--danger)">   CORS 오류 — JS에서 응답 접근 차단됨</span>'
+    ],
+    'cross-allow': [
+      '<span style="color:var(--text-dim)">브라우저: https://my-app.com/page</span>',
+      '<span style="color:var(--accent4)">→ fetch("https://api.other.com/data")</span>',
+      '<span style="color:var(--text-dim)">서버 응답: 200 OK</span>',
+      '<span style="color:var(--accent3)">   Access-Control-Allow-Origin: https://my-app.com</span>',
+      '<span style="color:var(--accent)">✅ CORS 허용됨 — 응답 접근 가능</span>'
+    ],
+    'preflight': [
+      '<span style="color:var(--accent4)">① Preflight 요청 (OPTIONS 메서드)</span>',
+      '<span style="color:var(--text-dim)">   Origin: https://my-app.com</span>',
+      '<span style="color:var(--text-dim)">   Access-Control-Request-Method: POST</span>',
+      '<span style="color:var(--accent3)">② 서버 응답</span>',
+      '<span style="color:var(--text-dim)">   Access-Control-Allow-Origin: *</span>',
+      '<span style="color:var(--text-dim)">   Access-Control-Allow-Methods: GET,POST</span>',
+      '<span style="color:var(--accent)">③ 실제 POST 요청 전송 → ✅ 허용됨</span>',
+      '<span style="color:var(--text-dim);font-size:0.7rem;">PUT/PATCH/DELETE 또는 커스텀 헤더 있을 때 Preflight 발생</span>'
+    ]
+  };
+  const lines = cases[type] || [];
+  v.innerHTML = lines.join('<br>');
+}
+
+// Init
+corsDemo('same');
+showAuthTab('cookie');
+
+// ════════════════════════════════════════════
+// SECTION 9: TCP vs UDP Simulation
+// ════════════════════════════════════════════
+let simRunning = false;
+
+function simLog(id, msg, color) {
+  const el = document.getElementById(id);
+  el.innerHTML += `<span style="color:${color||'var(--text-dim)'}">${msg}</span><br>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function simReset() {
+  simRunning = false;
+  document.getElementById('tcpLog').innerHTML = '';
+  document.getElementById('udpLog').innerHTML = '';
+}
+
+async function simTCP() {
+  if (simRunning) return;
+  simRunning = true;
+  const dl = ms => new Promise(r => setTimeout(r, ms));
+  simLog('tcpLog', '=== TCP 전송 시작 ===', 'var(--accent)');
+  await dl(300);
+  simLog('tcpLog', '① SYN → 서버', 'var(--accent4)');
+  await dl(400);
+  simLog('tcpLog', '② ← SYN-ACK', 'var(--accent4)');
+  await dl(400);
+  simLog('tcpLog', '③ ACK → (연결 확립)', 'var(--accent)');
+  await dl(400);
+  for (let i = 1; i <= 4; i++) {
+    simLog('tcpLog', `  패킷 #${i} → 서버`, 'var(--text-dim)');
+    await dl(200);
+    simLog('tcpLog', `  ← ACK #${i} 수신`, 'var(--text-dim)');
+    await dl(150);
+  }
+  simLog('tcpLog', '④ FIN → (연결 종료 시작)', 'var(--accent2)');
+  await dl(300);
+  simLog('tcpLog', '⑤ ← FIN-ACK', 'var(--accent2)');
+  await dl(300);
+  simLog('tcpLog', '✅ 모든 패킷 순서대로 수신 완료', 'var(--accent)');
+  simRunning = false;
+}
+
+async function simUDP() {
+  if (simRunning) return;
+  simRunning = true;
+  const dl = ms => new Promise(r => setTimeout(r, ms));
+  simLog('udpLog', '=== UDP 전송 시작 ===', 'var(--accent3)');
+  await dl(200);
+  simLog('udpLog', '연결 설정 없이 바로 전송!', 'var(--accent3)');
+  await dl(200);
+  const order = [1,2,3,4];
+  const received = [1,3,2,4]; // out of order
+  for (let i = 0; i < order.length; i++) {
+    simLog('udpLog', `  패킷 #${order[i]} 송신 →`, 'var(--text-dim)');
+    await dl(150);
+  }
+  await dl(200);
+  simLog('udpLog', '수신 순서 (순서 보장 없음):', 'var(--accent4)');
+  for (const p of received) {
+    simLog('udpLog', `  ← 패킷 #${p} 수신`, 'var(--text-dim)');
+    await dl(100);
+  }
+  simLog('udpLog', '⚡ ACK 없음, 빠르게 완료', 'var(--accent3)');
+  simLog('udpLog', '⚠ 패킷 손실 가능, 재전송 없음', 'var(--accent4)');
+  simRunning = false;
+}
 </script>
 <script src="sidebar.js"></script>
 </body>

@@ -402,6 +402,18 @@ footer{text-align:center;padding:60px 24px;color:var(--text-dim);font-size:0.85r
 .tag-ch8{background:rgba(34,211,238,0.12);color:#22d3ee;}
 .tag-ch9{background:rgba(249,115,22,0.12);color:#f97316;}
 .cb8 h2{color:#22d3ee;}.cb9 h2{color:#f97316;}
+.ch10 .ch-card-name{color:#10b981;}.ch10:hover{border-color:#10b981;}
+.ch11 .ch-card-name{color:#f59e0b;}.ch11:hover{border-color:#f59e0b;}
+.ch12 .ch-card-name{color:#8b5cf6;}.ch12:hover{border-color:#8b5cf6;}
+.tag-ch10{background:rgba(16,185,129,0.12);color:#10b981;}
+.tag-ch11{background:rgba(245,158,11,0.12);color:#f59e0b;}
+.tag-ch12{background:rgba(139,92,246,0.12);color:#8b5cf6;}
+.cb10 h2{color:#10b981;}.cb11 h2{color:#f59e0b;}.cb12 h2{color:#8b5cf6;}
+.ch13 .ch-card-name{color:#ec4899;}.ch13:hover{border-color:#ec4899;}
+.ch14 .ch-card-name{color:#06b6d4;}.ch14:hover{border-color:#06b6d4;}
+.tag-ch13{background:rgba(236,72,153,0.12);color:#ec4899;}
+.tag-ch14{background:rgba(6,182,212,0.12);color:#06b6d4;}
+.cb13 h2{color:#ec4899;}.cb14 h2{color:#06b6d4;}
 /* GRAPH (ch4) */
 .graph-canvas-wrap{background:var(--surface2);border-radius:8px;position:relative;overflow:hidden;}
 .graph-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}

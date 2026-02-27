@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.12 디자인 패턴 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── Ch12 tag ── */
+.tag-ch12 { background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.3); }
+
+/* ── Shared helpers ── */
+.flex-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.flex-col  { display: flex; flex-direction: column; gap: 10px; }
+.code-block {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: #c9d1d9;
+  line-height: 1.9;
+  overflow-x: auto;
+  white-space: pre;
+}
+.kw  { color: #ff79c6; }
+.fn  { color: #50fa7b; }
+.str { color: #f1fa8c; }
+.cm  { color: #6272a4; }
+.num { color: #bd93f9; }
+.cls { color: #8be9fd; }
+
+/* ── Arrow helper ── */
+.arrow-right { display: inline-block; margin: 0 6px; color: var(--text-dim); font-size: 1.1rem; }
+.arrow-down  { display: block; text-align: center; color: var(--text-dim); font-size: 1.2rem; line-height: 1.2; }
+
+/* ═══════════════════════════════════════════
+   SECTION 1 — SINGLETON
+════════════════════════════════════════════ */
+.singleton-diagram {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.caller-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.caller-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  transition: all 0.3s;
+}
+.caller-box.active {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  background: rgba(139,92,246,0.1);
+  box-shadow: 0 0 10px rgba(139,92,246,0.2);
+}
+.arrows-middle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 16px;
+}
+.arrow-line {
+  width: 50px;
+  height: 2px;
+  background: var(--border);
+  position: relative;
+  transition: background 0.3s;
+  align-self: center;
+}
+.arrow-line::after {
+  content: '▶';
+  position: absolute;
+  right: -8px;
+  top: -8px;
+  font-size: 10px;
+  color: var(--border);
+  transition: color 0.3s;
+}
+.arrow-line.active { background: #8b5cf6; }
+.arrow-line.active::after { color: #8b5cf6; }
+
+.singleton-instance {
+  background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(139,92,246,0.05));
+  border: 2px solid #8b5cf6;
+  border-radius: 12px;
+  padding: 18px 24px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(139,92,246,0.2);
+}
+.singleton-instance .inst-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: #8b5cf6;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.singleton-instance .inst-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.singleton-instance .inst-addr {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--accent);
+  margin-top: 4px;
+}
+
+.log-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  min-height: 100px;
+  max-height: 200px;
+  overflow-y: auto;
+  color: var(--text-dim);
+}
+.log-entry { line-height: 2; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.log-entry .log-same  { color: var(--accent); }
+.log-entry .log-addr  { color: #8b5cf6; }
+.log-entry .log-label { color: var(--text-dim); }
+
+/* ═══════════════════════════════════════════
+   SECTION 2 — FACTORY
+════════════════════════════════════════════ */
+.factory-selector {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.shape-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.shape-btn:hover, .shape-btn.selected {
+  border-color: var(--accent3);
+  color: var(--accent3);
+  background: rgba(107,138,255,0.1);
+}
+.factory-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+.factory-node {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  min-width: 110px;
+  transition: all 0.3s;
+}
+.factory-node.client { border-color: var(--accent4); color: var(--accent4); }
+.factory-node.factory-box { border-color: var(--accent3); color: var(--accent3); background: rgba(107,138,255,0.08); }
+.factory-node.product { border-color: var(--accent); color: var(--accent); }
+.factory-node.active-product {
+  box-shadow: 0 0 16px rgba(0,255,170,0.3);
+  transform: scale(1.05);
+}
+.shape-canvas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 140px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 16px 0;
+  position: relative;
+  overflow: hidden;
+}
+.shape-canvas svg { transition: all 0.4s; }
+.shape-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+.shape-info-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.shape-info-card .card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+/* ═══════════════════════════════════════════
+   SECTION 3 — OBSERVER
+════════════════════════════════════════════ */
+.observer-layout {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 20px;
+  align-items: start;
+  margin: 16px 0;
+}
+@media (max-width: 680px) {
+  .observer-layout { grid-template-columns: 1fr; }
+}
+.publisher-box {
+  background: linear-gradient(135deg, rgba(255,107,157,0.1), rgba(255,107,157,0.04));
+  border: 2px solid var(--accent2);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+}
+.publisher-box .pub-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  color: var(--accent2);
+  margin-bottom: 6px;
+}
+.publisher-box .pub-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.observer-arrows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.4rem;
+  color: var(--border);
+  padding-top: 20px;
+}
+.observer-arrows.broadcasting {
+  color: var(--accent2);
+  animation: pulseArrow 0.5s ease-in-out 3;
+}
+@keyframes pulseArrow {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.9); }
+}
+.subscribers-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.subscriber-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.subscriber-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0,255,170,0.15), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.4s;
+}
+.subscriber-item.notified::before { transform: translateX(0); }
+.subscriber-item.notified {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(0,255,170,0.2);
+}
+.subscriber-item.removed {
+  opacity: 0.3;
+  border-style: dashed;
+}
+.sub-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.sub-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  flex: 1;
+}
+.sub-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  transition: color 0.3s;
+}
+.subscriber-item.notified .sub-status { color: var(--accent); }
+
+.obs-controls { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+.obs-log {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.77rem;
+  min-height: 80px;
+  max-height: 160px;
+  overflow-y: auto;
+  color: var(--text-dim);
+  line-height: 2;
+}
+
+/* ═══════════════════════════════════════════
+   SECTION 4 — STRATEGY
+════════════════════════════════════════════ */
+.strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+@media (max-width: 600px) { .strategy-grid { grid-template-columns: 1fr; } }
+.strategy-card {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.25s;
+  text-align: center;
+}
+.strategy-card:hover { border-color: var(--accent3); background: rgba(107,138,255,0.08); }
+.strategy-card.active {
+  border-color: var(--accent4);
+  background: rgba(255,170,0,0.1);
+  box-shadow: 0 0 16px rgba(255,170,0,0.2);
+}
+.strategy-icon { font-size: 2rem; margin-bottom: 6px; }
+.strategy-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.strategy-desc { font-size: 0.78rem; color: var(--text-dim); }
+
+.payment-flow {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin: 14px 0;
+  min-height: 130px;
+}
+.payment-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s;
+}
+.payment-step.visible { opacity: 1; transform: translateX(0); }
+.step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent4);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.context-box {
+  background: var(--surface2);
+  border: 1px solid var(--accent3);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+}
+.context-label {
+  color: var(--accent3);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.code-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 16px;
+}
+@media (max-width: 620px) { .code-compare { grid-template-columns: 1fr; } }
+.compare-col-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.bad-label  { background: rgba(255,68,102,0.15); color: var(--danger); }
+.good-label { background: rgba(0,255,170,0.1);   color: var(--accent); }
+
+/* ═══════════════════════════════════════════
+   SECTION 5 — MVC / MVP / MVVM
+════════════════════════════════════════════ */
+.arch-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  width: fit-content;
+}
+.arch-tab {
+  padding: 10px 22px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  cursor: pointer;
+  background: var(--surface2);
+  color: var(--text-dim);
+  border: none;
+  transition: all 0.2s;
+  border-right: 1px solid var(--border);
+}
+.arch-tab:last-child { border-right: none; }
+.arch-tab:hover { background: rgba(139,92,246,0.1); color: var(--text); }
+.arch-tab.active { background: rgba(139,92,246,0.2); color: #8b5cf6; font-weight: 600; }
+
+.arch-panel { display: none; }
+.arch-panel.active { display: block; }
+
+.arch-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+.arch-node {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  text-align: center;
+  min-width: 110px;
+  transition: all 0.4s;
+  position: relative;
+}
+.arch-node .node-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.arch-node .node-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.arch-node.model   { border-color: var(--accent3); }
+.arch-node.view    { border-color: var(--accent2); }
+.arch-node.ctrl    { border-color: var(--accent);  }
+.arch-node.presenter { border-color: var(--accent); }
+.arch-node.viewmodel { border-color: var(--accent4); }
+.arch-node.model   .node-label { color: var(--accent3); }
+.arch-node.view    .node-label { color: var(--accent2); }
+.arch-node.ctrl    .node-label { color: var(--accent);  }
+.arch-node.presenter .node-label { color: var(--accent); }
+.arch-node.viewmodel .node-label { color: var(--accent4); }
+
+.arch-node.highlighted {
+  box-shadow: 0 0 20px rgba(139,92,246,0.4);
+  border-color: #8b5cf6 !important;
+  transform: scale(1.06);
+}
+
+.arch-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  gap: 2px;
+  min-width: 60px;
+}
+.arch-arrow .arr-line {
+  height: 2px;
+  width: 100%;
+  background: var(--border);
+  position: relative;
+}
+.arch-arrow .arr-label { text-align: center; white-space: nowrap; }
+.arch-arrow.bidirectional .arr-line::before,
+.arch-arrow.bidirectional .arr-line::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border: 2px solid var(--border);
+  border-left: none;
+  border-bottom: none;
+  top: -3px;
+}
+.arch-arrow.bidirectional .arr-line::after {
+  right: 0; transform: rotate(45deg);
+}
+.arch-arrow.bidirectional .arr-line::before {
+  left: 0; transform: rotate(-135deg);
+}
+.arch-arrow.unidirectional .arr-line::after {
+  content: '';
+  position: absolute;
+  right: -1px; top: -3px;
+  width: 6px; height: 6px;
+  border: 2px solid var(--border);
+  border-left: none; border-bottom: none;
+  transform: rotate(45deg);
+}
+
+.arch-desc {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 14px 0;
+  font-size: 0.87rem;
+  line-height: 1.8;
+}
+.arch-desc .arch-desc-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  color: #8b5cf6;
+}
+.flow-trace {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 2;
+  min-height: 60px;
+  color: var(--text-dim);
+}
+.flow-step { opacity: 0; transition: opacity 0.3s; }
+.flow-step.show { opacity: 1; }
+.flow-step .fs-label { color: #8b5cf6; }
+.flow-step .fs-arrow { color: var(--accent4); margin: 0 6px; }
+
+.realworld-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.rw-badge {
+  background: rgba(139,92,246,0.12);
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: #8b5cf6;
+}
+</style>
+</head>
+<body class="page-body">
+
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:#8b5cf6">Ch.12 — 디자인 패턴</div>
+  <div class="nav-sections">
+    <a href="#singleton" class="nav-sec-link">싱글톤</a>
+    <a href="#factory" class="nav-sec-link">팩토리</a>
+    <a href="#observer" class="nav-sec-link">옵저버</a>
+    <a href="#strategy" class="nav-sec-link">전략</a>
+    <a href="#mvc" class="nav-sec-link">MVC/MVP/MVVM</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     SECTION 1 — 싱글톤 패턴
+══════════════════════════════════════════════ -->
+<section id="singleton">
+  <div class="section-header">
+    <div class="tag tag-ch12">01 — SINGLETON PATTERN</div>
+    <h2>싱글톤 패턴</h2>
+    <p>클래스의 인스턴스가 오직 <strong>하나</strong>만 존재하도록 보장하고, 그 인스턴스에 전역 접근점을 제공하는 패턴입니다. "new"를 아무리 많이 호출해도 항상 같은 객체를 반환합니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <!-- Diagram -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:12px;">STRUCTURE DIAGRAM</div>
+    <div class="singleton-diagram">
+      <div class="caller-stack">
+        <div class="caller-box" id="caller1">Caller A<br><span style="color:var(--text-dim);font-size:0.7rem">new Instance()</span></div>
+        <div class="caller-box" id="caller2">Caller B<br><span style="color:var(--text-dim);font-size:0.7rem">new Instance()</span></div>
+        <div class="caller-box" id="caller3">Caller C<br><span style="color:var(--text-dim);font-size:0.7rem">new Instance()</span></div>
+      </div>
+      <div class="arrows-middle">
+        <div class="arrow-line" id="arr1"></div>
+        <div class="arrow-line" id="arr2"></div>
+        <div class="arrow-line" id="arr3"></div>
+      </div>
+      <div class="singleton-instance">
+        <div class="inst-label">SINGLE INSTANCE</div>
+        <div class="inst-name">DatabaseConnection</div>
+        <div class="inst-addr" id="singletonAddr">0x7f4a2b3c</div>
+        <div style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim)">host: localhost:5432<br>pool: 10 connections</div>
+      </div>
+    </div>
+
+    <!-- Button + log -->
+    <div class="flex-row" style="margin:16px 0 10px">
+      <button class="btn" onclick="createSingletonInstance()">인스턴스 생성</button>
+      <button class="btn" onclick="resetSingleton()" style="background:transparent;border-color:var(--danger);color:var(--danger)">리셋</button>
+      <span id="singletonCount" style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim)">생성 횟수: 0</span>
+    </div>
+    <div class="log-box" id="singletonLog">
+      <div style="color:var(--text-dim);font-style:italic">// 버튼을 클릭하면 인스턴스 참조가 로그됩니다...</div>
+    </div>
+
+    <!-- Code snippet -->
+    <div style="margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">DOUBLE-CHECKED LOCKING (Java)</div>
+    <div class="code-block"><span class="kw">public class</span> <span class="cls">DatabaseConnection</span> {
+    <span class="kw">private static volatile</span> <span class="cls">DatabaseConnection</span> instance = <span class="kw">null</span>;
+    <span class="kw">private</span> <span class="cls">String</span> host;
+    <span class="kw">private</span> <span class="cls">ConnectionPool</span> pool;
+
+    <span class="cm">// private 생성자 — 외부에서 new 불가</span>
+    <span class="kw">private</span> <span class="fn">DatabaseConnection</span>() {
+        <span class="kw">this</span>.host = <span class="str">"localhost:5432"</span>;
+        <span class="kw">this</span>.pool = <span class="kw">new</span> <span class="cls">ConnectionPool</span>(<span class="num">10</span>);
+    }
+
+    <span class="kw">public static</span> <span class="cls">DatabaseConnection</span> <span class="fn">getInstance</span>() {
+        <span class="kw">if</span> (instance == <span class="kw">null</span>) {               <span class="cm">// 1차 체크 (비용 절감)</span>
+            <span class="kw">synchronized</span> (<span class="cls">DatabaseConnection</span>.class) {
+                <span class="kw">if</span> (instance == <span class="kw">null</span>) {       <span class="cm">// 2차 체크 (스레드 안전)</span>
+                    instance = <span class="kw">new</span> <span class="cls">DatabaseConnection</span>();
+                }
+            }
+        }
+        <span class="kw">return</span> instance;
+    }
+}</div>
+
+    <!-- Use cases -->
+    <div class="info-text" style="margin-top:16px">
+      <strong style="color:#8b5cf6">사용 사례:</strong>&nbsp;
+      DB 커넥션 풀 &nbsp;·&nbsp; Logger &nbsp;·&nbsp; 설정(Config) 관리자 &nbsp;·&nbsp; 캐시 관리자 &nbsp;·&nbsp; 스레드 풀
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════
+     SECTION 2 — 팩토리 패턴
+══════════════════════════════════════════════ -->
+<section id="factory">
+  <div class="section-header">
+    <div class="tag tag-ch12">02 — FACTORY PATTERN</div>
+    <h2>팩토리 패턴</h2>
+    <p>객체 생성 로직을 클라이언트로부터 분리하여 <strong>팩토리 클래스</strong>에 위임하는 패턴입니다. 클라이언트는 구체적인 클래스를 알 필요 없이 공통 인터페이스를 통해 객체를 요청합니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <!-- Shape selector -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:10px;">도형 타입을 선택하면 팩토리가 해당 객체를 생성합니다</div>
+    <div class="factory-selector">
+      <button class="shape-btn selected" id="btn-circle"    onclick="selectShape('circle')">● Circle</button>
+      <button class="shape-btn"          id="btn-rect"      onclick="selectShape('rect')">▬ Rectangle</button>
+      <button class="shape-btn"          id="btn-triangle"  onclick="selectShape('triangle')">▲ Triangle</button>
+    </div>
+
+    <!-- Flow diagram -->
+    <div class="factory-diagram">
+      <div class="factory-node client">
+        <div style="font-size:0.7rem;margin-bottom:2px;color:var(--accent4)">CLIENT</div>
+        <div style="font-size:0.82rem">createShape(<span id="factoryArg" style="color:var(--text)">"circle"</span>)</div>
+      </div>
+      <div class="arch-arrow unidirectional" style="min-width:40px">
+        <div class="arr-line"></div>
+        <div class="arr-label">요청</div>
+      </div>
+      <div class="factory-node factory-box">
+        <div style="font-size:0.7rem;margin-bottom:2px">FACTORY</div>
+        <div>ShapeFactory</div>
+      </div>
+      <div class="arch-arrow unidirectional" style="min-width:40px">
+        <div class="arr-line"></div>
+        <div class="arr-label">생성</div>
+      </div>
+      <div class="factory-node product" id="factoryProduct">
+        <div style="font-size:0.7rem;margin-bottom:2px;color:var(--accent)">PRODUCT</div>
+        <div id="factoryProductName">Circle</div>
+      </div>
+    </div>
+
+    <!-- Shape canvas -->
+    <div class="shape-canvas" id="shapeCanvas">
+      <svg id="shapeSVG" width="120" height="120" viewBox="0 0 120 120"></svg>
+    </div>
+
+    <!-- Object properties -->
+    <div class="shape-info-row">
+      <div class="shape-info-card">
+        <div class="card-label">OBJECT TYPE</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--accent3)" id="shapeType">Circle</div>
+      </div>
+      <div class="shape-info-card">
+        <div class="card-label">PROPERTIES</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim)" id="shapeProps">radius: 50, area: 7854</div>
+      </div>
+      <div class="shape-info-card">
+        <div class="card-label">METHOD</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--accent4)" id="shapeMethod">draw(), resize(n)</div>
+      </div>
+      <div class="shape-info-card">
+        <div class="card-label">INTERFACE</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--accent2)">Shape (공통)</div>
+      </div>
+    </div>
+
+    <!-- Factory Method vs Abstract Factory -->
+    <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--accent3);letter-spacing:1px;margin-bottom:8px">FACTORY METHOD</div>
+        <div style="font-size:0.83rem;line-height:1.8;color:var(--text-dim)">
+          서브클래스가 생성할 객체의 클래스를 결정.<br>
+          하나의 제품 계층을 다룸.<br>
+          <span style="color:var(--text)">예: Logger, Parser 생성</span>
+        </div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--accent2);letter-spacing:1px;margin-bottom:8px">ABSTRACT FACTORY</div>
+        <div style="font-size:0.83rem;line-height:1.8;color:var(--text-dim)">
+          관련된 객체 <em>군(族)</em>을 함께 생성.<br>
+          여러 제품 계층을 다룸.<br>
+          <span style="color:var(--text)">예: UI 컴포넌트 키트(Button+Input+Modal)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code -->
+    <div style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px">FACTORY IMPLEMENTATION (TypeScript)</div>
+    <div class="code-block"><span class="kw">interface</span> <span class="cls">Shape</span> {
+    <span class="fn">draw</span>(): <span class="cls">void</span>;
+    <span class="fn">area</span>(): <span class="cls">number</span>;
+}
+
+<span class="kw">class</span> <span class="cls">ShapeFactory</span> {
+    <span class="kw">static</span> <span class="fn">create</span>(type: <span class="cls">string</span>): <span class="cls">Shape</span> {
+        <span class="kw">switch</span> (type) {
+            <span class="kw">case</span> <span class="str">'circle'</span>:    <span class="kw">return new</span> <span class="cls">Circle</span>();
+            <span class="kw">case</span> <span class="str">'rect'</span>:      <span class="kw">return new</span> <span class="cls">Rectangle</span>();
+            <span class="kw">case</span> <span class="str">'triangle'</span>:  <span class="kw">return new</span> <span class="cls">Triangle</span>();
+            <span class="kw">default</span>:          <span class="kw">throw new</span> <span class="cls">Error</span>(<span class="str">`Unknown shape: ${type}`</span>);
+        }
+    }
+}
+
+<span class="cm">// 클라이언트 코드 — 구체 클래스를 전혀 모름</span>
+<span class="kw">const</span> shape = <span class="cls">ShapeFactory</span>.<span class="fn">create</span>(<span class="str">'circle'</span>);
+shape.<span class="fn">draw</span>();   <span class="cm">// Circle이든 Rectangle이든 동일 인터페이스 사용</span></div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════
+     SECTION 3 — 옵저버 패턴
+══════════════════════════════════════════════ -->
+<section id="observer">
+  <div class="section-header">
+    <div class="tag tag-ch12">03 — OBSERVER PATTERN</div>
+    <h2>옵저버 패턴</h2>
+    <p>객체 간의 <strong>일대다(1:N) 의존 관계</strong>를 정의합니다. 퍼블리셔(Publisher)의 상태가 변경되면, 구독 중인 모든 서브스크라이버(Subscriber)에게 자동으로 통지됩니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <div class="observer-layout">
+      <!-- Publisher -->
+      <div class="publisher-box">
+        <div class="pub-title">PUBLISHER</div>
+        <div class="pub-name">📺 CS Visualizer 채널</div>
+        <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:14px">구독자 수: <span id="subCount" style="color:var(--accent2);font-weight:700">3</span>명</div>
+        <button class="btn" style="width:100%;background:rgba(255,107,157,0.15);border-color:var(--accent2);color:var(--accent2)" onclick="broadcastEvent()">
+          📢 이벤트 발생
+        </button>
+        <div style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim)" id="pubEventCount">발송된 이벤트: 0</div>
+      </div>
+
+      <!-- Arrows -->
+      <div class="observer-arrows" id="obsArrows">
+        <div>→</div>
+        <div>→</div>
+        <div>→</div>
+      </div>
+
+      <!-- Subscribers -->
+      <div class="subscribers-col">
+        <div class="subscriber-item" id="sub0">
+          <div class="sub-icon" style="background:rgba(0,255,170,0.15);color:var(--accent)">👤</div>
+          <div class="flex-col" style="gap:1px">
+            <div class="sub-name">UserA (React 개발자)</div>
+            <div class="sub-status" id="sub0status">대기 중...</div>
+          </div>
+          <button onclick="toggleSubscriber(0)" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);cursor:pointer" id="sub0btn">구독 취소</button>
+        </div>
+        <div class="subscriber-item" id="sub1">
+          <div class="sub-icon" style="background:rgba(107,138,255,0.15);color:var(--accent3)">👤</div>
+          <div class="flex-col" style="gap:1px">
+            <div class="sub-name">UserB (백엔드 개발자)</div>
+            <div class="sub-status" id="sub1status">대기 중...</div>
+          </div>
+          <button onclick="toggleSubscriber(1)" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);cursor:pointer" id="sub1btn">구독 취소</button>
+        </div>
+        <div class="subscriber-item" id="sub2">
+          <div class="sub-icon" style="background:rgba(255,170,0,0.15);color:var(--accent4)">👤</div>
+          <div class="flex-col" style="gap:1px">
+            <div class="sub-name">UserC (CS 학생)</div>
+            <div class="sub-status" id="sub2status">대기 중...</div>
+          </div>
+          <button onclick="toggleSubscriber(2)" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);cursor:pointer" id="sub2btn">구독 취소</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event log -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);letter-spacing:1px;margin:14px 0 6px">EVENT LOG</div>
+    <div class="obs-log" id="obsLog">
+      <div style="color:var(--text-dim);font-style:italic">// 이벤트를 발생시키면 구독자들에게 통지됩니다...</div>
+    </div>
+
+    <!-- Real-world examples -->
+    <div class="info-text" style="margin-top:16px">
+      <strong style="color:#8b5cf6">실세계 적용 사례:</strong>
+      <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
+        <div style="font-size:0.83rem"><span style="color:var(--accent2)">YouTube 구독</span> — Channel(Publisher) + User(Subscriber)</div>
+        <div style="font-size:0.83rem"><span style="color:var(--accent3)">React useState</span> — state 변경 → 컴포넌트 리렌더링</div>
+        <div style="font-size:0.83rem"><span style="color:var(--accent4)">DOM Events</span> — element.addEventListener()</div>
+        <div style="font-size:0.83rem"><span style="color:var(--accent)">Node.js EventEmitter</span> — emitter.on() / emitter.emit()</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════
+     SECTION 4 — 전략 패턴
+══════════════════════════════════════════════ -->
+<section id="strategy">
+  <div class="section-header">
+    <div class="tag tag-ch12">04 — STRATEGY PATTERN</div>
+    <h2>전략 패턴</h2>
+    <p>알고리즘의 군(族)을 정의하고 각각을 캡슐화하여 <strong>런타임에 교환 가능</strong>하게 만드는 패턴입니다. 조건문 분기를 없애고 동작을 유연하게 변경할 수 있습니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <!-- Context -->
+    <div class="context-box">
+      <div>
+        <div class="context-label">CONTEXT</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:600">PaymentContext</div>
+      </div>
+      <div style="width:1px;height:40px;background:var(--border)"></div>
+      <div style="flex:1">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:2px">현재 전략</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.88rem;color:var(--accent4)" id="currentStrategy">전략을 선택하세요</div>
+      </div>
+      <div>
+        <button class="btn" onclick="executePayment()" id="payBtn" disabled style="opacity:0.5">결제 실행</button>
+      </div>
+    </div>
+
+    <!-- Strategy cards -->
+    <div class="strategy-grid">
+      <div class="strategy-card" id="sc-credit" onclick="selectStrategy('credit')">
+        <div class="strategy-icon">💳</div>
+        <div class="strategy-name">CreditCard</div>
+        <div class="strategy-desc">신용카드 결제<br>3D Secure 인증</div>
+      </div>
+      <div class="strategy-card" id="sc-kakao" onclick="selectStrategy('kakao')">
+        <div class="strategy-icon">💛</div>
+        <div class="strategy-name">KakaoPay</div>
+        <div class="strategy-desc">카카오페이 결제<br>간편 인증</div>
+      </div>
+      <div class="strategy-card" id="sc-naver" onclick="selectStrategy('naver')">
+        <div class="strategy-icon">🟢</div>
+        <div class="strategy-name">NaverPay</div>
+        <div class="strategy-desc">네이버페이 결제<br>포인트 사용 가능</div>
+      </div>
+    </div>
+
+    <!-- Payment flow -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px">PAYMENT FLOW</div>
+    <div class="payment-flow" id="paymentFlow">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);padding:20px 0;text-align:center">전략을 선택하고 "결제 실행"을 누르세요</div>
+    </div>
+
+    <!-- Code compare -->
+    <div class="code-compare">
+      <div>
+        <div class="compare-col-label bad-label">BAD: if/else 분기</div>
+        <div class="code-block" style="font-size:0.74rem"><span class="kw">function</span> <span class="fn">pay</span>(method, amount) {
+  <span class="kw">if</span> (method === <span class="str">'credit'</span>) {
+    <span class="cm">// 신용카드 로직...</span>
+    validate3DSecure();
+    chargeCard(amount);
+  } <span class="kw">else if</span> (method === <span class="str">'kakao'</span>) {
+    <span class="cm">// 카카오 로직...</span>
+    requestKakaoAuth();
+    deductKakao(amount);
+  } <span class="kw">else if</span> (method === <span class="str">'naver'</span>) {
+    <span class="cm">// 네이버 로직...</span>
+    checkNaverPoints();
+    deductNaver(amount);
+  }
+  <span class="cm">// 새 결제수단 추가 → 코드 수정 필요!</span>
+}</div>
+      </div>
+      <div>
+        <div class="compare-col-label good-label">GOOD: 전략 패턴</div>
+        <div class="code-block" style="font-size:0.74rem"><span class="kw">interface</span> <span class="cls">PayStrategy</span> {
+  <span class="fn">pay</span>(amount: <span class="cls">number</span>): <span class="cls">void</span>;
+}
+
+<span class="kw">class</span> <span class="cls">PaymentContext</span> {
+  <span class="kw">private</span> strategy: <span class="cls">PayStrategy</span>;
+
+  <span class="fn">setStrategy</span>(s: <span class="cls">PayStrategy</span>) {
+    <span class="kw">this</span>.strategy = s;
+  }
+  <span class="fn">execute</span>(amount: <span class="cls">number</span>) {
+    <span class="kw">this</span>.strategy.<span class="fn">pay</span>(amount);
+  }
+}
+<span class="cm">// 새 전략 추가 → 클래스만 추가!</span>
+<span class="cm">// 기존 코드 수정 없음 (OCP 준수)</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════
+     SECTION 5 — MVC / MVP / MVVM
+══════════════════════════════════════════════ -->
+<section id="mvc">
+  <div class="section-header">
+    <div class="tag tag-ch12">05 — ARCHITECTURE PATTERNS</div>
+    <h2>MVC / MVP / MVVM 아키텍처</h2>
+    <p>UI와 비즈니스 로직을 분리하는 아키텍처 패턴들입니다. 관심사 분리(Separation of Concerns)를 통해 코드의 유지보수성과 테스트 가능성을 높입니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <!-- Tabs -->
+    <div class="arch-tabs">
+      <button class="arch-tab active" onclick="switchArch('mvc')">MVC</button>
+      <button class="arch-tab" onclick="switchArch('mvp')">MVP</button>
+      <button class="arch-tab" onclick="switchArch('mvvm')">MVVM</button>
+    </div>
+
+    <!-- ─── MVC Panel ─── -->
+    <div class="arch-panel active" id="panel-mvc">
+      <div class="arch-diagram">
+        <div class="arch-node view" id="mvc-view">
+          <div class="node-label">VIEW</div>
+          <div class="node-name">화면</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:4px">HTML/Template</div>
+        </div>
+        <div class="arch-arrow bidirectional" style="min-width:55px">
+          <div class="arr-line"></div>
+          <div class="arr-label" style="font-size:0.65rem;color:var(--text-dim)">이벤트/렌더</div>
+        </div>
+        <div class="arch-node ctrl" id="mvc-ctrl">
+          <div class="node-label">CONTROLLER</div>
+          <div class="node-name">제어</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:4px">요청 처리</div>
+        </div>
+        <div class="arch-arrow bidirectional" style="min-width:55px">
+          <div class="arr-line"></div>
+          <div class="arr-label" style="font-size:0.65rem;color:var(--text-dim)">데이터/쿼리</div>
+        </div>
+        <div class="arch-node model" id="mvc-model">
+          <div class="node-label">MODEL</div>
+          <div class="node-name">데이터</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:4px">DB/비즈니스 로직</div>
+        </div>
+      </div>
+      <div class="arch-desc">
+        <div class="arch-desc-title">MVC — Model View Controller</div>
+        <ul style="padding-left:18px;line-height:2">
+          <li><strong>Model</strong>: 데이터와 비즈니스 로직 담당. DB와 직접 통신.</li>
+          <li><strong>View</strong>: 사용자에게 보여지는 UI. Model 데이터를 렌더링.</li>
+          <li><strong>Controller</strong>: 사용자 입력을 받아 Model 업데이트 후 View 선택.</li>
+        </ul>
+        <div class="realworld-row">
+          <div class="rw-badge">Django (Python)</div>
+          <div class="rw-badge">Ruby on Rails</div>
+          <div class="rw-badge">Spring MVC</div>
+          <div class="rw-badge">Laravel (PHP)</div>
+          <div class="rw-badge">ASP.NET MVC</div>
+        </div>
+      </div>
+      <div>
+        <button class="btn" style="background:rgba(139,92,246,0.15);border-color:#8b5cf6;color:#8b5cf6" onclick="traceFlow('mvc')">
+          👆 사용자 클릭 — 데이터 흐름 추적
+        </button>
+        <div class="flow-trace" id="trace-mvc">
+          <span style="color:var(--text-dim);font-style:italic">// 버튼을 클릭하면 MVC 데이터 흐름을 추적합니다...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── MVP Panel ─── -->
+    <div class="arch-panel" id="panel-mvp">
+      <div class="arch-diagram">
+        <div class="arch-node view" id="mvp-view">
+          <div class="node-label">VIEW</div>
+          <div class="node-name">화면</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:4px">수동적 (Passive)</div>
+        </div>
+        <div class="arch-arrow bidirectional" style="min-width:55px">
+          <div class="arr-line"></div>
+          <div class="arr-label" style="font-size:0.65rem;color:var(--text-dim)">인터페이스</div>
+        </div>
+        <div class="arch-node presenter" id="mvp-presenter">
+          <div class="node-label">PRESENTER</div>
+          <div class="node-name">발표자</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:4px">모든 로직 담당</div>
+        </div>
+        <div class="arch-arrow bidirectional" style="min-width:55px">
+          <div class="arr-line"></div>
+          <div class="arr-label" style="font-size:0.65rem;color:var(--text-dim)">데이터</div>
+        </div>
+        <div class="arch-node model" id="mvp-model">
+          <div class="node-label">MODEL</div>
+          <div class="node-name">데이터</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:4px">저장소</div>
+        </div>
+      </div>
+      <div class="arch-desc">
+        <div class="arch-desc-title">MVP — Model View Presenter</div>
+        <ul style="padding-left:18px;line-height:2">
+          <li><strong>View</strong>: 완전히 수동적. UI 이벤트를 Presenter에게 위임.</li>
+          <li><strong>Presenter</strong>: View와 Model 사이의 중재자. 모든 UI 로직 포함.</li>
+          <li><strong>Model</strong>: 데이터 계층. Presenter만 접근 가능.</li>
+        </ul>
+        <div style="margin-top:8px;font-size:0.83rem;color:var(--accent)">View가 Presenter를 모름 → 인터페이스(contract)로만 통신 → 단위 테스트 용이!</div>
+        <div class="realworld-row" style="margin-top:10px">
+          <div class="rw-badge">Android (Java)</div>
+          <div class="rw-badge">iOS UIKit</div>
+          <div class="rw-badge">WinForms</div>
+        </div>
+      </div>
+      <div>
+        <button class="btn" style="background:rgba(139,92,246,0.15);border-color:#8b5cf6;color:#8b5cf6" onclick="traceFlow('mvp')">
+          👆 사용자 클릭 — 데이터 흐름 추적
+        </button>
+        <div class="flow-trace" id="trace-mvp">
+          <span style="color:var(--text-dim);font-style:italic">// 버튼을 클릭하면 MVP 데이터 흐름을 추적합니다...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── MVVM Panel ─── -->
+    <div class="arch-panel" id="panel-mvvm">
+      <div class="arch-diagram">
+        <div class="arch-node view" id="mvvm-view">
+          <div class="node-label">VIEW</div>
+          <div class="node-name">화면</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:4px">데이터 바인딩</div>
+        </div>
+        <div class="arch-arrow bidirectional" style="min-width:65px">
+          <div class="arr-line"></div>
+          <div class="arr-label" style="font-size:0.65rem;color:var(--accent4)">⇄ Two-way Binding</div>
+        </div>
+        <div class="arch-node viewmodel" id="mvvm-vm">
+          <div class="node-label">VIEWMODEL</div>
+          <div class="node-name">뷰모델</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:4px">상태 + 커맨드</div>
+        </div>
+        <div class="arch-arrow bidirectional" style="min-width:55px">
+          <div class="arr-line"></div>
+          <div class="arr-label" style="font-size:0.65rem;color:var(--text-dim)">데이터</div>
+        </div>
+        <div class="arch-node model" id="mvvm-model">
+          <div class="node-label">MODEL</div>
+          <div class="node-name">데이터</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:4px">도메인 로직</div>
+        </div>
+      </div>
+      <div class="arch-desc">
+        <div class="arch-desc-title">MVVM — Model View ViewModel</div>
+        <ul style="padding-left:18px;line-height:2">
+          <li><strong>View</strong>: ViewModel에 바인딩. 상태 변경 시 자동으로 UI 업데이트.</li>
+          <li><strong>ViewModel</strong>: View를 위한 상태와 커맨드 노출. View를 직접 참조하지 않음.</li>
+          <li><strong>Model</strong>: 도메인 데이터와 비즈니스 규칙.</li>
+        </ul>
+        <div style="margin-top:8px;font-size:0.83rem;color:var(--accent4)">양방향 데이터 바인딩: View ↔ ViewModel이 자동으로 동기화. 명시적 UI 조작 코드 불필요!</div>
+        <div class="realworld-row" style="margin-top:10px">
+          <div class="rw-badge">Vue.js</div>
+          <div class="rw-badge">React + Hooks</div>
+          <div class="rw-badge">Angular</div>
+          <div class="rw-badge">SwiftUI</div>
+          <div class="rw-badge">Jetpack Compose</div>
+        </div>
+      </div>
+      <div>
+        <button class="btn" style="background:rgba(139,92,246,0.15);border-color:#8b5cf6;color:#8b5cf6" onclick="traceFlow('mvvm')">
+          👆 사용자 클릭 — 데이터 흐름 추적
+        </button>
+        <div class="flow-trace" id="trace-mvvm">
+          <span style="color:var(--text-dim);font-style:italic">// 버튼을 클릭하면 MVVM 데이터 흐름을 추적합니다...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>CS Visualizer · <a href="index.html" style="color:#8b5cf6;text-decoration:none;">목차로 돌아가기</a></footer>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   SECTION 1 — SINGLETON
+════════════════════════════════════════════════════ */
+const SINGLETON_ADDR = '0x7f4a2b3c';
+let singletonCallCount = 0;
+let singletonInstance = null;
+
+function createSingletonInstance() {
+  singletonCallCount++;
+  const isFirst = singletonInstance === null;
+  if (!singletonInstance) {
+    singletonInstance = { addr: SINGLETON_ADDR, created: Date.now() };
+  }
+
+  const callerIdx = ((singletonCallCount - 1) % 3);
+  const callerIds = ['caller1', 'caller2', 'caller3'];
+  const arrIds = ['arr1', 'arr2', 'arr3'];
+
+  // Highlight current caller
+  callerIds.forEach((id, i) => {
+    document.getElementById(id).classList.toggle('active', i === callerIdx);
+  });
+  arrIds.forEach((id, i) => {
+    document.getElementById(id).classList.toggle('active', i === callerIdx);
+  });
+
+  // Update counter
+  document.getElementById('singletonCount').textContent = '생성 횟수: ' + singletonCallCount;
+
+  // Append log entry
+  const log = document.getElementById('singletonLog');
+  if (log.querySelector('em, i, [style*="italic"]')) {
+    log.innerHTML = '';
+  }
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  const callerNames = ['Caller A', 'Caller B', 'Caller C'];
+  const statusText = isFirst
+    ? '<span class="log-same" style="color:var(--accent4)">NEW</span> 인스턴스 생성됨'
+    : '<span class="log-same">SAME</span> 기존 인스턴스 반환';
+  entry.innerHTML = `<span class="log-label">[${callerNames[callerIdx]}] </span>getInstance() → <span class="log-addr">${SINGLETON_ADDR}</span> — ${statusText}`;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+
+  // After short delay, de-highlight
+  setTimeout(() => {
+    callerIds.forEach(id => document.getElementById(id).classList.remove('active'));
+    arrIds.forEach(id => document.getElementById(id).classList.remove('active'));
+  }, 600);
+}
+
+function resetSingleton() {
+  singletonInstance = null;
+  singletonCallCount = 0;
+  document.getElementById('singletonCount').textContent = '생성 횟수: 0';
+  document.getElementById('singletonLog').innerHTML =
+    '<div style="color:var(--text-dim);font-style:italic">// 리셋되었습니다. 다시 인스턴스를 생성해보세요...</div>';
+  ['caller1','caller2','caller3'].forEach(id => document.getElementById(id).classList.remove('active'));
+  ['arr1','arr2','arr3'].forEach(id => document.getElementById(id).classList.remove('active'));
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTION 2 — FACTORY
+════════════════════════════════════════════════════ */
+const shapeData = {
+  circle: {
+    name: 'Circle',
+    props: 'radius: 50px, area: 7854',
+    method: 'draw(), resize(r)',
+    svgFn: () => `<circle cx="60" cy="60" r="48" fill="none" stroke="#00ffaa" stroke-width="3" opacity="0.9"/><text x="60" y="65" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#00ffaa">Circle</text>`,
+  },
+  rect: {
+    name: 'Rectangle',
+    props: 'width: 90px, height: 60px, area: 5400',
+    method: 'draw(), resize(w,h)',
+    svgFn: () => `<rect x="15" y="30" width="90" height="60" fill="none" stroke="#6b8aff" stroke-width="3" rx="4"/><text x="60" y="65" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#6b8aff">Rectangle</text>`,
+  },
+  triangle: {
+    name: 'Triangle',
+    props: 'base: 90px, height: 78px, area: 3510',
+    method: 'draw(), resize(b)',
+    svgFn: () => `<polygon points="60,10 108,100 12,100" fill="none" stroke="#ff6b9d" stroke-width="3"/><text x="60" y="88" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#ff6b9d">Triangle</text>`,
+  },
+};
+
+function selectShape(type) {
+  ['circle','rect','triangle'].forEach(t => {
+    document.getElementById('btn-' + t).classList.toggle('selected', t === type);
+  });
+  const d = shapeData[type];
+  document.getElementById('factoryArg').textContent = '"' + type + '"';
+  document.getElementById('factoryProductName').textContent = d.name;
+  document.getElementById('shapeType').textContent = d.name;
+  document.getElementById('shapeProps').textContent = d.props;
+  document.getElementById('shapeMethod').textContent = d.method;
+  document.getElementById('shapeSVG').innerHTML = d.svgFn();
+
+  // Animate product node
+  const prod = document.getElementById('factoryProduct');
+  prod.classList.add('active-product');
+  setTimeout(() => prod.classList.remove('active-product'), 500);
+}
+
+// Init
+selectShape('circle');
+
+/* ═══════════════════════════════════════════════════
+   SECTION 3 — OBSERVER
+════════════════════════════════════════════════════ */
+let subscriberState = [true, true, true];
+let eventCount = 0;
+
+const subColors = [
+  { active: 'var(--accent)', text: '알림 수신됨!' },
+  { active: 'var(--accent3)', text: '알림 수신됨!' },
+  { active: 'var(--accent4)', text: '알림 수신됨!' },
+];
+
+function updateSubCount() {
+  const active = subscriberState.filter(Boolean).length;
+  document.getElementById('subCount').textContent = active;
+}
+
+function toggleSubscriber(idx) {
+  subscriberState[idx] = !subscriberState[idx];
+  const item = document.getElementById('sub' + idx);
+  const btn  = document.getElementById('sub' + idx + 'btn');
+  const status = document.getElementById('sub' + idx + 'status');
+  if (subscriberState[idx]) {
+    item.classList.remove('removed');
+    btn.textContent = '구독 취소';
+    status.textContent = '대기 중...';
+  } else {
+    item.classList.remove('notified');
+    item.classList.add('removed');
+    btn.textContent = '구독하기';
+    status.textContent = '구독 해제됨';
+    logObs('[구독 해제] sub' + idx + ' → 이벤트 수신 안 함');
+  }
+  updateSubCount();
+  if (subscriberState[idx]) {
+    logObs('[구독 시작] sub' + idx + ' → 이벤트 수신 대기');
+  }
+}
+
+function logObs(msg) {
+  const log = document.getElementById('obsLog');
+  if (log.querySelector('[style*="italic"]')) log.innerHTML = '';
+  const d = document.createElement('div');
+  d.style.lineHeight = '2';
+  d.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+  d.innerHTML = msg;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+function broadcastEvent() {
+  eventCount++;
+  document.getElementById('pubEventCount').textContent = '발송된 이벤트: ' + eventCount;
+
+  // Animate arrows
+  const arrows = document.getElementById('obsArrows');
+  arrows.classList.add('broadcasting');
+  setTimeout(() => arrows.classList.remove('broadcasting'), 1600);
+
+  const eventName = `새 영상 업로드 #${eventCount}`;
+  logObs(`<span style="color:var(--accent2)">[이벤트 발생]</span> Publisher → "${eventName}" 알림 전송`);
+
+  subscriberState.forEach((active, idx) => {
+    if (!active) return;
+    const delay = (idx + 1) * 350;
+    setTimeout(() => {
+      const item = document.getElementById('sub' + idx);
+      const status = document.getElementById('sub' + idx + 'status');
+      item.classList.add('notified');
+      status.textContent = `수신: ${eventName}`;
+      logObs(`<span style="color:${subColors[idx].active}">  [수신 완료]</span> sub${idx} → update("${eventName}")`);
+      setTimeout(() => {
+        item.classList.remove('notified');
+        status.textContent = '대기 중...';
+      }, 1800);
+    }, delay);
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTION 4 — STRATEGY
+════════════════════════════════════════════════════ */
+let currentPayStrategy = null;
+
+const payFlows = {
+  credit: [
+    '💳 신용카드 정보 입력 요청',
+    '🔐 3D Secure 인증 서버 호출',
+    '✅ 카드사 승인 요청 (카드 번호, 유효기간, CVC)',
+    '💰 결제 승인 완료 → 영수증 발행',
+  ],
+  kakao: [
+    '💛 카카오페이 SDK 초기화',
+    '📱 사용자 카카오 앱 인증 요청',
+    '🔑 토큰 기반 간편 인증 처리',
+    '💰 카카오페이 서버 결제 완료 → 내역 저장',
+  ],
+  naver: [
+    '🟢 네이버페이 API 호출',
+    '📊 사용 가능 포인트 조회 및 차감',
+    '🛡️ 네이버 계정 인증 토큰 검증',
+    '💰 네이버페이 서버 승인 완료 → 포인트 적립',
+  ],
+};
+
+function selectStrategy(type) {
+  currentPayStrategy = type;
+  ['credit','kakao','naver'].forEach(t => {
+    document.getElementById('sc-' + t).classList.toggle('active', t === type);
+  });
+  const names = { credit: 'CreditCardStrategy', kakao: 'KakaoPayStrategy', naver: 'NaverPayStrategy' };
+  document.getElementById('currentStrategy').textContent = names[type];
+  const btn = document.getElementById('payBtn');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+
+  // Clear flow
+  document.getElementById('paymentFlow').innerHTML =
+    '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.82rem;color:var(--text-dim);padding:10px 0">' +
+    '전략이 설정되었습니다. "결제 실행"을 눌러 흐름을 확인하세요.</div>';
+}
+
+function executePayment() {
+  if (!currentPayStrategy) return;
+  const steps = payFlows[currentPayStrategy];
+  const container = document.getElementById('paymentFlow');
+  container.innerHTML = '';
+
+  steps.forEach((text, i) => {
+    const div = document.createElement('div');
+    div.className = 'payment-step';
+    div.innerHTML = `<div class="step-num">${i + 1}</div><span>${text}</span>`;
+    container.appendChild(div);
+    setTimeout(() => div.classList.add('visible'), i * 350 + 100);
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTION 5 — MVC / MVP / MVVM
+════════════════════════════════════════════════════ */
+function switchArch(type) {
+  ['mvc','mvp','mvvm'].forEach(t => {
+    document.getElementById('panel-' + t).classList.toggle('active', t === type);
+    document.querySelectorAll('.arch-tab').forEach((tab, i) => {
+      const tabs = ['mvc','mvp','mvvm'];
+      tab.classList.toggle('active', tabs[i] === type);
+    });
+  });
+}
+
+const flowSteps = {
+  mvc: [
+    { label: 'View',       text: '사용자가 버튼 클릭 (이벤트 발생)' },
+    { label: 'Controller', text: '요청 수신 → handleClick() 호출' },
+    { label: 'Model',      text: '데이터 쿼리/업데이트 실행 (DB 조회)' },
+    { label: 'Controller', text: 'Model 결과를 받아 적절한 View 선택' },
+    { label: 'View',       text: '새 데이터로 UI 렌더링 완료' },
+  ],
+  mvp: [
+    { label: 'View',      text: '사용자 클릭 → Presenter.onButtonClick() 위임' },
+    { label: 'Presenter', text: '비즈니스 로직 처리 시작' },
+    { label: 'Model',     text: '데이터 요청 → repository.fetchData()' },
+    { label: 'Presenter', text: 'Model 결과 수신 → View 인터페이스로 전달' },
+    { label: 'View',      text: 'view.showData(result) → UI 업데이트 (수동적)' },
+  ],
+  mvvm: [
+    { label: 'View',      text: '사용자 클릭 → Command 바인딩으로 자동 처리' },
+    { label: 'ViewModel', text: 'command.execute() → 상태(state) 업데이트' },
+    { label: 'Model',     text: '데이터 레이어 쿼리 → 결과 반환' },
+    { label: 'ViewModel', text: 'Observable 상태 변경 → 바인딩 엔진에 알림' },
+    { label: 'View',      text: '양방향 바인딩으로 UI 자동 갱신 (코드 없음)' },
+  ],
+};
+
+const nodeIds = {
+  mvc:  { View: 'mvc-view', Controller: 'mvc-ctrl', Model: 'mvc-model' },
+  mvp:  { View: 'mvp-view', Presenter: 'mvp-presenter', Model: 'mvp-model' },
+  mvvm: { View: 'mvvm-view', ViewModel: 'mvvm-vm', Model: 'mvvm-model' },
+};
+
+const labelColors = {
+  View: 'var(--accent2)',
+  Controller: 'var(--accent)',
+  Presenter: 'var(--accent)',
+  ViewModel: 'var(--accent4)',
+  Model: 'var(--accent3)',
+};
+
+function traceFlow(type) {
+  const steps = flowSteps[type];
+  const traceEl = document.getElementById('trace-' + type);
+  const ids = nodeIds[type];
+
+  traceEl.innerHTML = '';
+
+  // Clear all highlights
+  Object.values(ids).forEach(id => document.getElementById(id).classList.remove('highlighted'));
+
+  steps.forEach((step, i) => {
+    setTimeout(() => {
+      // Remove previous highlight
+      Object.values(ids).forEach(id => document.getElementById(id).classList.remove('highlighted'));
+
+      // Highlight current node
+      const nodeId = ids[step.label];
+      if (nodeId) document.getElementById(nodeId).classList.add('highlighted');
+
+      // Append trace line
+      const div = document.createElement('div');
+      div.className = 'flow-step';
+      const color = labelColors[step.label] || '#8b5cf6';
+      div.innerHTML = `<span class="fs-label" style="color:${color}">[${step.label}]</span><span class="fs-arrow">→</span>${step.text}`;
+      traceEl.appendChild(div);
+      requestAnimationFrame(() => div.classList.add('show'));
+
+      // After last step
+      if (i === steps.length - 1) {
+        setTimeout(() => {
+          Object.values(ids).forEach(id => document.getElementById(id).classList.remove('highlighted'));
+        }, 800);
+      }
+    }, i * 600);
+  });
+}
+</script>
+<script src="sidebar.js"></script>
+</body>
+</html>

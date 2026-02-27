@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.13 시스템 & 언어 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── CH13 LOCAL STYLES ── */
+.pipeline-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin: 24px 0;
+  justify-content: center;
+}
+.pipeline-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-width: 90px;
+  transition: all 0.3s;
+  position: relative;
+}
+.pipeline-box.active {
+  border-color: #ec4899;
+  background: rgba(236, 72, 153, 0.12);
+  color: #ec4899;
+  box-shadow: 0 0 16px rgba(236, 72, 153, 0.2);
+}
+.pipeline-box .pipe-sub {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  font-weight: 400;
+  margin-top: 3px;
+}
+.pipeline-arrow {
+  color: var(--text-dim);
+  font-size: 1rem;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.compiler-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+.compiler-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.compiler-card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.compiler-card-desc {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.token-area {
+  margin-top: 16px;
+}
+.token-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.token-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  width: 220px;
+  outline: none;
+}
+.token-input:focus { border-color: #ec4899; }
+.token-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 36px;
+  margin-top: 8px;
+}
+.token-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  animation: fadeIn 0.2s;
+}
+.token-chip.IDENT  { border-color: var(--accent);  color: var(--accent);  background: rgba(0,255,170,0.08); }
+.token-chip.NUM    { border-color: var(--accent3); color: var(--accent3); background: rgba(107,138,255,0.08); }
+.token-chip.ASSIGN { border-color: var(--accent4); color: var(--accent4); background: rgba(255,170,0,0.08); }
+.token-chip.PLUS   { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,0.08); }
+.token-chip.MINUS  { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,0.08); }
+.token-chip.STAR   { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,0.08); }
+.token-chip.SLASH  { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,0.08); }
+.token-chip.LPAREN,.token-chip.RPAREN { border-color: var(--text-dim); color: var(--text-dim); }
+/* AST */
+.ast-wrap {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  margin-top: 8px;
+  padding: 16px;
+  background: var(--surface2);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.ast-node {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-align: center;
+  min-width: 40px;
+}
+.ast-node.op    { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,0.1); }
+.ast-node.ident { border-color: var(--accent);  color: var(--accent); background: rgba(0,255,170,0.08); }
+.ast-node.num   { border-color: var(--accent3); color: var(--accent3); background: rgba(107,138,255,0.08); }
+.ast-tree { text-align: center; }
+.ast-level { display: flex; justify-content: center; gap: 30px; margin: 8px 0; }
+.ast-connector { text-align: center; color: var(--text-dim); font-size: 0.9rem; line-height: 0.8; }
+/* lang table */
+.lang-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+.lang-table th, .lang-table td {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.lang-table th { color: var(--text-dim); font-weight: 500; }
+.lang-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  margin: 1px;
+}
+/* syscall diagram */
+.space-diagram {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: stretch;
+  margin: 24px 0;
+}
+.space-box {
+  border-radius: 10px;
+  padding: 20px;
+  border: 2px solid var(--border);
+}
+.space-box.user-space {
+  border-color: var(--accent3);
+  background: rgba(107,138,255,0.06);
+}
+.space-box.kernel-space {
+  border-color: #ec4899;
+  background: rgba(236,72,153,0.06);
+}
+.space-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.space-box.user-space .space-title  { color: var(--accent3); }
+.space-box.kernel-space .space-title { color: #ec4899; }
+.space-item {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-bottom: 6px;
+  color: var(--text-dim);
+  transition: all 0.25s;
+}
+.space-item.active {
+  border-color: var(--accent);
+  color: var(--text);
+  background: rgba(0,255,170,0.06);
+}
+.space-middle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0;
+}
+.boundary-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 2px;
+  border: 1px dashed var(--border);
+  padding: 14px 5px;
+  border-radius: 4px;
+}
+.syscall-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin: 16px 0;
+  justify-content: center;
+}
+.syscall-step {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  text-align: center;
+  min-width: 80px;
+  transition: all 0.3s;
+}
+.syscall-step.active {
+  border-color: #ec4899;
+  color: #ec4899;
+  background: rgba(236,72,153,0.1);
+}
+.syscall-arrow {
+  color: var(--text-dim);
+  padding: 0 4px;
+  font-size: 0.9rem;
+}
+/* syscall table */
+.syscall-table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+.syscall-table th, .syscall-table td {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.syscall-table th { color: var(--text-dim); font-weight: 400; font-size: 0.7rem; }
+.syscall-table tr { cursor: pointer; transition: background 0.2s; }
+.syscall-table tr:hover td { background: rgba(236,72,153,0.05); }
+.syscall-table tr.selected td { background: rgba(236,72,153,0.1); }
+.syscall-table tr.selected td:first-child { border-left: 3px solid #ec4899; }
+.syscall-detail {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: var(--surface2);
+  border-radius: 8px;
+  border-left: 3px solid #ec4899;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  min-height: 60px;
+  line-height: 1.8;
+}
+/* ring levels */
+.ring-diagram {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  margin: 20px auto;
+}
+.ring-circle {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  border: 2px solid;
+}
+.ring-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.ring-desc {
+  font-size: 0.6rem;
+  opacity: 0.7;
+}
+/* IPC */
+.ipc-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.ipc-tab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ipc-tab:hover { border-color: #ec4899; color: #ec4899; }
+.ipc-tab.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,0.1); }
+.ipc-panel { display: none; }
+.ipc-panel.active { display: block; }
+.ipc-diagram {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 16px;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.process-box {
+  background: var(--surface);
+  border: 2px solid var(--accent3);
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent3);
+  text-align: center;
+  min-width: 90px;
+}
+.pipe-channel {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+.pipe-byte {
+  width: 28px;
+  height: 28px;
+  background: rgba(236,72,153,0.15);
+  border: 1px solid rgba(236,72,153,0.4);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: #ec4899;
+  margin: 0 1px;
+  animation: byteFlow 2s linear infinite;
+}
+.pipe-byte:nth-child(1) { animation-delay: 0s; }
+.pipe-byte:nth-child(2) { animation-delay: 0.3s; }
+.pipe-byte:nth-child(3) { animation-delay: 0.6s; }
+.pipe-byte:nth-child(4) { animation-delay: 0.9s; }
+.pipe-byte:nth-child(5) { animation-delay: 1.2s; }
+@keyframes byteFlow {
+  0%,100% { opacity: 0.3; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1); }
+}
+.ipc-pros-cons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.pros-box, .cons-box {
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.8;
+}
+.pros-box {
+  background: rgba(0,255,170,0.06);
+  border: 1px solid rgba(0,255,170,0.2);
+  color: var(--accent);
+}
+.cons-box {
+  background: rgba(255,68,102,0.06);
+  border: 1px solid rgba(255,68,102,0.2);
+  color: var(--danger);
+}
+.pros-box .box-title, .cons-box .box-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+}
+/* shared memory */
+.shm-diagram {
+  display: flex;
+  gap: 0;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.shm-region {
+  background: rgba(255,170,0,0.08);
+  border: 2px dashed var(--accent4);
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--accent4);
+  text-align: center;
+  min-width: 140px;
+}
+/* signals */
+.signal-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.signal-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.signal-chip:hover { border-color: var(--accent4); color: var(--accent4); }
+.signal-chip.active { border-color: var(--danger); color: var(--danger); background: rgba(255,68,102,0.08); }
+.signal-detail {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-radius: 8px;
+  border-left: 3px solid var(--danger);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  min-height: 40px;
+  line-height: 1.8;
+}
+/* GC section */
+.gc-heap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-height: 80px;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+.heap-obj {
+  position: relative;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  text-align: center;
+  transition: all 0.4s;
+  min-width: 64px;
+  cursor: pointer;
+}
+.heap-obj.live {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0,255,170,0.08);
+}
+.heap-obj.garbage {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: rgba(255,68,102,0.08);
+  opacity: 0.7;
+}
+.heap-obj.marked {
+  border-color: var(--accent4);
+  color: var(--accent4);
+  background: rgba(255,170,0,0.1);
+  box-shadow: 0 0 10px rgba(255,170,0,0.2);
+}
+.heap-obj.swept {
+  opacity: 0;
+  transform: scale(0.5);
+}
+.heap-obj.root {
+  border-color: #ec4899;
+  color: #ec4899;
+  background: rgba(236,72,153,0.1);
+}
+.ref-count-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--accent3);
+  color: var(--bg);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+.ref-count-badge.zero { background: var(--danger); }
+.gc-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.gc-tab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.gc-tab:hover { border-color: #ec4899; color: #ec4899; }
+.gc-tab.active { border-color: #ec4899; color: #ec4899; background: rgba(236,72,153,0.1); }
+.gc-panel { display: none; }
+.gc-panel.active { display: block; }
+/* generational GC */
+.gen-diagram {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+.gen-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.gen-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  width: 80px;
+  flex-shrink: 0;
+}
+.gen-bar-wrap {
+  flex: 1;
+  height: 40px;
+  background: var(--surface2);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.gen-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(0,0,0,0.7);
+}
+/* rust ownership */
+.ownership-demo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  line-height: 2;
+}
+.own-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  border: 1px solid;
+  margin: 2px;
+  font-size: 0.78rem;
+  transition: all 0.4s;
+}
+.own-box.owned { border-color: var(--accent); color: var(--accent); background: rgba(0,255,170,0.08); }
+.own-box.moved  { border-color: var(--text-dim); color: var(--text-dim); opacity: 0.35; }
+.own-box.borrowed { border-color: var(--accent3); color: var(--accent3); background: rgba(107,138,255,0.08); }
+.own-box.dropped { border-color: var(--danger); color: var(--danger); background: rgba(255,68,102,0.08); opacity: 0.5; }
+/* fork diagram */
+.fork-diagram {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  margin: 20px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+}
+.fork-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.fork-process {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 2px solid;
+  text-align: center;
+  min-width: 100px;
+}
+.fork-process.parent { border-color: var(--accent3); color: var(--accent3); background: rgba(107,138,255,0.08); }
+.fork-process.child  { border-color: var(--accent); color: var(--accent); background: rgba(0,255,170,0.08); }
+.fork-line {
+  width: 2px;
+  height: 20px;
+  background: var(--border);
+}
+.fork-branch {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+}
+.fork-connector {
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+  color: var(--text-dim);
+  padding: 0 4px;
+  margin-top: 30px;
+}
+/* socket diagram */
+.socket-diagram {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.socket-box {
+  background: var(--surface);
+  border: 2px solid;
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  min-width: 100px;
+}
+.socket-box.client { border-color: var(--accent3); color: var(--accent3); }
+.socket-box.server { border-color: #ec4899; color: #ec4899; }
+.socket-channel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.socket-arrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.socket-arrow-line {
+  width: 80px;
+  height: 2px;
+  background: var(--border);
+  position: relative;
+}
+.socket-arrow-line.bidirectional::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-left: 7px solid var(--border);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+.socket-arrow-line.bidirectional::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-right: 7px solid var(--border);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+@media (max-width: 640px) {
+  .compiler-compare { grid-template-columns: 1fr; }
+  .space-diagram { grid-template-columns: 1fr; }
+  .ipc-pros-cons { grid-template-columns: 1fr; }
+  .ring-diagram { width: 250px; height: 250px; }
+}
+</style>
+</head>
+<body class="page-body">
+
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:#ec4899">Ch.13 — 시스템 & 언어</div>
+  <div class="nav-sections">
+    <a href="#compiler" class="nav-sec-link">컴파일러</a>
+    <a href="#syscall" class="nav-sec-link">시스템콜</a>
+    <a href="#ipc" class="nav-sec-link">IPC</a>
+    <a href="#gc" class="nav-sec-link">가비지컬렉션</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 1: 컴파일러 vs 인터프리터               -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="compiler">
+  <div class="section-header">
+    <div class="tag tag-ch13">01 — COMPILER & INTERPRETER</div>
+    <h2>컴파일러 vs 인터프리터</h2>
+    <p>소스 코드를 실행 가능한 기계어로 변환하는 방식은 크게 컴파일, 인터프리트, JIT 세 가지로 나뉩니다. 각 방식은 실행 속도와 유연성에서 서로 다른 트레이드오프를 가집니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:12px;">컴파일 파이프라인</div>
+    <div class="pipeline-wrap" id="pipelineWrap">
+      <div class="pipeline-box" id="pipe0">
+        Source Code
+        <div class="pipe-sub">.c / .py / .js</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-box" id="pipe1">
+        Lexer
+        <div class="pipe-sub">토큰화</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-box" id="pipe2">
+        Parser
+        <div class="pipe-sub">구문 분석</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-box" id="pipe3">
+        AST
+        <div class="pipe-sub">추상 구문 트리</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-box" id="pipe4">
+        Code Gen
+        <div class="pipe-sub">코드 생성</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-box" id="pipe5">
+        Machine Code
+        <div class="pipe-sub">실행 가능</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-bottom:8px;">
+      <button class="btn" onclick="animatePipeline()">파이프라인 애니메이션</button>
+    </div>
+
+    <div class="compiler-compare">
+      <div class="compiler-card" style="border-color:rgba(0,255,170,0.3);">
+        <div class="compiler-card-title" style="color:var(--accent)">컴파일러</div>
+        <div class="compiler-card-desc">
+          전체 소스를 미리 기계어로 번역 후 실행.<br>
+          <span style="color:var(--accent)">빠른 실행 속도</span>, 느린 빌드.<br><br>
+          예: C, C++, Go, Rust
+        </div>
+      </div>
+      <div class="compiler-card" style="border-color:rgba(107,138,255,0.3);">
+        <div class="compiler-card-title" style="color:var(--accent3)">인터프리터</div>
+        <div class="compiler-card-desc">
+          소스 코드를 줄 단위로 읽어 즉시 실행.<br>
+          <span style="color:var(--accent3)">빠른 개발 사이클</span>, 느린 런타임.<br><br>
+          예: Python, Ruby
+        </div>
+      </div>
+      <div class="compiler-card" style="border-color:rgba(255,170,0,0.3);">
+        <div class="compiler-card-title" style="color:var(--accent4)">JIT 컴파일러</div>
+        <div class="compiler-card-desc">
+          바이트코드를 런타임에 기계어로 컴파일.<br>
+          <span style="color:var(--accent4)">컴파일 + 해석 혼합</span>.<br><br>
+          예: Java (JVM), C# (.NET), JS V8
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="viz-box" style="margin-top:20px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:14px;">인터랙티브 토큰화 / 파싱</div>
+    <div class="token-area">
+      <div class="token-input-row">
+        <input type="text" class="token-input" id="tokenInput" value="x = 2 + 3" oninput="onTokenInput()" placeholder="예: x = 2 + 3">
+        <button class="btn" onclick="runTokenize()">토큰화</button>
+        <button class="btn" onclick="runParse()">파싱 (AST)</button>
+        <button class="btn" id="btnReset" onclick="resetTokens()">초기화</button>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:6px;" id="tokenLabel" style="display:none;"></div>
+      <div class="token-list" id="tokenList"></div>
+      <div id="astOutput" style="display:none; margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <div class="viz-box" style="margin-top:20px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:14px;">언어 분류표</div>
+    <table class="lang-table">
+      <thead>
+        <tr>
+          <th>유형</th>
+          <th>언어</th>
+          <th>메모리 관리</th>
+          <th>특징</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="lang-tag" style="background:rgba(0,255,170,0.1);border:1px solid rgba(0,255,170,0.3);color:var(--accent)">컴파일</span></td>
+          <td style="color:var(--accent)">C, C++, Go, Rust</td>
+          <td>수동 / GC / Ownership</td>
+          <td style="color:var(--text-dim)">빠른 실행, 시스템 프로그래밍</td>
+        </tr>
+        <tr>
+          <td><span class="lang-tag" style="background:rgba(107,138,255,0.1);border:1px solid rgba(107,138,255,0.3);color:var(--accent3)">인터프리트</span></td>
+          <td style="color:var(--accent3)">Python, JS, Ruby</td>
+          <td>GC (자동)</td>
+          <td style="color:var(--text-dim)">빠른 개발, 동적 타입</td>
+        </tr>
+        <tr>
+          <td><span class="lang-tag" style="background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.3);color:var(--accent4)">JIT</span></td>
+          <td style="color:var(--accent4)">Java, C#, Kotlin</td>
+          <td>GC (JVM/.NET)</td>
+          <td style="color:var(--text-dim)">포터블 바이트코드, 크로스 플랫폼</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:24px; font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:12px;">GC (가비지 컬렉션) 전략 비교</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+      <div style="padding:12px;background:var(--surface2);border:1px solid rgba(255,68,102,0.3);border-radius:8px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--danger);margin-bottom:6px;">수동 관리 (C/C++)</div>
+        <div style="font-size:0.78rem;color:var(--text-dim);line-height:1.7;">malloc/free 직접 호출. 가장 빠르나 메모리 누수, dangling pointer 위험.</div>
+      </div>
+      <div style="padding:12px;background:var(--surface2);border:1px solid rgba(0,255,170,0.3);border-radius:8px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--accent);margin-bottom:6px;">자동 GC (Java/Python)</div>
+        <div style="font-size:0.78rem;color:var(--text-dim);line-height:1.7;">런타임이 자동으로 메모리 회수. 편리하나 GC pause 발생 가능.</div>
+      </div>
+      <div style="padding:12px;background:var(--surface2);border:1px solid rgba(236,72,153,0.3);border-radius:8px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:#ec4899;margin-bottom:6px;">소유권 (Rust)</div>
+        <div style="font-size:0.78rem;color:var(--text-dim);line-height:1.7;">컴파일 타임에 소유권 검사. GC 없이 안전한 메모리 관리 보장.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 2: 시스템 콜                            -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="syscall">
+  <div class="section-header">
+    <div class="tag tag-ch13">02 — SYSTEM CALL</div>
+    <h2>시스템 콜 (System Call)</h2>
+    <p>시스템 콜은 사용자 프로세스가 운영체제 커널의 서비스를 요청하는 인터페이스입니다. 하드웨어 보호를 위해 특권 모드 전환(trap)을 수반합니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:16px;">유저 공간 ↔ 커널 공간</div>
+    <div class="space-diagram">
+      <div class="space-box user-space">
+        <div class="space-title">USER SPACE (Ring 3)</div>
+        <div class="space-item" id="ss-app">Application (프로세스)</div>
+        <div class="space-item" id="ss-lib">C 표준 라이브러리 (libc)</div>
+        <div class="space-item" id="ss-wrap">syscall() 래퍼 함수</div>
+      </div>
+      <div class="space-middle">
+        <div class="boundary-label">TRAP / INTERRUPT</div>
+      </div>
+      <div class="space-box kernel-space">
+        <div class="space-title">KERNEL SPACE (Ring 0)</div>
+        <div class="space-item" id="ss-kentry">커널 진입점 (syscall handler)</div>
+        <div class="space-item" id="ss-dispatch">syscall 번호 디스패치</div>
+        <div class="space-item" id="ss-hw">하드웨어 드라이버 / 서비스</div>
+        <div class="space-item" id="ss-ret">결과 반환 (iret)</div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:10px;">시스템 콜 실행 흐름</div>
+      <div class="syscall-flow" id="scFlow">
+        <div class="syscall-step" id="sc0">앱 코드<br><span style="color:var(--text-dim);font-size:0.65rem;">write(1, buf, n)</span></div>
+        <div class="syscall-arrow">→</div>
+        <div class="syscall-step" id="sc1">trap<br><span style="color:var(--text-dim);font-size:0.65rem;">INT 0x80 / SYSCALL</span></div>
+        <div class="syscall-arrow">→</div>
+        <div class="syscall-step" id="sc2">커널 핸들러<br><span style="color:var(--text-dim);font-size:0.65rem;">번호 검증</span></div>
+        <div class="syscall-arrow">→</div>
+        <div class="syscall-step" id="sc3">하드웨어 I/O<br><span style="color:var(--text-dim);font-size:0.65rem;">드라이버 호출</span></div>
+        <div class="syscall-arrow">→</div>
+        <div class="syscall-step" id="sc4">결과 반환<br><span style="color:var(--text-dim);font-size:0.65rem;">레지스터 복원</span></div>
+      </div>
+      <div style="text-align:center;margin-top:10px;">
+        <button class="btn" onclick="animateSyscallFlow()">흐름 애니메이션</button>
+      </div>
+    </div>
+
+    <div style="margin-top:28px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:10px;">주요 시스템 콜 — 클릭하면 상세 설명</div>
+      <table class="syscall-table" id="syscallTable">
+        <thead>
+          <tr>
+            <th>syscall</th>
+            <th>번호 (Linux x86_64)</th>
+            <th>분류</th>
+            <th>간단 설명</th>
+          </tr>
+        </thead>
+        <tbody id="syscallTbody"></tbody>
+      </table>
+      <div class="syscall-detail" id="syscallDetail">위 표에서 시스템 콜을 클릭하면 상세 설명이 표시됩니다.</div>
+    </div>
+  </div>
+
+  <div class="viz-box" style="margin-top:20px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:16px;">프로세스 생성: fork() & exec()</div>
+    <div class="fork-diagram">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+        <div class="fork-process parent">Parent Process<br><span style="font-size:0.65rem;color:var(--text-dim)">PID: 1234</span></div>
+        <div style="width:2px;height:18px;background:var(--border);"></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--accent4);padding:4px 10px;background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.3);border-radius:5px;">fork()</div>
+        <div style="display:flex;gap:60px;align-items:flex-start;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+            <div style="width:2px;height:16px;background:var(--border);"></div>
+            <div class="fork-process parent" style="opacity:0.6">Parent 계속<br><span style="font-size:0.65rem;color:var(--text-dim)">pid=1234</span></div>
+            <div style="width:2px;height:16px;background:var(--border);"></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);padding:4px 8px;background:var(--surface2);border-radius:4px;">wait(&status)</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+            <div style="width:2px;height:16px;background:var(--border);"></div>
+            <div class="fork-process child">Child Process<br><span style="font-size:0.65rem;color:var(--text-dim)">pid=1235</span></div>
+            <div style="width:2px;height:16px;background:var(--border);"></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#ec4899;padding:4px 10px;background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.3);border-radius:5px;">exec("/bin/ls")</div>
+            <div style="width:2px;height:16px;background:var(--border);"></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);padding:4px 8px;background:var(--surface2);border-radius:4px;">exit(0)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="info-text" style="margin-top:16px;">
+      <span style="color:#ec4899">fork()</span>: 현재 프로세스를 복사하여 자식 프로세스 생성. 부모는 자식 PID, 자식은 0 반환.<br>
+      <span style="color:var(--accent4)">exec()</span>: 현재 프로세스 이미지를 새 프로그램으로 교체. fork 후 exec 패턴(fork-exec)이 일반적.<br>
+      <span style="color:var(--accent)">wait()</span>: 부모가 자식 종료를 기다림. 좀비 프로세스 방지.
+    </div>
+  </div>
+
+  <div class="viz-box" style="margin-top:20px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:16px;">CPU 특권 링 (Privilege Rings)</div>
+    <div class="ring-diagram" id="ringDiagram"></div>
+    <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;">
+      <span style="color:#ec4899">Ring 0: 커널 (최고 권한)</span>
+      <span style="color:var(--accent4)">Ring 1/2: 드라이버</span>
+      <span style="color:var(--accent3)">Ring 3: 사용자 앱 (최저 권한)</span>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 3: IPC                                  -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="ipc">
+  <div class="section-header">
+    <div class="tag tag-ch13">03 — IPC</div>
+    <h2>IPC (프로세스 간 통신)</h2>
+    <p>독립된 프로세스끼리 데이터를 주고받는 메커니즘입니다. 각 방식은 속도, 방향성, 범위에서 서로 다른 특성을 가집니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <div class="ipc-tabs">
+      <button class="ipc-tab active" onclick="showIPC('pipe')">파이프 (Pipe)</button>
+      <button class="ipc-tab" onclick="showIPC('socket')">소켓 (Socket)</button>
+      <button class="ipc-tab" onclick="showIPC('shm')">공유 메모리</button>
+      <button class="ipc-tab" onclick="showIPC('mq')">메시지 큐</button>
+    </div>
+
+    <!-- PIPE -->
+    <div class="ipc-panel active" id="ipc-pipe">
+      <div class="ipc-diagram">
+        <div class="process-box">Process A<br><span style="font-size:0.65rem;color:var(--text-dim)">write(fd[1],...)</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--text-dim);">단방향 →</div>
+          <div class="pipe-channel">
+            <div class="pipe-byte">H</div>
+            <div class="pipe-byte">e</div>
+            <div class="pipe-byte">l</div>
+            <div class="pipe-byte">l</div>
+            <div class="pipe-byte">o</div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:#ec4899;margin-top:4px;">바이트 스트림</div>
+        </div>
+        <div class="process-box">Process B<br><span style="font-size:0.65rem;color:var(--text-dim)">read(fd[0],...)</span></div>
+      </div>
+      <div class="ipc-pros-cons">
+        <div class="pros-box">
+          <div class="box-title">장점</div>
+          간단한 API (POSIX)<br>
+          커널이 동기화 처리<br>
+          부모-자식 간 쉬운 통신
+        </div>
+        <div class="cons-box">
+          <div class="box-title">단점</div>
+          단방향만 지원<br>
+          부모-자식 프로세스만 가능<br>
+          구조화된 메시지 없음
+        </div>
+      </div>
+      <div class="info-text">
+        <span style="color:#ec4899">pipe(fd[2])</span> → fd[0]: 읽기 끝, fd[1]: 쓰기 끝. 셸에서 <span style="color:var(--accent)">ls | grep txt</span>가 파이프의 대표 예시입니다.
+      </div>
+    </div>
+
+    <!-- SOCKET -->
+    <div class="ipc-panel" id="ipc-socket">
+      <div class="ipc-diagram">
+        <div class="socket-diagram">
+          <div class="socket-box client">Client<br><span style="font-size:0.62rem;color:var(--text-dim)">connect()</span></div>
+          <div class="socket-channel">
+            <div class="socket-arrow">
+              <span style="color:var(--accent3)">request →</span>
+            </div>
+            <div style="width:100px;height:2px;background:linear-gradient(90deg,var(--accent3),#ec4899);margin:4px 0;border-radius:1px;"></div>
+            <div class="socket-arrow">
+              <span style="color:#ec4899">← response</span>
+            </div>
+          </div>
+          <div class="socket-box server">Server<br><span style="font-size:0.62rem;color:var(--text-dim)">listen() / accept()</span></div>
+        </div>
+        <div style="margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);text-align:center;">
+          TCP: 연결 지향 · 신뢰성 보장 &nbsp;|&nbsp; UDP: 비연결 · 빠른 전송
+        </div>
+      </div>
+      <div class="ipc-pros-cons">
+        <div class="pros-box">
+          <div class="box-title">장점</div>
+          양방향 통신<br>
+          네트워크 너머 통신 가능<br>
+          다양한 프로토콜 지원
+        </div>
+        <div class="cons-box">
+          <div class="box-title">단점</div>
+          설정 복잡 (addr, port)<br>
+          네트워크 오버헤드<br>
+          연결 관리 필요
+        </div>
+      </div>
+      <div class="info-text">
+        <span style="color:#ec4899">Unix Domain Socket</span>은 같은 호스트 내 IPC에 최적화된 소켓입니다. TCP보다 빠르며, Docker 데몬 통신 등에 사용됩니다.
+      </div>
+    </div>
+
+    <!-- SHARED MEMORY -->
+    <div class="ipc-panel" id="ipc-shm">
+      <div class="ipc-diagram">
+        <div class="shm-diagram">
+          <div class="process-box">Process A<br><span style="font-size:0.62rem;color:var(--text-dim)">shmget/shmat</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="display:flex;gap:2px;">
+              <div style="width:8px;height:20px;background:rgba(107,138,255,0.4);border-radius:2px;"></div>
+              <div style="width:8px;height:20px;background:rgba(107,138,255,0.6);border-radius:2px;"></div>
+              <div style="width:8px;height:20px;background:rgba(107,138,255,0.4);border-radius:2px;"></div>
+            </div>
+            <div class="shm-region">공유 메모리 영역<br><span style="font-size:0.62rem;opacity:0.7">Shared Memory</span><br><span style="font-size:0.62rem;color:var(--text-dim)">뮤텍스/세마포어 필요</span></div>
+            <div style="display:flex;gap:2px;">
+              <div style="width:8px;height:20px;background:rgba(236,72,153,0.4);border-radius:2px;"></div>
+              <div style="width:8px;height:20px;background:rgba(236,72,153,0.6);border-radius:2px;"></div>
+              <div style="width:8px;height:20px;background:rgba(236,72,153,0.4);border-radius:2px;"></div>
+            </div>
+          </div>
+          <div class="process-box">Process B<br><span style="font-size:0.62rem;color:var(--text-dim)">shmget/shmat</span></div>
+        </div>
+      </div>
+      <div class="ipc-pros-cons">
+        <div class="pros-box">
+          <div class="box-title">장점</div>
+          가장 빠른 IPC<br>
+          데이터 복사 없음<br>
+          대용량 데이터 공유 적합
+        </div>
+        <div class="cons-box">
+          <div class="box-title">단점</div>
+          동기화 직접 구현 필요<br>
+          같은 호스트만 가능<br>
+          경쟁 조건 주의
+        </div>
+      </div>
+      <div class="info-text">
+        두 프로세스가 <span style="color:var(--accent4)">동일한 물리 페이지</span>를 각자의 가상 주소 공간에 매핑합니다. 복사 없이 직접 접근하므로 가장 빠른 IPC이지만, <span style="color:#ec4899">뮤텍스/세마포어</span>로 동시 접근을 제어해야 합니다.
+      </div>
+    </div>
+
+    <!-- MESSAGE QUEUE -->
+    <div class="ipc-panel" id="ipc-mq">
+      <div class="ipc-diagram">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;">
+          <div style="display:flex;gap:20px;align-items:center;width:100%;justify-content:center;">
+            <div class="process-box">Producer A<br><span style="font-size:0.62rem;color:var(--text-dim)">msgsnd()</span></div>
+            <div style="color:var(--text-dim);font-size:1rem;">→</div>
+            <div style="background:var(--surface);border:2px solid var(--accent4);border-radius:10px;padding:14px 24px;display:flex;gap:6px;align-items:center;">
+              <div style="background:rgba(255,170,0,0.15);border:1px solid var(--accent4);border-radius:5px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--accent4);">MSG1<br><span style="color:var(--text-dim)">type:1</span></div>
+              <div style="background:rgba(255,170,0,0.1);border:1px solid var(--accent4);border-radius:5px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--accent4);">MSG2<br><span style="color:var(--text-dim)">type:2</span></div>
+              <div style="background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.3);border-radius:5px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--accent4);opacity:0.6;">MSG3<br><span style="color:var(--text-dim)">type:1</span></div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--accent4);margin-left:4px;">메시지 큐<br>(커널 관리)</div>
+            </div>
+            <div style="color:var(--text-dim);font-size:1rem;">→</div>
+            <div class="process-box">Consumer B<br><span style="font-size:0.62rem;color:var(--text-dim)">msgrcv()</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="ipc-pros-cons">
+        <div class="pros-box">
+          <div class="box-title">장점</div>
+          비동기 통신 가능<br>
+          구조화된 메시지<br>
+          타입별 수신 선택
+        </div>
+        <div class="cons-box">
+          <div class="box-title">단점</div>
+          커널 메모리 제한<br>
+          공유 메모리보다 느림<br>
+          큐 크기 제한 존재
+        </div>
+      </div>
+      <div class="info-text">
+        POSIX 메시지 큐(<span style="color:var(--accent4)">mq_open</span>) 또는 System V IPC(<span style="color:var(--accent4)">msgget</span>)를 사용합니다. 메시지에 타입을 붙여 <span style="color:var(--accent)">선택적 수신</span>이 가능합니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="viz-box" style="margin-top:20px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:14px;">시그널 (Signal) — 클릭하여 설명 보기</div>
+    <div class="signal-list" id="signalList"></div>
+    <div class="signal-detail" id="signalDetail">시그널을 클릭하면 설명이 표시됩니다.</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 4: GC & 메모리 관리                     -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="gc">
+  <div class="section-header">
+    <div class="tag tag-ch13">04 — GC & MEMORY</div>
+    <h2>가비지 컬렉션 & 메모리 관리</h2>
+    <p>GC는 더 이상 사용되지 않는 메모리를 자동으로 회수하는 기법입니다. 참조 카운팅, Mark & Sweep, 세대별 GC 등 다양한 알고리즘이 존재합니다.</p>
+  </div>
+
+  <div class="viz-box">
+    <div class="gc-tabs">
+      <button class="gc-tab active" onclick="showGC('refcount')">참조 카운팅</button>
+      <button class="gc-tab" onclick="showGC('marksweep')">Mark & Sweep</button>
+      <button class="gc-tab" onclick="showGC('generational')">세대별 GC</button>
+    </div>
+
+    <!-- REF COUNTING -->
+    <div class="gc-panel active" id="gc-refcount">
+      <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:14px;font-family:'JetBrains Mono',monospace;">
+        각 객체의 참조 횟수를 추적. 참조 수가 0이 되면 즉시 회수.
+      </div>
+      <div class="gc-heap" id="rcHeap"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn" onclick="rcAllocate()">객체 할당</button>
+        <button class="btn" onclick="rcAddRef()">참조 추가</button>
+        <button class="btn" onclick="rcRemoveRef()">참조 제거</button>
+        <button class="btn" onclick="rcReset()">초기화</button>
+      </div>
+      <div class="info-text" id="rcInfo">
+        배지의 숫자가 <span style="color:var(--accent3)">참조 카운트</span>입니다. 0이 되면 <span style="color:var(--danger)">즉시 회수</span>됩니다.<br>
+        <span style="color:var(--accent4)">단점:</span> 순환 참조(A→B→A)는 카운트가 절대 0이 되지 않아 누수 발생.
+      </div>
+    </div>
+
+    <!-- MARK & SWEEP -->
+    <div class="gc-panel" id="gc-marksweep">
+      <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:14px;font-family:'JetBrains Mono',monospace;">
+        루트(root)에서 도달 가능한 객체를 마킹 후, 마킹되지 않은 객체를 일괄 제거.
+      </div>
+      <div class="gc-heap" id="msHeap"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn" onclick="msSetup()">초기 설정</button>
+        <button class="btn" onclick="msRunMark()">Mark 단계 실행</button>
+        <button class="btn" onclick="msRunSweep()">Sweep 단계 실행</button>
+        <button class="btn" onclick="msReset()">초기화</button>
+      </div>
+      <div class="info-text" id="msInfo">
+        <span style="color:#ec4899">루트(Root)</span>: 스택/전역 변수에서 직접 참조되는 객체.<br>
+        Mark 단계: 루트에서 DFS/BFS로 <span style="color:var(--accent4)">도달 가능한 모든 객체 마킹.</span><br>
+        Sweep 단계: <span style="color:var(--danger)">마킹되지 않은 객체 회수</span>. GC pause 발생.
+      </div>
+    </div>
+
+    <!-- GENERATIONAL -->
+    <div class="gc-panel" id="gc-generational">
+      <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:14px;font-family:'JetBrains Mono',monospace;">
+        대부분의 객체는 금방 죽는다는 약한 세대 가설에 기반. Young/Old 세대를 나눠 GC 빈도를 다르게 적용.
+      </div>
+      <div class="gen-diagram">
+        <div class="gen-row">
+          <div class="gen-label">Eden</div>
+          <div class="gen-bar-wrap">
+            <div class="gen-bar-fill" id="edenBar" style="width:75%;background:linear-gradient(90deg,var(--accent3),rgba(107,138,255,0.6));">새로운 객체 할당</div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);width:80px;flex-shrink:0;text-align:right;">Young Gen</div>
+        </div>
+        <div class="gen-row">
+          <div class="gen-label">Survivor 0</div>
+          <div class="gen-bar-wrap">
+            <div class="gen-bar-fill" id="s0Bar" style="width:30%;background:linear-gradient(90deg,var(--accent4),rgba(255,170,0,0.6));">1회 생존</div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);width:80px;flex-shrink:0;text-align:right;">Young Gen</div>
+        </div>
+        <div class="gen-row">
+          <div class="gen-label">Survivor 1</div>
+          <div class="gen-bar-wrap">
+            <div class="gen-bar-fill" id="s1Bar" style="width:15%;background:linear-gradient(90deg,var(--accent4),rgba(255,170,0,0.4));">2회 생존</div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);width:80px;flex-shrink:0;text-align:right;">Young Gen</div>
+        </div>
+        <div class="gen-row">
+          <div class="gen-label">Old Gen</div>
+          <div class="gen-bar-wrap">
+            <div class="gen-bar-fill" id="oldBar" style="width:45%;background:linear-gradient(90deg,#ec4899,rgba(236,72,153,0.6));">장기 생존 객체</div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);width:80px;flex-shrink:0;text-align:right;">Old Gen</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn" onclick="genMinorGC()">Minor GC (Young)</button>
+        <button class="btn" onclick="genMajorGC()">Major GC (Full)</button>
+        <button class="btn" onclick="genReset()">초기화</button>
+      </div>
+      <div class="info-text" id="genInfo">
+        <span style="color:var(--accent3)">Minor GC</span>: Young 세대만 GC. 빠르고 자주 발생 (짧은 pause).<br>
+        <span style="color:#ec4899">Major GC</span>: Old 세대 포함 전체 GC. 느리지만 드물게 발생 (긴 pause).<br>
+        임계값(Tenuring Threshold) 이상 생존하면 Old 세대로 <span style="color:var(--accent4)">승격(Promotion)</span>.
+      </div>
+    </div>
+  </div>
+
+  <div class="viz-box" style="margin-top:20px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:16px;">Rust 소유권 (Ownership) & 이동 시맨틱스</div>
+    <div class="ownership-demo" id="ownershipDemo">
+      <div style="color:var(--text-dim);margin-bottom:8px;">// Rust 소유권 이동 시뮬레이션</div>
+      <div id="ownLine1">let s1 = <span class="own-box owned" id="ownBox1">String "hello" [소유자: s1]</span>;</div>
+      <div id="ownLine2" style="margin-top:4px;color:var(--text-dim);">// s2 = s1 실행 전</div>
+      <div id="ownLine3" style="margin-top:4px; display:none;">let s2 = s1; <span style="color:var(--text-dim)">// 소유권 이동 (move)</span></div>
+      <div id="ownLine4" style="margin-top:4px; display:none;"></div>
+      <div id="ownLine5" style="margin-top:4px; display:none;"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
+      <button class="btn" onclick="ownMove()">소유권 이동 (move)</button>
+      <button class="btn" onclick="ownBorrow()">빌리기 (borrow &amp;)</button>
+      <button class="btn" onclick="ownReset()">초기화</button>
+    </div>
+    <div class="info-text" style="margin-top:12px;" id="ownInfo">
+      Rust에서 값에는 단 하나의 <span style="color:var(--accent)">소유자(owner)</span>만 존재합니다. 소유권이 이동(move)되면 이전 변수는 무효화됩니다. <span style="color:var(--accent3)">빌리기(&)</span>는 소유권 없이 임시 접근을 허용합니다.
+    </div>
+  </div>
+
+  <div class="viz-box" style="margin-top:20px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:16px;">메모리 누수 vs 올바른 관리</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:rgba(255,68,102,0.06);border:1px solid rgba(255,68,102,0.2);border-radius:8px;padding:16px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--danger);margin-bottom:10px;font-weight:700;">메모리 누수 (C)</div>
+        <pre style="font-family:'JetBrains Mono',monospace;font-size:0.73rem;color:var(--text-dim);line-height:1.9;white-space:pre-wrap;">void leak() {
+  <span style="color:var(--accent3)">char *p</span> = malloc(1024);
+  // ... 사용 ...
+  <span style="color:var(--danger)">// free(p) 누락!</span>
+  return; <span style="color:var(--danger)">// 1024 bytes 누수</span>
+}
+// 반복 호출 → 메모리 고갈</pre>
+      </div>
+      <div style="background:rgba(0,255,170,0.04);border:1px solid rgba(0,255,170,0.2);border-radius:8px;padding:16px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--accent);margin-bottom:10px;font-weight:700;">올바른 관리 (Rust)</div>
+        <pre style="font-family:'JetBrains Mono',monospace;font-size:0.73rem;color:var(--text-dim);line-height:1.9;white-space:pre-wrap;">fn no_leak() {
+  <span style="color:var(--accent)">let v</span> = Vec::new(); <span style="color:var(--text-dim)">// 힙 할당</span>
+  // ... 사용 ...
+  <span style="color:var(--accent)">// 스코프 종료 → Drop 자동 호출</span>
+} <span style="color:var(--accent)">// ← 여기서 자동 해제!</span>
+// 컴파일러가 보장 → 런타임 0 비용</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>CS Visualizer · <a href="index.html" style="color:#ec4899;text-decoration:none;">목차로 돌아가기</a></footer>
+
+<script>
+// ═══════════════════════════════════════════════
+// SECTION 1: COMPILER / TOKENIZER / PARSER
+// ═══════════════════════════════════════════════
+
+let pipelineTimer = null;
+
+function animatePipeline() {
+  if (pipelineTimer) { clearTimeout(pipelineTimer); }
+  const boxes = document.querySelectorAll('.pipeline-box');
+  boxes.forEach(b => b.classList.remove('active'));
+  let i = 0;
+  function step() {
+    if (i > 0) boxes[i - 1].classList.remove('active');
+    if (i < boxes.length) {
+      boxes[i].classList.add('active');
+      i++;
+      pipelineTimer = setTimeout(step, 500);
+    }
+  }
+  step();
+}
+
+function onTokenInput() {
+  document.getElementById('tokenList').innerHTML = '';
+  const ast = document.getElementById('astOutput');
+  ast.style.display = 'none';
+  ast.innerHTML = '';
+  document.getElementById('tokenLabel').textContent = '';
+}
+
+// Simple tokenizer
+function tokenize(expr) {
+  const tokens = [];
+  let i = 0;
+  const src = expr.trim();
+  while (i < src.length) {
+    if (src[i] === ' ') { i++; continue; }
+    if (/[a-zA-Z_]/.test(src[i])) {
+      let j = i;
+      while (j < src.length && /[a-zA-Z0-9_]/.test(src[j])) j++;
+      tokens.push({ type: 'IDENT', val: src.slice(i, j) });
+      i = j;
+    } else if (/[0-9]/.test(src[i])) {
+      let j = i;
+      while (j < src.length && /[0-9]/.test(src[j])) j++;
+      tokens.push({ type: 'NUM', val: src.slice(i, j) });
+      i = j;
+    } else if (src[i] === '=') {
+      tokens.push({ type: 'ASSIGN', val: '=' }); i++;
+    } else if (src[i] === '+') {
+      tokens.push({ type: 'PLUS', val: '+' }); i++;
+    } else if (src[i] === '-') {
+      tokens.push({ type: 'MINUS', val: '-' }); i++;
+    } else if (src[i] === '*') {
+      tokens.push({ type: 'STAR', val: '*' }); i++;
+    } else if (src[i] === '/') {
+      tokens.push({ type: 'SLASH', val: '/' }); i++;
+    } else if (src[i] === '(') {
+      tokens.push({ type: 'LPAREN', val: '(' }); i++;
+    } else if (src[i] === ')') {
+      tokens.push({ type: 'RPAREN', val: ')' }); i++;
+    } else {
+      tokens.push({ type: 'UNKNOWN', val: src[i] }); i++;
+    }
+  }
+  return tokens;
+}
+
+function runTokenize() {
+  const expr = document.getElementById('tokenInput').value;
+  const tokens = tokenize(expr);
+  const list = document.getElementById('tokenList');
+  list.innerHTML = '';
+  const label = document.getElementById('tokenLabel');
+  label.textContent = '토큰 목록:';
+  tokens.forEach((t, idx) => {
+    const chip = document.createElement('span');
+    chip.className = 'token-chip ' + t.type;
+    chip.textContent = t.type + ':' + t.val;
+    chip.style.animationDelay = (idx * 0.08) + 's';
+    list.appendChild(chip);
+  });
+  const ast = document.getElementById('astOutput');
+  ast.style.display = 'none';
+}
+
+// Very simple expression parser for "x = a op b" patterns
+function runParse() {
+  const expr = document.getElementById('tokenInput').value.trim();
+  const tokens = tokenize(expr);
+  const astOut = document.getElementById('astOutput');
+  astOut.style.display = 'block';
+
+  // Try to parse: IDENT = EXPR
+  if (tokens.length >= 3 && tokens[0].type === 'IDENT' && tokens[1].type === 'ASSIGN') {
+    const lhs = tokens[0].val;
+    const rest = tokens.slice(2);
+    const tree = buildExprTree(rest);
+    astOut.innerHTML = '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:8px;">AST 트리:</div>' + renderAST({ type: 'ASSIGN', val: '=', left: { type: 'IDENT', val: lhs }, right: tree });
+  } else {
+    const tree = buildExprTree(tokens);
+    astOut.innerHTML = '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:8px;">AST 트리:</div>' + renderAST(tree);
+  }
+}
+
+function buildExprTree(tokens) {
+  // find lowest precedence operator (+ or - last)
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    if (tokens[i].type === 'PLUS' || tokens[i].type === 'MINUS') {
+      return {
+        type: tokens[i].type, val: tokens[i].val,
+        left: buildExprTree(tokens.slice(0, i)),
+        right: buildExprTree(tokens.slice(i + 1))
+      };
+    }
+  }
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    if (tokens[i].type === 'STAR' || tokens[i].type === 'SLASH') {
+      return {
+        type: tokens[i].type, val: tokens[i].val,
+        left: buildExprTree(tokens.slice(0, i)),
+        right: buildExprTree(tokens.slice(i + 1))
+      };
+    }
+  }
+  if (tokens.length === 1) return tokens[0];
+  if (tokens.length === 0) return { type: 'UNKNOWN', val: '?' };
+  return tokens[0];
+}
+
+function renderAST(node) {
+  if (!node) return '';
+  const nodeClass = node.type === 'IDENT' ? 'ident' : (node.type === 'NUM' ? 'num' : 'op');
+  if (!node.left && !node.right) {
+    return '<div class="ast-tree"><div class="ast-level"><span class="ast-node ' + nodeClass + '">' + escHtml(node.val) + '</span></div></div>';
+  }
+  let html = '<div class="ast-tree">';
+  html += '<div class="ast-level"><span class="ast-node ' + nodeClass + '">' + escHtml(node.val) + '</span></div>';
+  html += '<div class="ast-connector" style="display:flex;justify-content:center;gap:40px;color:var(--text-dim);font-size:0.9rem;margin:2px 0;">';
+  if (node.left) html += '<span>╱</span>';
+  if (node.right) html += '<span>╲</span>';
+  html += '</div>';
+  html += '<div class="ast-level">';
+  if (node.left) html += renderASTInline(node.left);
+  if (node.right) html += renderASTInline(node.right);
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderASTInline(node) {
+  if (!node) return '';
+  const nodeClass = node.type === 'IDENT' ? 'ident' : (node.type === 'NUM' ? 'num' : 'op');
+  if (!node.left && !node.right) {
+    return '<div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 12px;"><span class="ast-node ' + nodeClass + '">' + escHtml(node.val) + '</span></div>';
+  }
+  let html = '<div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 8px;">';
+  html += '<span class="ast-node ' + nodeClass + '">' + escHtml(node.val) + '</span>';
+  html += '<div style="display:flex;gap:8px;margin-top:6px;">';
+  if (node.left) html += renderASTInline(node.left);
+  if (node.right) html += renderASTInline(node.right);
+  html += '</div></div>';
+  return html;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function resetTokens() {
+  document.getElementById('tokenList').innerHTML = '';
+  const ast = document.getElementById('astOutput');
+  ast.style.display = 'none';
+  ast.innerHTML = '';
+  document.getElementById('tokenLabel').textContent = '';
+}
+
+// ═══════════════════════════════════════════════
+// SECTION 2: SYSCALL
+// ═══════════════════════════════════════════════
+
+const SYSCALLS = [
+  { name: 'open',  num: 2,   cat: '파일 I/O', brief: '파일 열기', detail: 'open(pathname, flags, mode) → fd\n파일이나 디바이스를 열고 파일 디스크립터를 반환합니다. O_RDONLY, O_WRONLY, O_CREAT 등의 플래그로 모드 지정. 예: fd = open("/etc/passwd", O_RDONLY)' },
+  { name: 'read',  num: 0,   cat: '파일 I/O', brief: 'fd에서 읽기', detail: 'read(fd, buf, count) → bytes_read\n파일 디스크립터 fd에서 최대 count 바이트를 buf에 읽습니다. 실제 읽은 바이트 수 반환. 0이면 EOF. 예: n = read(fd, buf, 1024)' },
+  { name: 'write', num: 1,   cat: '파일 I/O', brief: 'fd에 쓰기', detail: 'write(fd, buf, count) → bytes_written\nbuf의 count 바이트를 fd에 씁니다. fd=1은 표준 출력(stdout). 예: write(1, "Hello\n", 6)' },
+  { name: 'close', num: 3,   cat: '파일 I/O', brief: '파일 닫기', detail: 'close(fd) → 0 or -1\n파일 디스크립터를 닫고 관련 커널 자원을 해제합니다. 열린 fd를 닫지 않으면 파일 디스크립터 누수 발생.' },
+  { name: 'fork',  num: 57,  cat: '프로세스', brief: '프로세스 복제', detail: 'fork() → pid_t\n현재 프로세스를 복제하여 자식 프로세스 생성. 부모에는 자식 PID, 자식에는 0 반환. 실패 시 -1 반환. 자식은 부모의 메모리, fd, 시그널 핸들러를 복사 상속.' },
+  { name: 'execve',num: 59,  cat: '프로세스', brief: '프로세스 이미지 교체', detail: 'execve(pathname, argv, envp)\n현재 프로세스를 새 프로그램으로 교체. 성공 시 반환 없음. 실패 시 -1. fork 후 exec(fork-exec 패턴)로 새 프로세스 실행. 예: execve("/bin/ls", args, env)' },
+  { name: 'exit',  num: 60,  cat: '프로세스', brief: '프로세스 종료', detail: 'exit(status)\n현재 프로세스를 종료하고 status를 부모 프로세스에 전달. 열린 fd, atexit 핸들러 등 정리. 부모가 wait()로 수거해야 좀비 프로세스 방지.' },
+  { name: 'wait',  num: 61,  cat: '프로세스', brief: '자식 종료 대기', detail: 'wait(status) / waitpid(pid, status, opts)\n부모 프로세스가 자식 프로세스 종료를 기다림. 자식의 exit status를 수집. 수거 없으면 자식은 좀비(zombie) 상태로 남음.' },
+  { name: 'mmap',  num: 9,   cat: '메모리',  brief: '메모리 매핑', detail: 'mmap(addr, length, prot, flags, fd, offset) → *addr\n파일이나 디바이스를 메모리에 매핑, 또는 익명 메모리 할당. malloc 내부에서 큰 메모리 요청 시 mmap 사용. 공유 메모리 IPC에도 활용.' },
+];
+
+function buildSyscallTable() {
+  const tbody = document.getElementById('syscallTbody');
+  tbody.innerHTML = '';
+  SYSCALLS.forEach((sc, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:#ec4899;font-weight:600;">${sc.name}</td>
+      <td style="color:var(--text-dim);">${sc.num}</td>
+      <td><span style="font-size:0.7rem;padding:2px 8px;border-radius:100px;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);">${sc.cat}</span></td>
+      <td style="color:var(--text-dim);">${sc.brief}</td>
+    `;
+    tr.onclick = () => selectSyscall(idx, tr);
+    tbody.appendChild(tr);
+  });
+}
+
+function selectSyscall(idx, tr) {
+  document.querySelectorAll('#syscallTbody tr').forEach(r => r.classList.remove('selected'));
+  tr.classList.add('selected');
+  const sc = SYSCALLS[idx];
+  document.getElementById('syscallDetail').innerHTML =
+    `<span style="color:#ec4899;font-weight:700;">${sc.name}()</span> — ${sc.cat}<br><br>` +
+    sc.detail.replace(/\n/g, '<br>');
+}
+
+let scFlowTimer = null;
+function animateSyscallFlow() {
+  if (scFlowTimer) clearTimeout(scFlowTimer);
+  const steps = document.querySelectorAll('.syscall-step');
+  steps.forEach(s => s.classList.remove('active'));
+  let i = 0;
+  function step() {
+    if (i > 0) steps[i - 1].classList.remove('active');
+    if (i < steps.length) {
+      steps[i].classList.add('active');
+      i++;
+      scFlowTimer = setTimeout(step, 600);
+    }
+  }
+  step();
+}
+
+function buildRingDiagram() {
+  const container = document.getElementById('ringDiagram');
+  container.innerHTML = '';
+  const rings = [
+    { label: 'Ring 0', desc: 'Kernel', color: '#ec4899', size: 320, bg: 'rgba(236,72,153,0.06)' },
+    { label: 'Ring 1', desc: 'Drivers', color: 'var(--accent4)', size: 240, bg: 'rgba(255,170,0,0.05)' },
+    { label: 'Ring 2', desc: 'Services', color: 'var(--accent4)', size: 170, bg: 'rgba(255,170,0,0.04)' },
+    { label: 'Ring 3', desc: 'User Apps', color: 'var(--accent3)', size: 100, bg: 'rgba(107,138,255,0.08)' },
+  ];
+  rings.forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'ring-circle';
+    const offset = (320 - r.size) / 2;
+    el.style.cssText = `
+      width:${r.size}px;height:${r.size}px;
+      top:${offset}px;left:${offset}px;
+      border-color:${r.color};background:${r.bg};
+    `;
+    el.innerHTML = `<div class="ring-label" style="color:${r.color}">${r.label}</div><div class="ring-desc" style="color:${r.color}">${r.desc}</div>`;
+    container.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// SECTION 3: IPC
+// ═══════════════════════════════════════════════
+
+function showIPC(type) {
+  document.querySelectorAll('.ipc-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ipc-panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('ipc-' + type).classList.add('active');
+}
+
+const SIGNALS = [
+  { name: 'SIGTERM', num: 15, detail: 'SIGTERM (15): 정상 종료 요청. 프로세스가 핸들러를 설정하면 정리 후 종료 가능. kill 명령의 기본 시그널.' },
+  { name: 'SIGKILL', num: 9,  detail: 'SIGKILL (9): 강제 즉시 종료. 캐치하거나 무시할 수 없음. 블로킹된 프로세스 강제 종료 시 사용. kill -9 PID.' },
+  { name: 'SIGINT',  num: 2,  detail: 'SIGINT (2): 인터럽트 시그널. 터미널에서 Ctrl+C 입력 시 발생. 기본 동작은 프로세스 종료.' },
+  { name: 'SIGCHLD', num: 17, detail: 'SIGCHLD (17): 자식 프로세스가 종료/정지될 때 부모에게 전송. 부모가 이를 처리해야 좀비 프로세스가 되지 않음.' },
+  { name: 'SIGSEGV', num: 11, detail: 'SIGSEGV (11): 잘못된 메모리 접근(Segmentation Fault). NULL 포인터 역참조, 배열 범위 초과 등. 기본 동작: 코어 덤프 후 종료.' },
+  { name: 'SIGHUP',  num: 1,  detail: 'SIGHUP (1): 연결 종료(Hang Up). 터미널 연결이 끊기거나 세션 리더 종료 시 발생. 데몬에게 설정 재로드 신호로 관용적으로 사용.' },
+  { name: 'SIGUSR1', num: 10, detail: 'SIGUSR1 (10): 사용자 정의 시그널 1. 애플리케이션이 원하는 목적으로 사용 가능. 예: 로그 로테이션 트리거.' },
+];
+
+function buildSignals() {
+  const list = document.getElementById('signalList');
+  list.innerHTML = '';
+  SIGNALS.forEach((sig, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'signal-chip';
+    chip.textContent = sig.name + ' (' + sig.num + ')';
+    chip.onclick = () => selectSignal(i, chip);
+    list.appendChild(chip);
+  });
+}
+
+function selectSignal(idx, chip) {
+  document.querySelectorAll('.signal-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  document.getElementById('signalDetail').innerHTML = SIGNALS[idx].detail;
+}
+
+// ═══════════════════════════════════════════════
+// SECTION 4: GC
+// ═══════════════════════════════════════════════
+
+// ── Reference Counting ──
+let rcObjects = [];
+let rcNextId = 1;
+
+function rcRender() {
+  const heap = document.getElementById('rcHeap');
+  heap.innerHTML = '';
+  if (rcObjects.length === 0) {
+    heap.innerHTML = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:var(--text-dim);padding:10px;">힙이 비어 있습니다. 객체를 할당하세요.</span>';
+    return;
+  }
+  rcObjects.forEach(obj => {
+    const el = document.createElement('div');
+    el.className = 'heap-obj ' + (obj.refs === 0 ? 'garbage' : 'live');
+    el.innerHTML = `Obj ${obj.id}<br><span style="font-size:0.6rem;color:var(--text-dim);">id=${obj.id}</span>
+      <div class="ref-count-badge ${obj.refs === 0 ? 'zero' : ''}">${obj.refs}</div>`;
+    heap.appendChild(el);
+  });
+}
+
+function rcAllocate() {
+  if (rcObjects.length >= 8) {
+    document.getElementById('rcInfo').innerHTML = '<span style="color:var(--danger)">최대 8개 객체까지만 할당 가능합니다.</span>';
+    return;
+  }
+  rcObjects.push({ id: rcNextId++, refs: 1 });
+  rcRender();
+  document.getElementById('rcInfo').innerHTML = `Obj ${rcNextId-1} 할당 완료. 참조 카운트 = <span style="color:var(--accent)">1</span>`;
+}
+
+function rcAddRef() {
+  const live = rcObjects.filter(o => o.refs > 0);
+  if (live.length === 0) { document.getElementById('rcInfo').innerHTML = '<span style="color:var(--text-dim)">살아있는 객체가 없습니다.</span>'; return; }
+  const obj = live[Math.floor(Math.random() * live.length)];
+  obj.refs++;
+  rcRender();
+  document.getElementById('rcInfo').innerHTML = `Obj ${obj.id} 참조 추가 → refs = <span style="color:var(--accent3)">${obj.refs}</span>`;
+}
+
+function rcRemoveRef() {
+  const live = rcObjects.filter(o => o.refs > 0);
+  if (live.length === 0) { document.getElementById('rcInfo').innerHTML = '<span style="color:var(--text-dim)">살아있는 객체가 없습니다.</span>'; return; }
+  const obj = live[Math.floor(Math.random() * live.length)];
+  obj.refs--;
+  rcRender();
+  if (obj.refs === 0) {
+    document.getElementById('rcInfo').innerHTML = `Obj ${obj.id} refs = <span style="color:var(--danger)">0</span> → <span style="color:var(--danger)">즉시 메모리 회수!</span>`;
+    setTimeout(() => {
+      rcObjects = rcObjects.filter(o => o.id !== obj.id);
+      rcRender();
+    }, 1000);
+  } else {
+    document.getElementById('rcInfo').innerHTML = `Obj ${obj.id} 참조 제거 → refs = <span style="color:var(--accent4)">${obj.refs}</span>`;
+  }
+}
+
+function rcReset() {
+  rcObjects = [];
+  rcNextId = 1;
+  rcRender();
+  document.getElementById('rcInfo').innerHTML = '참조 카운팅: 각 객체의 배지 숫자가 참조 횟수입니다. 0이 되면 즉시 회수됩니다.';
+}
+
+// ── Mark & Sweep ──
+let msState = 'idle'; // idle | setup | marked | swept
+let msObjects = [];
+
+function msSetup() {
+  msObjects = [
+    { id: 'A', root: true,  reachable: true,  marked: false, swept: false, label: 'Root A' },
+    { id: 'B', root: false, reachable: true,  marked: false, swept: false, label: 'Obj B' },
+    { id: 'C', root: false, reachable: false, marked: false, swept: false, label: 'Obj C' },
+    { id: 'D', root: true,  reachable: true,  marked: false, swept: false, label: 'Root D' },
+    { id: 'E', root: false, reachable: false, marked: false, swept: false, label: 'Obj E' },
+    { id: 'F', root: false, reachable: true,  marked: false, swept: false, label: 'Obj F' },
+  ];
+  msState = 'setup';
+  msRender();
+  document.getElementById('msInfo').innerHTML =
+    '<span style="color:#ec4899">루트 객체 (Root A, Root D)</span>와 그로부터 도달 가능한 객체(B, F)는 live.<br>' +
+    'C, E는 루트에서 도달 불가 → garbage 대상. Mark 단계를 실행하세요.';
+}
+
+function msRunMark() {
+  if (msState === 'idle') { msSetup(); return; }
+  msObjects.forEach(o => { if (o.reachable) o.marked = true; });
+  msState = 'marked';
+  msRender();
+  document.getElementById('msInfo').innerHTML =
+    '<span style="color:var(--accent4)">Mark 완료!</span> 루트에서 도달 가능한 객체(A, B, D, F)가 마킹됨.<br>' +
+    'C, E는 마킹되지 않음 → Sweep 단계에서 회수 대상. Sweep을 실행하세요.';
+}
+
+function msRunSweep() {
+  if (msState !== 'marked') { document.getElementById('msInfo').innerHTML = '<span style="color:var(--text-dim)">먼저 Mark 단계를 실행하세요.</span>'; return; }
+  msObjects.forEach(o => { if (!o.marked) o.swept = true; });
+  msState = 'swept';
+  msRender();
+  const swept = msObjects.filter(o => o.swept).map(o => o.label).join(', ');
+  document.getElementById('msInfo').innerHTML =
+    `<span style="color:var(--danger)">Sweep 완료! ${swept}</span> 회수됨.<br>` +
+    '마킹된 객체는 유지. GC pause 동안 애플리케이션이 일시 정지됩니다.';
+  setTimeout(() => {
+    msObjects = msObjects.filter(o => !o.swept);
+    msObjects.forEach(o => o.marked = false);
+    msState = 'setup';
+    msRender();
+  }, 1200);
+}
+
+function msReset() {
+  msObjects = [];
+  msState = 'idle';
+  document.getElementById('msHeap').innerHTML = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:var(--text-dim);padding:10px;">초기 설정 버튼을 클릭하세요.</span>';
+  document.getElementById('msInfo').innerHTML =
+    '<span style="color:#ec4899">루트(Root)</span>: 스택/전역 변수에서 직접 참조되는 객체.<br>' +
+    'Mark 단계: 루트에서 DFS/BFS로 <span style="color:var(--accent4)">도달 가능한 모든 객체 마킹.</span><br>' +
+    'Sweep 단계: <span style="color:var(--danger)">마킹되지 않은 객체 회수</span>. GC pause 발생.';
+}
+
+function msRender() {
+  const heap = document.getElementById('msHeap');
+  heap.innerHTML = '';
+  if (msObjects.length === 0) return;
+  msObjects.forEach(obj => {
+    const el = document.createElement('div');
+    let cls = 'heap-obj';
+    if (obj.swept) cls += ' swept';
+    else if (obj.marked) cls += ' marked';
+    else if (obj.root) cls += ' root';
+    else if (obj.reachable) cls += ' live';
+    else cls += ' garbage';
+    el.className = cls;
+    let badge = '';
+    if (obj.root) badge = '<div class="ref-count-badge" style="background:#ec4899;">R</div>';
+    else if (obj.marked) badge = '<div class="ref-count-badge" style="background:var(--accent4);">M</div>';
+    el.innerHTML = `${obj.label}${badge}`;
+    heap.appendChild(el);
+  });
+}
+
+// ── Generational GC ──
+let genEden = 75, genS0 = 30, genS1 = 15, genOld = 45;
+
+function updateGenBars() {
+  document.getElementById('edenBar').style.width = genEden + '%';
+  document.getElementById('s0Bar').style.width = genS0 + '%';
+  document.getElementById('s1Bar').style.width = genS1 + '%';
+  document.getElementById('oldBar').style.width = genOld + '%';
+}
+
+function genMinorGC() {
+  document.getElementById('genInfo').innerHTML = '<span style="color:var(--accent3)">Minor GC 실행 중...</span> Eden + Survivor 영역 정리.';
+  const survived = Math.floor(genEden * 0.2);
+  genEden = 10;
+  genOld = Math.min(95, genOld + Math.floor(survived * 0.3));
+  genS0 = survived;
+  genS1 = Math.floor(genS0 * 0.5);
+  updateGenBars();
+  setTimeout(() => {
+    document.getElementById('genInfo').innerHTML =
+      '<span style="color:var(--accent3)">Minor GC 완료!</span> Eden → 10% (대부분 회수).<br>' +
+      `생존 객체 일부가 Old Gen으로 <span style="color:var(--accent4)">승격(Promotion)</span>됨. Old Gen: ${genOld}%<br>` +
+      '짧은 pause, 자주 실행. 이후 Eden이 다시 채워지면 반복.';
+    genEden = 75;
+    updateGenBars();
+  }, 1200);
+}
+
+function genMajorGC() {
+  document.getElementById('genInfo').innerHTML = '<span style="color:#ec4899">Major GC (Full GC) 실행 중...</span> 전체 힙 정리.';
+  genOld = Math.floor(genOld * 0.4);
+  genEden = 5;
+  genS0 = 5;
+  genS1 = 3;
+  updateGenBars();
+  setTimeout(() => {
+    document.getElementById('genInfo').innerHTML =
+      '<span style="color:#ec4899">Major GC 완료!</span> Old Gen 포함 전체 힙 정리.<br>' +
+      `Old Gen: ${genOld}% (가비지 회수). <span style="color:var(--danger)">긴 STW(Stop-The-World) pause 발생.</span><br>` +
+      'G1 GC, ZGC 등은 이 pause를 최소화하도록 설계됩니다.';
+    genOld = 45;
+    genEden = 75;
+    genS0 = 30;
+    genS1 = 15;
+    updateGenBars();
+  }, 1500);
+}
+
+function genReset() {
+  genEden = 75; genS0 = 30; genS1 = 15; genOld = 45;
+  updateGenBars();
+  document.getElementById('genInfo').innerHTML =
+    '<span style="color:var(--accent3)">Minor GC</span>: Young 세대만 GC. 빠르고 자주 발생 (짧은 pause).<br>' +
+    '<span style="color:#ec4899">Major GC</span>: Old 세대 포함 전체 GC. 느리지만 드물게 발생 (긴 pause).<br>' +
+    '임계값(Tenuring Threshold) 이상 생존하면 Old 세대로 <span style="color:var(--accent4)">승격(Promotion)</span>.';
+}
+
+// ── GC Panel Tabs ──
+function showGC(type) {
+  document.querySelectorAll('.gc-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.gc-panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('gc-' + type).classList.add('active');
+}
+
+// ── Rust Ownership ──
+let ownState = 'initial';
+
+function ownReset() {
+  ownState = 'initial';
+  document.getElementById('ownLine2').textContent = '// s2 = s1 실행 전';
+  document.getElementById('ownLine2').style.color = 'var(--text-dim)';
+  document.getElementById('ownLine3').style.display = 'none';
+  document.getElementById('ownLine4').style.display = 'none';
+  document.getElementById('ownLine5').style.display = 'none';
+  document.getElementById('ownBox1').className = 'own-box owned';
+  document.getElementById('ownBox1').textContent = 'String "hello" [소유자: s1]';
+  document.getElementById('ownLine1').innerHTML = 'let s1 = <span class="own-box owned" id="ownBox1">String "hello" [소유자: s1]</span>;';
+  document.getElementById('ownInfo').innerHTML =
+    'Rust에서 값에는 단 하나의 <span style="color:var(--accent)">소유자(owner)</span>만 존재합니다. 소유권이 이동(move)되면 이전 변수는 무효화됩니다. <span style="color:var(--accent3)">빌리기(&)</span>는 소유권 없이 임시 접근을 허용합니다.';
+}
+
+function ownMove() {
+  if (ownState !== 'initial') { ownReset(); return; }
+  ownState = 'moved';
+  document.getElementById('ownLine1').innerHTML = 'let s1 = <span class="own-box moved" id="ownBox1">String "hello" [무효! 이동됨]</span>; <span style="color:var(--danger);font-size:0.75rem;">// s1 무효화</span>';
+  document.getElementById('ownLine2').style.display = 'none';
+  document.getElementById('ownLine3').style.display = 'block';
+  document.getElementById('ownLine3').innerHTML = 'let s2 = s1; <span style="color:var(--text-dim)">// 소유권 이동 (move)</span>';
+  document.getElementById('ownLine4').style.display = 'block';
+  document.getElementById('ownLine4').innerHTML = 's2 → <span class="own-box owned">String "hello" [소유자: s2]</span>';
+  document.getElementById('ownLine5').style.display = 'block';
+  document.getElementById('ownLine5').innerHTML = '<span style="color:var(--danger);font-size:0.75rem;">// println!("{}", s1); ← 컴파일 에러!</span>';
+  document.getElementById('ownInfo').innerHTML =
+    '<span style="color:var(--accent4)">소유권 이동 후</span> s1은 더 이상 유효하지 않습니다.<br>' +
+    's2가 새 소유자. 스코프 종료 시 s2가 drop() → 메모리 자동 해제.<br>' +
+    '<span style="color:var(--danger)">s1을 사용하면 컴파일 타임 에러!</span> 런타임 에러 없음 = Rust의 핵심.';
+}
+
+function ownBorrow() {
+  if (ownState !== 'initial') { ownReset(); }
+  ownState = 'borrowed';
+  document.getElementById('ownLine1').innerHTML = 'let s1 = <span class="own-box owned" id="ownBox1">String "hello" [소유자: s1]</span>;';
+  document.getElementById('ownLine2').style.display = 'none';
+  document.getElementById('ownLine3').style.display = 'block';
+  document.getElementById('ownLine3').innerHTML = 'let r = &s1; <span style="color:var(--text-dim)">// 불변 빌리기 (immutable borrow)</span>';
+  document.getElementById('ownLine4').style.display = 'block';
+  document.getElementById('ownLine4').innerHTML = 'r → <span class="own-box borrowed">참조 &s1 [소유권 없음]</span>';
+  document.getElementById('ownLine5').style.display = 'block';
+  document.getElementById('ownLine5').innerHTML = '<span style="color:var(--accent);font-size:0.75rem;">// s1과 r 모두 유효! r 스코프 끝나면 빌리기 종료.</span>';
+  document.getElementById('ownInfo').innerHTML =
+    '<span style="color:var(--accent3)">빌리기(&)</span>는 소유권을 이전하지 않고 임시로 접근을 허용합니다.<br>' +
+    's1은 여전히 소유자. r이 스코프를 벗어나면 빌리기가 자동 종료됩니다.<br>' +
+    '빌리기 중에는 <span style="color:var(--accent4)">원본 소유자(s1)를 이동시킬 수 없습니다</span>.';
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+buildSyscallTable();
+buildRingDiagram();
+buildSignals();
+rcReset();
+msReset();
+</script>
+<script src="sidebar.js"></script>
+</body>
+</html>

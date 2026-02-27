@@ -8,7 +8,8 @@
 <link rel="stylesheet" href="style.css">
 <style>
 /* extra landing styles */
-.chapter-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:2.5rem;position:relative;z-index:1;padding:0 20px;max-width:960px;width:100%;}
+.chapter-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:2.5rem;position:relative;z-index:1;padding:0 20px;max-width:1080px;width:100%;}
+@media(max-width:820px){.chapter-nav{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:640px){.chapter-nav{grid-template-columns:1fr 1fr;}}
 </style>
 </head>
@@ -62,6 +63,31 @@
       <div class="ch-card-num">CHAPTER 09</div>
       <div class="ch-card-name">보안</div>
       <div class="ch-card-topics">암호화 · 해시함수</div>
+    </a>
+    <a href="ch10.html" class="ch-card ch10">
+      <div class="ch-card-num">CHAPTER 10</div>
+      <div class="ch-card-name">데이터베이스</div>
+      <div class="ch-card-topics">SQL · 정규화 · 트랜잭션 · 인덱스 · NoSQL</div>
+    </a>
+    <a href="ch11.html" class="ch-card ch11">
+      <div class="ch-card-num">CHAPTER 11</div>
+      <div class="ch-card-name">OOP & 패러다임</div>
+      <div class="ch-card-topics">객체지향 · SOLID · 함수형 · 패러다임 비교</div>
+    </a>
+    <a href="ch12.html" class="ch-card ch12">
+      <div class="ch-card-num">CHAPTER 12</div>
+      <div class="ch-card-name">디자인 패턴</div>
+      <div class="ch-card-topics">Singleton · Factory · Observer · Strategy · MVC</div>
+    </a>
+    <a href="ch13.html" class="ch-card ch13">
+      <div class="ch-card-num">CHAPTER 13</div>
+      <div class="ch-card-name">시스템 & 언어</div>
+      <div class="ch-card-topics">컴파일러 · 인터프리터 · 시스템콜 · IPC · GC</div>
+    </a>
+    <a href="ch14.html" class="ch-card ch14">
+      <div class="ch-card-num">CHAPTER 14</div>
+      <div class="ch-card-name">Git & 버전관리</div>
+      <div class="ch-card-topics">commit · branch · merge · rebase · 협업 전략</div>
     </a>
   </div>
 </header>
