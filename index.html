@@ -6,272 +6,390 @@
 <title>CS Visualizer — 컴퓨터 공학 개념 시각화</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0a0a0f;
-  --surface: #12121a;
-  --surface2: #1a1a28;
-  --border: #2a2a3a;
-  --text: #e0e0f0;
-  --text-dim: #8888aa;
-  --accent: #00ffaa;
-  --accent2: #ff6b9d;
-  --accent3: #6b8aff;
-  --accent4: #ffaa00;
-  --danger: #ff4466;
-  --success: #00cc88;
-  --glow: 0 0 20px rgba(0,255,170,0.15);
-  --radius: 12px;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior: smooth; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Noto Sans KR', sans-serif;
-  line-height: 1.7;
-  overflow-x: hidden;
-}
-code, .mono { font-family: 'JetBrains Mono', monospace; }
-
-.hero {
-  min-height: 100vh;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; position: relative; overflow: hidden;
-}
-.hero::before {
-  content: ''; position: absolute; inset: 0;
-  background: radial-gradient(ellipse 600px 400px at 30% 40%, rgba(0,255,170,0.06), transparent),
-    radial-gradient(ellipse 500px 500px at 70% 60%, rgba(107,138,255,0.06), transparent);
-}
-.hero-grid {
-  position: absolute; inset: 0;
-  background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size: 60px 60px; animation: gridMove 20s linear infinite;
-}
-@keyframes gridMove { 0%{transform:translate(0,0)}100%{transform:translate(60px,60px)} }
-.hero h1 {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 700; letter-spacing: -2px;
-  position: relative; z-index: 1;
-}
-.hero h1 span { color: var(--accent); }
-.hero p { font-size:1.15rem; color:var(--text-dim); margin-top:1rem; position:relative; z-index:1; max-width:600px; padding:0 20px; }
-.hero-nav {
-  display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
-  margin-top:3rem; position:relative; z-index:1; padding:0 20px;
-}
-.hero-nav a {
-  display:inline-flex; align-items:center; gap:8px; padding:10px 20px;
-  border:1px solid var(--border); border-radius:100px; color:var(--text-dim);
-  text-decoration:none; font-size:0.9rem; transition:all 0.3s;
-  font-family:'JetBrains Mono',monospace;
-}
-.hero-nav a:hover { border-color:var(--accent); color:var(--accent); background:rgba(0,255,170,0.05); box-shadow:var(--glow); }
-.level { font-size:0.65rem; padding:2px 8px; border-radius:100px; font-weight:600; }
-.level-1 { background:rgba(0,204,136,0.2); color:var(--success); }
-.level-2 { background:rgba(107,138,255,0.2); color:var(--accent3); }
-.level-3 { background:rgba(255,170,0,0.2); color:var(--accent4); }
-.level-4 { background:rgba(255,68,102,0.2); color:var(--danger); }
-
-section { max-width:960px; margin:0 auto; padding:100px 24px; }
-.section-header { margin-bottom:2.5rem; }
-.section-header .tag {
-  display:inline-flex; align-items:center; gap:6px;
-  font-family:'JetBrains Mono',monospace; font-size:0.75rem;
-  padding:4px 12px; border-radius:100px; margin-bottom:12px;
-}
-.section-header h2 { font-family:'JetBrains Mono',monospace; font-size:clamp(1.8rem,4vw,2.5rem); font-weight:700; letter-spacing:-1px; }
-.section-header p { color:var(--text-dim); margin-top:8px; font-size:1rem; max-width:640px; }
-.viz-box {
-  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-  padding:32px; margin-top:1.5rem; position:relative; overflow:hidden;
-}
-.viz-box::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:1px;
-  background:linear-gradient(90deg,transparent,var(--accent),transparent); opacity:0.3;
-}
-.controls { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:24px; }
-.btn {
-  font-family:'JetBrains Mono',monospace; font-size:0.82rem; padding:8px 18px;
-  border:1px solid var(--border); border-radius:8px; background:var(--surface2);
-  color:var(--text); cursor:pointer; transition:all 0.2s; user-select:none;
-}
-.btn:hover { border-color:var(--accent); color:var(--accent); background:rgba(0,255,170,0.05); }
-.btn.active { border-color:var(--accent); color:var(--bg); background:var(--accent); }
-.btn.danger { border-color:var(--danger); color:var(--danger); }
-.btn.danger:hover { background:var(--danger); color:#fff; }
-.btn:disabled { opacity:0.3; cursor:not-allowed; pointer-events:none; }
-canvas { display:block; width:100%; border-radius:8px; }
-.info-text {
-  font-family:'JetBrains Mono',monospace; font-size:0.82rem; color:var(--text-dim);
-  margin-top:16px; padding:12px 16px; background:var(--surface2); border-radius:8px;
-  border-left:3px solid var(--accent); line-height:1.8;
-}
-
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a28;--border:#2a2a3a;--text:#e0e0f0;--text-dim:#8888aa;--accent:#00ffaa;--accent2:#ff6b9d;--accent3:#6b8aff;--accent4:#ffaa00;--danger:#ff4466;--success:#00cc88;--glow:0 0 20px rgba(0,255,170,0.15);--radius:12px;}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;line-height:1.7;overflow-x:hidden;}
+code,.mono{font-family:'JetBrains Mono',monospace;}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 600px 400px at 30% 40%,rgba(0,255,170,0.06),transparent),radial-gradient(ellipse 500px 500px at 70% 60%,rgba(107,138,255,0.06),transparent);}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:60px 60px;animation:gridMove 20s linear infinite;}
+@keyframes gridMove{0%{transform:translate(0,0)}100%{transform:translate(60px,60px)}}
+.hero h1{font-family:'JetBrains Mono',monospace;font-size:clamp(2.5rem,6vw,5rem);font-weight:700;letter-spacing:-2px;position:relative;z-index:1;}
+.hero h1 span{color:var(--accent);}
+.hero>p{font-size:1.1rem;color:var(--text-dim);margin-top:1rem;position:relative;z-index:1;max-width:620px;padding:0 20px;}
+.chapter-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:2.5rem;position:relative;z-index:1;padding:0 20px;max-width:860px;width:100%;}
+.ch-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 12px;text-decoration:none;transition:all 0.25s;text-align:left;}
+.ch-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+.ch-card-num{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);letter-spacing:2px;margin-bottom:4px;}
+.ch-card-name{font-family:'JetBrains Mono',monospace;font-size:0.88rem;font-weight:700;margin-bottom:6px;}
+.ch-card-topics{font-size:0.72rem;color:var(--text-dim);line-height:1.5;}
+.ch1 .ch-card-name{color:var(--accent);}.ch1:hover{border-color:var(--accent);}
+.ch2 .ch-card-name{color:var(--accent3);}.ch2:hover{border-color:var(--accent3);}
+.ch3 .ch-card-name{color:var(--accent4);}.ch3:hover{border-color:var(--accent4);}
+.ch4 .ch-card-name{color:var(--accent2);}.ch4:hover{border-color:var(--accent2);}
+.ch5 .ch-card-name{color:var(--danger);}.ch5:hover{border-color:var(--danger);}
+.ch6 .ch-card-name{color:var(--success);}.ch6:hover{border-color:var(--success);}
+.ch7 .ch-card-name{color:#a855f7;}.ch7:hover{border-color:#a855f7;}
+.chapter-banner{max-width:960px;margin:0 auto;padding:70px 24px 40px;}
+.chapter-banner .ch-num{font-family:'JetBrains Mono',monospace;font-size:0.72rem;font-weight:600;letter-spacing:3px;color:var(--text-dim);margin-bottom:10px;}
+.chapter-banner h2{font-family:'JetBrains Mono',monospace;font-size:clamp(2rem,5vw,3.2rem);font-weight:700;letter-spacing:-1px;margin-bottom:12px;}
+.chapter-banner .ch-desc{color:var(--text-dim);font-size:1rem;max-width:640px;margin-bottom:20px;}
+.chapter-banner .ch-pills{display:flex;flex-wrap:wrap;gap:8px;}
+.chapter-banner .ch-pills span{font-family:'JetBrains Mono',monospace;font-size:0.75rem;padding:4px 14px;border-radius:100px;background:var(--surface);border:1px solid var(--border);color:var(--text-dim);}
+.cb1 h2{color:var(--accent);}.cb2 h2{color:var(--accent3);}.cb3 h2{color:var(--accent4);}
+.cb4 h2{color:var(--accent2);}.cb5 h2{color:var(--danger);}.cb6 h2{color:var(--success);}.cb7 h2{color:#a855f7;}
+section{max-width:960px;margin:0 auto;padding:60px 24px;}
+.section-header{margin-bottom:2.5rem;}
+.section-header .tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;padding:4px 12px;border-radius:100px;margin-bottom:12px;}
+.tag-ch1{background:rgba(0,255,170,0.12);color:var(--accent);}
+.tag-ch2{background:rgba(107,138,255,0.12);color:var(--accent3);}
+.tag-ch3{background:rgba(255,170,0,0.12);color:var(--accent4);}
+.tag-ch4{background:rgba(255,107,157,0.12);color:var(--accent2);}
+.tag-ch5{background:rgba(255,68,102,0.12);color:var(--danger);}
+.tag-ch6{background:rgba(0,204,136,0.12);color:var(--success);}
+.tag-ch7{background:rgba(168,85,247,0.12);color:#a855f7;}
+.section-header h2{font-family:'JetBrains Mono',monospace;font-size:clamp(1.6rem,4vw,2.3rem);font-weight:700;letter-spacing:-1px;}
+.section-header p{color:var(--text-dim);margin-top:8px;font-size:1rem;max-width:640px;}
+.viz-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;margin-top:1.5rem;position:relative;overflow:hidden;}
+.viz-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.3;}
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px;}
+.btn{font-family:'JetBrains Mono',monospace;font-size:0.82rem;padding:8px 18px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);cursor:pointer;transition:all 0.2s;user-select:none;}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,255,170,0.05);}
+.btn.active{border-color:var(--accent);color:var(--bg);background:var(--accent);}
+.btn.danger{border-color:var(--danger);color:var(--danger);}
+.btn.danger:hover{background:var(--danger);color:#fff;}
+.btn:disabled{opacity:0.3;cursor:not-allowed;pointer-events:none;}
+canvas{display:block;width:100%;border-radius:8px;}
+.info-text{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);margin-top:16px;padding:12px 16px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--accent);line-height:1.8;}
 /* BINARY */
-.binary-display { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:24px 0; }
-.bit-cell {
-  width:64px; height:80px; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  background:var(--surface2); border:2px solid var(--border); border-radius:10px;
-  cursor:pointer; transition:all 0.25s; user-select:none;
-}
-.bit-cell:hover { border-color:var(--accent); transform:translateY(-2px); }
-.bit-cell.on { border-color:var(--accent); background:rgba(0,255,170,0.1); box-shadow:0 0 20px rgba(0,255,170,0.15); }
-.bit-cell .bit-val { font-family:'JetBrains Mono',monospace; font-size:1.8rem; font-weight:700; color:var(--text-dim); transition:all 0.25s; }
-.bit-cell.on .bit-val { color:var(--accent); }
-.bit-cell .bit-weight { font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--text-dim); margin-top:4px; }
-.decimal-result { text-align:center; font-family:'JetBrains Mono',monospace; font-size:2rem; color:var(--accent); margin-top:16px; }
-.decimal-result small { font-size:0.9rem; color:var(--text-dim); }
-
+.binary-display{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:24px 0;}
+.bit-cell{width:64px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--surface2);border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.25s;user-select:none;}
+.bit-cell:hover{border-color:var(--accent);transform:translateY(-2px);}
+.bit-cell.on{border-color:var(--accent);background:rgba(0,255,170,0.1);box-shadow:0 0 20px rgba(0,255,170,0.15);}
+.bit-cell .bit-val{font-family:'JetBrains Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--text-dim);transition:all 0.25s;}
+.bit-cell.on .bit-val{color:var(--accent);}
+.bit-cell .bit-weight{font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--text-dim);margin-top:4px;}
+.decimal-result{text-align:center;font-family:'JetBrains Mono',monospace;font-size:2rem;color:var(--accent);margin-top:16px;}
+.decimal-result small{font-size:0.9rem;color:var(--text-dim);}
 /* LOGIC GATES */
-.gate-container { display:flex; flex-direction:column; gap:20px; align-items:center; }
-.gate-row { display:flex; align-items:center; gap:20px; flex-wrap:wrap; justify-content:center; }
-.gate-input { width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:700; border:2px solid var(--border); border-radius:50%; cursor:pointer; transition:all 0.25s; user-select:none; }
-.gate-input.on { border-color:var(--accent); background:rgba(0,255,170,0.15); color:var(--accent); box-shadow:0 0 16px rgba(0,255,170,0.2); }
-.gate-symbol { font-family:'JetBrains Mono',monospace; font-size:1rem; font-weight:600; padding:10px 20px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; min-width:80px; text-align:center; }
-.gate-output { width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:700; border:2px solid var(--border); border-radius:50%; transition:all 0.3s; }
-.gate-output.on { border-color:var(--accent2); background:rgba(255,107,157,0.15); color:var(--accent2); box-shadow:0 0 16px rgba(255,107,157,0.2); }
-
+.gate-container{display:flex;flex-direction:column;gap:20px;align-items:center;}
+.gate-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:center;}
+.gate-input{width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;border:2px solid var(--border);border-radius:50%;cursor:pointer;transition:all 0.25s;user-select:none;}
+.gate-input.on{border-color:var(--accent);background:rgba(0,255,170,0.15);color:var(--accent);box-shadow:0 0 16px rgba(0,255,170,0.2);}
+.gate-symbol{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:600;padding:10px 20px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;min-width:80px;text-align:center;}
+.gate-output{width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;border:2px solid var(--border);border-radius:50%;transition:all 0.3s;}
+.gate-output.on{border-color:var(--accent2);background:rgba(255,107,157,0.15);color:var(--accent2);box-shadow:0 0 16px rgba(255,107,157,0.2);}
+/* NUMCONV */
+.numconv-row{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;margin-bottom:20px;}
+.numconv-input-group{display:flex;gap:8px;align-items:center;}
+.numconv-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:1.1rem;padding:10px 14px;width:200px;outline:none;}
+.numconv-input:focus{border-color:var(--accent);}
+.numconv-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.82rem;padding:10px 12px;outline:none;cursor:pointer;}
+.numconv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px;}
+.numconv-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;transition:all 0.2s;}
+.numconv-card.highlight{border-color:var(--accent);background:rgba(0,255,170,0.05);}
+.numconv-base{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:6px;}
+.numconv-value{font-family:'JetBrains Mono',monospace;font-size:1.3rem;color:var(--accent);word-break:break-all;min-height:28px;}
+.numconv-arrow{font-family:'JetBrains Mono',monospace;font-size:1.5rem;color:var(--text-dim);text-align:center;padding-top:20px;}
+.color-preview{height:48px;border-radius:8px;margin-top:12px;transition:background 0.3s;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.82rem;border:1px solid var(--border);}
+/* ENCODING */
+.enc-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:1rem;padding:10px 14px;width:100%;outline:none;margin-bottom:16px;}
+.enc-input:focus{border-color:var(--accent);}
+.enc-display{display:flex;flex-wrap:wrap;gap:8px;min-height:100px;}
+.enc-char-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;text-align:center;min-width:90px;animation:fadeIn 0.2s;}
+@keyframes fadeIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+.enc-glyph{font-size:1.8rem;color:var(--accent);margin-bottom:6px;min-height:2rem;font-family:'JetBrains Mono',monospace;}
+.enc-row{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);margin-top:2px;}
+.enc-row span{color:var(--text);}
+/* LINKED LIST */
+.ll-compare{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;}
+.ll-panel-title{font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.arr-visual{display:flex;gap:3px;flex-wrap:wrap;min-height:56px;align-items:center;padding:8px 0;}
+.arr-cell{width:46px;height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(107,138,255,0.12);border:1px solid rgba(107,138,255,0.4);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:var(--accent3);transition:all 0.3s;}
+.arr-cell.highlight{background:rgba(107,138,255,0.3);border-color:var(--accent3);transform:scale(1.1);}
+.arr-idx{font-size:0.5rem;color:var(--text-dim);}
+.ll-visual{display:flex;flex-wrap:wrap;gap:0;min-height:56px;align-items:center;padding:8px 0;}
+.ll-node{display:flex;align-items:center;}
+.ll-val-box{width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(0,255,170,0.08);border:1px solid rgba(0,255,170,0.3);border-radius:6px 0 0 6px;font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:var(--accent);transition:all 0.3s;}
+.ll-ptr-box{width:28px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(0,255,170,0.04);border:1px solid rgba(0,255,170,0.2);border-radius:0 6px 6px 0;font-size:0.7rem;color:var(--text-dim);}
+.ll-arrow{font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:var(--text-dim);padding:0 3px;}
+.ll-null{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);padding-left:6px;opacity:0.5;}
+.ll-node.highlight .ll-val-box{background:rgba(0,255,170,0.25);border-color:var(--accent);}
+.complexity-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.complexity-badge{font-family:'JetBrains Mono',monospace;font-size:0.72rem;padding:4px 10px;border-radius:100px;border:1px solid var(--border);color:var(--text-dim);}
+.complexity-badge.fast{border-color:var(--accent);color:var(--accent);background:rgba(0,255,170,0.08);}
+.complexity-badge.slow{border-color:var(--danger);color:var(--danger);background:rgba(255,68,102,0.08);}
+/* BST */
+.bst-controls{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.bst-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.9rem;padding:8px 12px;width:100px;outline:none;}
+.bst-input:focus{border-color:var(--accent);}
+.bst-info{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);margin-top:8px;min-height:20px;}
+/* HASH TABLE */
+.ht-inputs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.ht-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.85rem;padding:8px 12px;width:130px;outline:none;}
+.ht-input:focus{border-color:var(--accent);}
+.ht-visual{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+.ht-bucket{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;transition:all 0.35s;}
+.ht-bucket.ht-highlight{border-color:var(--accent);background:rgba(0,255,170,0.06);box-shadow:0 0 12px rgba(0,255,170,0.1);}
+.ht-idx{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);width:22px;flex-shrink:0;}
+.ht-chain{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-height:24px;}
+.ht-entry{display:flex;align-items:center;gap:3px;background:rgba(0,255,170,0.1);border:1px solid rgba(0,255,170,0.25);border-radius:4px;padding:3px 8px;}
+.ht-key{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent);}
+.ht-sep{color:var(--text-dim);font-size:0.8rem;}
+.ht-val{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text);}
+.ht-link{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);padding:0 2px;}
+.ht-empty{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);opacity:0.35;}
+.ht-formula{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);text-align:center;}
 /* SORTING */
-.sort-bars { display:flex; align-items:flex-end; gap:3px; height:260px; padding:0 4px; }
-.sort-bar { flex:1; background:var(--accent3); border-radius:3px 3px 0 0; transition:height 0.15s,background 0.15s; min-width:4px; }
-.sort-bar.comparing { background:var(--accent4); }
-.sort-bar.swapping { background:var(--accent2); }
-.sort-bar.sorted { background:var(--accent); }
-.sort-speed { display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--text-dim); }
-.sort-speed input[type=range] { -webkit-appearance:none; width:120px; height:4px; background:var(--border); border-radius:2px; outline:none; }
-.sort-speed input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; background:var(--accent); border-radius:50%; cursor:pointer; }
-
+.sort-bars{display:flex;align-items:flex-end;gap:3px;height:260px;padding:0 4px;}
+.sort-bar{flex:1;background:var(--accent3);border-radius:3px 3px 0 0;transition:height 0.15s,background 0.15s;min-width:4px;}
+.sort-bar.comparing{background:var(--accent4);}.sort-bar.swapping{background:var(--accent2);}.sort-bar.sorted{background:var(--accent);}
+.sort-speed{display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);}
+.sort-speed input[type=range]{-webkit-appearance:none;width:120px;height:4px;background:var(--border);border-radius:2px;outline:none;}
+.sort-speed input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--accent);border-radius:50%;cursor:pointer;}
 /* STACK & QUEUE */
-.ds-container { display:flex; gap:40px; flex-wrap:wrap; justify-content:center; }
-.ds-panel { flex:1; min-width:280px; max-width:400px; }
-.ds-panel h3 { font-family:'JetBrains Mono',monospace; font-size:1.1rem; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-.ds-visual { min-height:300px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:6px; }
-.ds-item { padding:10px 16px; font-family:'JetBrains Mono',monospace; font-size:0.9rem; border-radius:6px; animation:itemIn 0.3s ease-out; display:flex; justify-content:space-between; align-items:center; }
-.ds-item .idx { font-size:0.7rem; opacity:0.5; }
-@keyframes itemIn { from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)} }
-.stack-item { background:rgba(107,138,255,0.15); border:1px solid rgba(107,138,255,0.3); color:var(--accent3); }
-.queue-item { background:rgba(255,170,0,0.12); border:1px solid rgba(255,170,0,0.3); color:var(--accent4); }
-.ds-controls { display:flex; gap:8px; margin-top:12px; }
-.ds-empty { color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:0.8rem; text-align:center; padding:40px; opacity:0.5; }
-
+.ds-container{display:flex;gap:40px;flex-wrap:wrap;justify-content:center;}
+.ds-panel{flex:1;min-width:280px;max-width:400px;}
+.ds-panel h3{font-family:'JetBrains Mono',monospace;font-size:1.1rem;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.ds-visual{min-height:300px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:6px;}
+.ds-item{padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:0.9rem;border-radius:6px;animation:itemIn 0.3s ease-out;display:flex;justify-content:space-between;align-items:center;}
+.ds-item .idx{font-size:0.7rem;opacity:0.5;}
+@keyframes itemIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+.stack-item{background:rgba(107,138,255,0.15);border:1px solid rgba(107,138,255,0.3);color:var(--accent3);}
+.queue-item{background:rgba(255,170,0,0.12);border:1px solid rgba(255,170,0,0.3);color:var(--accent4);}
+.ds-controls{display:flex;gap:8px;margin-top:12px;}
+.ds-empty{color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:0.8rem;text-align:center;padding:40px;opacity:0.5;}
+/* SEARCH */
+.search-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.search-label{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);margin-bottom:8px;}
+.search-arr{display:flex;gap:3px;flex-wrap:wrap;min-height:40px;}
+.search-cell{width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.75rem;background:var(--surface2);border:1px solid var(--border);border-radius:4px;transition:all 0.2s;}
+.search-cell.cur{border-color:var(--accent4);background:rgba(255,170,0,0.2);color:var(--accent4);}
+.search-cell.found{border-color:var(--accent);background:rgba(0,255,170,0.2);color:var(--accent);}
+.search-cell.range{border-color:var(--accent3);background:rgba(107,138,255,0.1);}
+.search-cell.mid{border-color:var(--accent2);background:rgba(255,107,157,0.25);color:var(--accent2);}
+.search-cell.out{opacity:0.2;}
+.search-steps{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:var(--accent);text-align:center;margin-top:10px;}
+.search-steps small{font-size:0.8rem;color:var(--text-dim);}
+.search-input-row{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.search-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.9rem;padding:8px 12px;width:80px;outline:none;}
+.search-input:focus{border-color:var(--accent);}
+/* RECURSION */
+.recursion-controls{display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+.recursion-n-display{font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--accent);}
+.recursion-stack-visual{display:flex;flex-direction:column-reverse;gap:4px;margin-top:12px;}
+.call-frame{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent3);border-radius:0 8px 8px 0;padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;display:flex;justify-content:space-between;align-items:center;animation:fadeSlideIn 0.3s ease-out;}
+.call-frame.base-case{border-left-color:var(--accent);}
+.call-fn{color:var(--accent3);}.call-frame.base-case .call-fn{color:var(--accent);}
+.call-result{color:var(--text-dim);font-size:0.75rem;}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* BIG-O */
+.bigo-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;}
+.bigo-item{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;}
+.bigo-dot{width:12px;height:12px;border-radius:50%;}
+.bigo-n-display{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);margin-left:auto;}
 /* MEMORY */
-.memory-grid { display:grid; grid-template-columns:repeat(16,1fr); gap:2px; margin:20px 0; }
-.mem-cell { aspect-ratio:1; border-radius:3px; background:var(--surface2); border:1px solid var(--border); transition:all 0.3s; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:0.55rem; color:transparent; }
-.mem-cell.allocated { color:rgba(0,0,0,0.5); font-weight:600; }
-.mem-legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; }
-.mem-legend-item { display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--text-dim); }
-.mem-legend-color { width:14px; height:14px; border-radius:3px; }
-
+.memory-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:2px;margin:20px 0;}
+.mem-cell{aspect-ratio:1;border-radius:3px;background:var(--surface2);border:1px solid var(--border);transition:all 0.3s;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.55rem;color:transparent;}
+.mem-cell.allocated{color:rgba(0,0,0,0.5);font-weight:600;}
+.mem-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;}
+.mem-legend-item{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);}
+.mem-legend-color{width:14px;height:14px;border-radius:3px;}
+/* VIRTUAL MEMORY */
+.vm-layout{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:start;margin-top:12px;}
+.vm-col-title{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);text-align:center;margin-bottom:8px;}
+.vm-pages{display:flex;flex-direction:column;gap:4px;}
+.vm-page{padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:0.8rem;transition:all 0.25s;}
+.vm-page:hover{border-color:var(--accent3);background:rgba(107,138,255,0.06);}
+.vm-page.present{border-color:var(--accent);background:rgba(0,255,170,0.08);color:var(--accent);}
+.vm-page.accessing{animation:pagePulse 0.4s ease;}
+@keyframes pagePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.vm-pt{display:flex;flex-direction:column;gap:4px;padding:0 8px;}
+.vm-pt-title{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);text-align:center;margin-bottom:4px;}
+.vm-pt-row{font-family:'JetBrains Mono',monospace;font-size:0.68rem;padding:5px 8px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);display:flex;gap:6px;white-space:nowrap;}
+.vm-pt-row.mapped{border-color:rgba(0,255,170,0.3);color:var(--accent);}
+.vm-pt-row.unmapped{opacity:0.4;}
+.vm-frames{display:flex;flex-direction:column;gap:4px;}
+.vm-frame{padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:0.8rem;transition:all 0.3s;}
+.vm-frame.occupied{border-color:var(--accent3);background:rgba(107,138,255,0.1);color:var(--accent3);}
+.vm-frame.hit{border-color:var(--accent);background:rgba(0,255,170,0.15);color:var(--accent);animation:pagePulse 0.3s;}
+.vm-frame.fault{border-color:var(--danger);background:rgba(255,68,102,0.1);animation:pagePulse 0.3s;}
+.vm-stats{display:flex;gap:24px;justify-content:center;margin-top:14px;}
+.vm-stat{text-align:center;}
+.vm-stat-val{font-family:'JetBrains Mono',monospace;font-size:1.8rem;font-weight:700;}
+.vm-stat-label{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);}
+.vm-stat.hit-stat .vm-stat-val{color:var(--accent);}
+.vm-stat.fault-stat .vm-stat-val{color:var(--danger);}
 /* SCHEDULING */
-.process-timeline { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
-.process-row { display:flex; align-items:center; gap:12px; }
-.process-label { font-family:'JetBrains Mono',monospace; font-size:0.82rem; width:40px; flex-shrink:0; }
-.process-track { flex:1; height:36px; background:var(--surface2); border-radius:6px; position:relative; overflow:hidden; }
-.process-block { position:absolute; top:3px; bottom:3px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:rgba(0,0,0,0.7); font-weight:600; }
-.process-info { display:flex; gap:20px; flex-wrap:wrap; margin-top:16px; font-family:'JetBrains Mono',monospace; font-size:0.8rem; }
-.process-stat { display:flex; align-items:center; gap:6px; }
-.process-dot { width:10px; height:10px; border-radius:50%; }
-
+.process-timeline{display:flex;flex-direction:column;gap:12px;margin-top:20px;}
+.process-row{display:flex;align-items:center;gap:12px;}
+.process-label{font-family:'JetBrains Mono',monospace;font-size:0.82rem;width:40px;flex-shrink:0;}
+.process-track{flex:1;height:36px;background:var(--surface2);border-radius:6px;position:relative;overflow:hidden;}
+.process-block{position:absolute;top:3px;bottom:3px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:rgba(0,0,0,0.7);font-weight:600;}
+.process-info{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;}
+.process-stat{display:flex;align-items:center;gap:6px;}
+.process-dot{width:10px;height:10px;border-radius:50%;}
 /* DEADLOCK */
-.deadlock-canvas-wrap { position:relative; background:var(--surface2); border-radius:8px; overflow:hidden; }
-.deadlock-status {
-  position:absolute; top:16px; right:16px;
-  font-family:'JetBrains Mono',monospace; font-size:0.85rem;
-  padding:6px 16px; border-radius:100px; z-index:5; transition:all 0.3s;
-}
-.deadlock-status.safe { background:rgba(0,204,136,0.15); color:var(--success); border:1px solid rgba(0,204,136,0.3); }
-.deadlock-status.warning { background:rgba(255,170,0,0.15); color:var(--accent4); border:1px solid rgba(255,170,0,0.3); }
-.deadlock-status.deadlocked { background:rgba(255,68,102,0.15); color:var(--danger); border:1px solid rgba(255,68,102,0.3); animation:pulse 1.5s ease-in-out infinite; }
-.deadlock-status.resolving { background:rgba(107,138,255,0.15); color:var(--accent3); border:1px solid rgba(107,138,255,0.3); }
-@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,68,102,0.3)}50%{box-shadow:0 0 20px 4px rgba(255,68,102,0.2)} }
-
-.narration-log { margin-top:20px; max-height:340px; overflow-y:auto; scroll-behavior:smooth; }
-.narration-log::-webkit-scrollbar { width:4px; }
-.narration-log::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
-.narration-entry {
-  display:flex; gap:12px; padding:10px 14px; border-radius:8px; margin-bottom:6px;
-  font-family:'JetBrains Mono',monospace; font-size:0.8rem; line-height:1.7;
-  animation:fadeSlideIn 0.4s ease-out; border-left:3px solid transparent;
-}
-@keyframes fadeSlideIn { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
-.narration-entry.normal { background:rgba(0,204,136,0.05); border-left-color:var(--success); color:var(--text-dim); }
-.narration-entry.warning { background:rgba(255,170,0,0.07); border-left-color:var(--accent4); color:var(--accent4); }
-.narration-entry.danger { background:rgba(255,68,102,0.07); border-left-color:var(--danger); color:var(--danger); }
-.narration-entry.info { background:rgba(107,138,255,0.07); border-left-color:var(--accent3); color:var(--accent3); }
-.narration-entry.resolve { background:rgba(0,255,170,0.07); border-left-color:var(--accent); color:var(--accent); }
-.narration-time { flex-shrink:0; color:var(--text-dim); opacity:0.5; min-width:36px; text-align:right; font-size:0.7rem; }
-.narration-text { flex:1; }
-
-.dl-progress-wrap { margin-top:16px; background:var(--surface2); border-radius:100px; height:6px; overflow:hidden; }
-.dl-progress { height:100%; border-radius:100px; background:var(--accent); transition:width 0.3s,background 0.3s; width:0%; }
-.dl-progress.danger { background:var(--danger); }
-.dl-progress.resolve { background:var(--accent3); }
-
-.dl-phase { display:flex; gap:0; margin-bottom:24px; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
-.dl-phase-step {
-  flex:1; padding:10px 8px; font-family:'JetBrains Mono',monospace; font-size:0.7rem;
-  text-align:center; background:var(--surface2); color:var(--text-dim); transition:all 0.4s;
-  border-right:1px solid var(--border);
-}
-.dl-phase-step:last-child { border-right:none; }
-.dl-phase-step.done { background:rgba(0,255,170,0.08); color:rgba(0,255,170,0.5); }
-.dl-phase-step.active-normal { background:rgba(0,204,136,0.15); color:var(--success); }
-.dl-phase-step.active-warning { background:rgba(255,170,0,0.15); color:var(--accent4); }
-.dl-phase-step.active-danger { background:rgba(255,68,102,0.15); color:var(--danger); }
-.dl-phase-step.active-resolve { background:rgba(107,138,255,0.15); color:var(--accent3); }
-.dl-phase-step.active-done { background:rgba(0,255,170,0.15); color:var(--accent); }
-.dl-phase-step .phase-num { display:block; font-size:0.55rem; opacity:0.5; margin-bottom:2px; }
-
-/* RESOURCES */
-.resources-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; margin-top:1.5rem; }
-.resource-category { margin-bottom:2rem; }
-.resource-category-title {
-  font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:600;
-  color:var(--text-dim); text-transform:uppercase; letter-spacing:2px;
-  margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border);
-}
-.resource-card {
-  display:block; text-decoration:none;
-  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-  padding:20px; transition:all 0.25s; position:relative; overflow:hidden;
-}
-.resource-card::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:2px;
-  opacity:0; transition:opacity 0.25s;
-}
-.resource-card.cat-web::before { background:linear-gradient(90deg,var(--accent),var(--accent3)); }
-.resource-card.cat-os::before { background:linear-gradient(90deg,var(--accent4),var(--accent2)); }
-.resource-card.cat-etc::before { background:linear-gradient(90deg,var(--accent3),var(--accent2)); }
-.resource-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
-.resource-card:hover::before { opacity:1; }
-.resource-card-name {
-  font-family:'JetBrains Mono',monospace; font-size:0.95rem; font-weight:600;
-  color:var(--text); margin-bottom:6px; display:flex; align-items:center; gap:8px;
-}
-.resource-card-url {
-  font-family:'JetBrains Mono',monospace; font-size:0.72rem;
-  color:var(--accent); margin-bottom:10px; opacity:0.7;
-}
-.resource-card-desc { font-size:0.85rem; color:var(--text-dim); line-height:1.6; }
-.resource-tag {
-  display:inline-block; font-family:'JetBrains Mono',monospace; font-size:0.62rem;
-  padding:2px 8px; border-radius:100px; margin-left:auto; flex-shrink:0;
-}
-.tag-web { background:rgba(0,255,170,0.12); color:var(--accent); }
-.tag-video { background:rgba(255,107,157,0.12); color:var(--accent2); }
-.tag-os { background:rgba(255,170,0,0.12); color:var(--accent4); }
-.tag-tool { background:rgba(107,138,255,0.12); color:var(--accent3); }
-
-footer { text-align:center; padding:60px 24px; color:var(--text-dim); font-size:0.85rem; border-top:1px solid var(--border); }
-.section-divider { max-width:960px; margin:0 auto; height:1px; background:linear-gradient(90deg,transparent,var(--border),transparent); }
+.deadlock-canvas-wrap{position:relative;background:var(--surface2);border-radius:8px;overflow:hidden;}
+.deadlock-status{position:absolute;top:16px;right:16px;font-family:'JetBrains Mono',monospace;font-size:0.85rem;padding:6px 16px;border-radius:100px;z-index:5;transition:all 0.3s;}
+.deadlock-status.safe{background:rgba(0,204,136,0.15);color:var(--success);border:1px solid rgba(0,204,136,0.3);}
+.deadlock-status.warning{background:rgba(255,170,0,0.15);color:var(--accent4);border:1px solid rgba(255,170,0,0.3);}
+.deadlock-status.deadlocked{background:rgba(255,68,102,0.15);color:var(--danger);border:1px solid rgba(255,68,102,0.3);animation:pulse 1.5s ease-in-out infinite;}
+.deadlock-status.resolving{background:rgba(107,138,255,0.15);color:var(--accent3);border:1px solid rgba(107,138,255,0.3);}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,68,102,0.3)}50%{box-shadow:0 0 20px 4px rgba(255,68,102,0.2)}}
+.narration-log{margin-top:20px;max-height:340px;overflow-y:auto;scroll-behavior:smooth;}
+.narration-log::-webkit-scrollbar{width:4px;}
+.narration-log::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.narration-entry{display:flex;gap:12px;padding:10px 14px;border-radius:8px;margin-bottom:6px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;line-height:1.7;animation:fadeSlideIn 0.4s ease-out;border-left:3px solid transparent;}
+.narration-entry.normal{background:rgba(0,204,136,0.05);border-left-color:var(--success);color:var(--text-dim);}
+.narration-entry.warning{background:rgba(255,170,0,0.07);border-left-color:var(--accent4);color:var(--accent4);}
+.narration-entry.danger{background:rgba(255,68,102,0.07);border-left-color:var(--danger);color:var(--danger);}
+.narration-entry.info{background:rgba(107,138,255,0.07);border-left-color:var(--accent3);color:var(--accent3);}
+.narration-entry.resolve{background:rgba(0,255,170,0.07);border-left-color:var(--accent);color:var(--accent);}
+.narration-time{flex-shrink:0;color:var(--text-dim);opacity:0.5;min-width:36px;text-align:right;font-size:0.7rem;}
+.narration-text{flex:1;}
+.dl-progress-wrap{margin-top:16px;background:var(--surface2);border-radius:100px;height:6px;overflow:hidden;}
+.dl-progress{height:100%;border-radius:100px;background:var(--accent);transition:width 0.3s,background 0.3s;width:0%;}
+.dl-progress.danger{background:var(--danger);}.dl-progress.resolve{background:var(--accent3);}
+.dl-phase{display:flex;gap:0;margin-bottom:24px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+.dl-phase-step{flex:1;padding:10px 8px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;text-align:center;background:var(--surface2);color:var(--text-dim);transition:all 0.4s;border-right:1px solid var(--border);}
+.dl-phase-step:last-child{border-right:none;}
+.dl-phase-step.done{background:rgba(0,255,170,0.08);color:rgba(0,255,170,0.5);}
+.dl-phase-step.active-normal{background:rgba(0,204,136,0.15);color:var(--success);}
+.dl-phase-step.active-warning{background:rgba(255,170,0,0.15);color:var(--accent4);}
+.dl-phase-step.active-danger{background:rgba(255,68,102,0.15);color:var(--danger);}
+.dl-phase-step.active-resolve{background:rgba(107,138,255,0.15);color:var(--accent3);}
+.dl-phase-step.active-done{background:rgba(0,255,170,0.15);color:var(--accent);}
+.dl-phase-step .phase-num{display:block;font-size:0.55rem;opacity:0.5;margin-bottom:2px;}
+/* CPU */
+.cpu-phase-bar{display:flex;gap:0;margin-bottom:20px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+.cpu-phase-step{flex:1;padding:10px 8px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.78rem;background:var(--surface2);color:var(--text-dim);transition:all 0.3s;border-right:1px solid var(--border);}
+.cpu-phase-step:last-child{border-right:none;}
+.cpu-phase-step.fetch.active{background:rgba(107,138,255,0.15);color:var(--accent3);}
+.cpu-phase-step.decode.active{background:rgba(255,170,0,0.15);color:var(--accent4);}
+.cpu-phase-step.execute.active{background:rgba(0,255,170,0.15);color:var(--accent);}
+.cpu-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+.cpu-box{background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:16px;transition:all 0.3s;}
+.cpu-box.active{border-color:var(--accent);box-shadow:0 0 16px rgba(0,255,170,0.12);}
+.cpu-box-title{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;}
+.cpu-box-val{font-family:'JetBrains Mono',monospace;font-size:0.92rem;color:var(--accent);min-height:22px;}
+.cpu-regs{display:flex;flex-direction:column;gap:4px;}
+.cpu-reg{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:0.8rem;}
+.cpu-reg-name{color:var(--text-dim);}
+.cpu-reg-val{color:var(--accent4);}
+.cpu-program{display:flex;flex-direction:column;gap:4px;}
+.cpu-instr{display:flex;gap:12px;padding:7px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);border-left:3px solid transparent;transition:all 0.3s;}
+.cpu-instr.current{background:rgba(0,255,170,0.06);color:var(--text);border-left-color:var(--accent);}
+.cpu-instr.done{opacity:0.35;}
+.cpu-addr{color:var(--text-dim);font-size:0.72rem;}.cpu-op{color:var(--accent3);}.cpu-arg{color:var(--accent4);}
+.cpu-desc-box{margin-top:12px;padding:10px 14px;background:var(--surface2);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);min-height:36px;}
+/* CACHE */
+.cache-pyramid{display:flex;flex-direction:column;gap:6px;margin:16px 0;align-items:center;}
+.cache-level{border-radius:8px;padding:10px 20px;font-family:'JetBrains Mono',monospace;display:flex;justify-content:space-between;align-items:center;transition:all 0.35s;cursor:default;}
+.cache-level.l1{background:rgba(0,255,170,0.08);border:1px solid rgba(0,255,170,0.3);color:var(--accent);width:45%;}
+.cache-level.l2{background:rgba(107,138,255,0.08);border:1px solid rgba(107,138,255,0.3);color:var(--accent3);width:60%;}
+.cache-level.l3{background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.3);color:var(--accent4);width:75%;}
+.cache-level.ram{background:rgba(255,107,157,0.06);border:1px solid rgba(255,107,157,0.3);color:var(--accent2);width:90%;}
+.cache-level.ssd{background:rgba(136,136,170,0.06);border:1px solid rgba(136,136,170,0.2);color:var(--text-dim);width:100%;}
+.cache-level.hit-anim{box-shadow:0 0 20px rgba(0,255,170,0.3);transform:scale(1.02);}
+.cache-level-name{font-size:0.85rem;font-weight:600;}
+.cache-level-info{font-size:0.7rem;opacity:0.7;}
+.cache-slots{display:flex;gap:6px;margin-top:16px;flex-wrap:wrap;}
+.cache-slot{padding:6px 14px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;border:1px solid var(--border);background:var(--surface2);color:var(--text-dim);transition:all 0.3s;}
+.cache-slot.filled{border-color:var(--accent);background:rgba(0,255,170,0.1);color:var(--accent);}
+.cache-slot.hit{border-color:var(--accent);background:rgba(0,255,170,0.25);animation:pagePulse 0.3s;}
+.cache-stats-row{display:flex;gap:20px;margin-top:14px;}
+.cache-stat{font-family:'JetBrains Mono',monospace;font-size:0.82rem;}
+.cache-stat-val{font-size:1.4rem;font-weight:700;}
+.cache-stat.hit-c .cache-stat-val{color:var(--accent);}
+.cache-stat.miss-c .cache-stat-val{color:var(--danger);}
+/* OSI */
+.osi-stack{display:flex;flex-direction:column;gap:5px;margin-top:16px;}
+.osi-layer{border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:all 0.25s;}
+.osi-layer:hover{transform:translateX(4px);}
+.osi-layer-header{display:flex;align-items:center;gap:10px;padding:11px 16px;}
+.osi-num{font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:700;width:22px;}
+.osi-name{font-family:'JetBrains Mono',monospace;font-size:0.88rem;font-weight:600;flex:1;}
+.osi-en{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);}
+.osi-unit{font-family:'JetBrains Mono',monospace;font-size:0.68rem;padding:2px 8px;border-radius:100px;background:rgba(255,255,255,0.06);flex-shrink:0;}
+.osi-detail{padding:10px 16px 14px;border-top:1px solid var(--border);font-size:0.86rem;color:var(--text-dim);animation:fadeSlideIn 0.2s;}
+.osi-detail p{margin-bottom:6px;}
+.osi-examples{font-family:'JetBrains Mono',monospace;font-size:0.75rem;margin-top:4px;}
+/* TCP */
+.tcp-diagram{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:16px;position:relative;}
+.tcp-node{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 20px;text-align:center;min-width:120px;}
+.tcp-node-title{font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:700;color:var(--accent);}
+.tcp-node-state{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-top:4px;min-height:18px;}
+.tcp-messages{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
+.tcp-msg{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;animation:fadeSlideIn 0.3s;}
+.tcp-msg.c2s{background:rgba(0,255,170,0.06);border:1px solid rgba(0,255,170,0.2);color:var(--accent);flex-direction:row;}
+.tcp-msg.s2c{background:rgba(255,107,157,0.06);border:1px solid rgba(255,107,157,0.2);color:var(--accent2);flex-direction:row-reverse;}
+.tcp-msg-arrow{flex-shrink:0;font-size:1rem;}
+.tcp-msg-text{flex:1;}
+.tcp-step-desc{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-top:4px;padding:8px 12px;background:var(--surface2);border-radius:6px;}
+/* HTTP */
+.http-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px;}
+.http-panel{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;}
+.http-panel-title{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:12px;letter-spacing:1px;}
+.http-line{font-family:'JetBrains Mono',monospace;font-size:0.82rem;margin-bottom:5px;line-height:1.6;}
+.http-method{color:var(--accent);}.http-url{color:var(--accent3);}
+.http-header-k{color:var(--accent2);}.http-header-v{color:var(--text-dim);}
+.http-status-2{color:var(--accent);}.http-status-3{color:var(--accent4);}.http-status-4{color:var(--danger);}.http-status-5{color:var(--accent2);}
+.http-body-line{color:var(--text-dim);font-size:0.75rem;}
+.http-select{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.8rem;padding:7px 10px;outline:none;cursor:pointer;width:100%;margin-bottom:8px;}
+.status-table{width:100%;border-collapse:collapse;margin-top:16px;}
+.status-table th,.status-table td{font-family:'JetBrains Mono',monospace;font-size:0.78rem;padding:7px 12px;border-bottom:1px solid var(--border);text-align:left;}
+.status-table th{color:var(--text-dim);font-weight:400;}
+/* DNS */
+.dns-nodes{display:flex;flex-direction:column;gap:5px;margin-top:16px;}
+.dns-node{display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);opacity:0.35;transition:all 0.4s;}
+.dns-node.active{opacity:1;border-color:var(--accent3);background:rgba(107,138,255,0.08);}
+.dns-node.done{opacity:0.6;}
+.dns-node-icon{font-size:1.2rem;flex-shrink:0;}
+.dns-node-name{font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:600;min-width:130px;}
+.dns-node-desc{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);}
+.dns-packet{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--accent4);margin-left:auto;flex-shrink:0;}
+/* CRYPTO */
+.cipher-io{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+.cipher-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.cipher-box-label{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;}
+.cipher-text{font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--text);word-break:break-all;min-height:32px;}
+.cipher-text.encrypted{color:var(--accent);}
+.cipher-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.95rem;padding:10px 14px;width:100%;outline:none;margin-bottom:12px;}
+.cipher-input:focus{border-color:var(--accent);}
+.cipher-shift-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);}
+.cipher-shift-val{color:var(--accent);font-size:1rem;min-width:24px;}
+.cipher-alphabet{display:flex;gap:2px;overflow-x:auto;padding:8px 0;margin-top:14px;}
+.cipher-char-col{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:22px;}
+.cipher-plain-c{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);padding:2px;}
+.cipher-enc-c{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--accent);background:rgba(0,255,170,0.1);border-radius:3px;padding:2px 3px;width:22px;text-align:center;}
+/* HASH FN */
+.hash-visual{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-top:16px;}
+.hash-io-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;}
+.hash-io-label{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);margin-bottom:6px;}
+.hash-io-val{font-family:'JetBrains Mono',monospace;font-size:0.9rem;word-break:break-all;color:var(--accent);min-height:22px;}
+.hash-fn-box{background:rgba(107,138,255,0.08);border:2px solid var(--accent3);border-radius:10px;padding:10px 16px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent3);}
+.hash-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.95rem;padding:10px 14px;width:100%;outline:none;margin-bottom:12px;}
+.hash-input:focus{border-color:var(--accent);}
+.hash-avalanche{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
+.hash-avl-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+.hash-avl-label{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);margin-bottom:6px;}
+.hash-avl-input{font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--text);margin-bottom:4px;}
+.hash-avl-hash{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--accent);word-break:break-all;}
+.hash-diff-count{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--accent4);margin-top:4px;}
+/* COMMON */
+.section-divider{max-width:960px;margin:0 auto;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+footer{text-align:center;padding:60px 24px;color:var(--text-dim);font-size:0.85rem;border-top:1px solid var(--border);}
 @media(max-width:640px){
-  .bit-cell{width:48px;height:64px} .bit-cell .bit-val{font-size:1.4rem}
-  .ds-container{flex-direction:column} section{padding:60px 16px}
-  .dl-phase-step{font-size:0.55rem;padding:8px 4px}
+  .bit-cell{width:44px;height:60px}.bit-cell .bit-val{font-size:1.3rem}
+  .ds-container{flex-direction:column}.search-grid{grid-template-columns:1fr}
+  .ll-compare{grid-template-columns:1fr}.cpu-layout{grid-template-columns:1fr}
+  .http-layout{grid-template-columns:1fr}.cipher-io{grid-template-columns:1fr}
+  .hash-avalanche{grid-template-columns:1fr}.vm-layout{grid-template-columns:1fr}
+  .chapter-nav{grid-template-columns:repeat(2,1fr)}
+  section{padding:50px 16px}.chapter-banner{padding:50px 16px 30px}
 }
-::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-track{background:var(--bg)} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
 <body>
@@ -279,26 +397,60 @@ footer { text-align:center; padding:60px 24px; color:var(--text-dim); font-size:
 <header class="hero">
   <div class="hero-grid"></div>
   <h1>CS <span>Visualizer</span></h1>
-  <p>컴퓨터 공학의 핵심 개념들을 인터랙티브 시각화로 직관적으로 이해하세요. 기초부터 고급까지 단계별로 탐험합니다.</p>
-  <nav class="hero-nav">
-    <a href="#binary"><span class="level level-1">Lv.1</span> 이진수</a>
-    <a href="#gates"><span class="level level-1">Lv.1</span> 논리 게이트</a>
-    <a href="#sorting"><span class="level level-2">Lv.2</span> 정렬 알고리즘</a>
-    <a href="#datastructure"><span class="level level-2">Lv.2</span> 스택 & 큐</a>
-    <a href="#memory"><span class="level level-3">Lv.3</span> 메모리 관리</a>
-    <a href="#scheduling"><span class="level level-3">Lv.3</span> 프로세스 스케줄링</a>
-    <a href="#deadlock"><span class="level level-4">Lv.4</span> 데드락</a>
-    <a href="#resources"><span class="level" style="background:rgba(136,136,170,0.2);color:var(--text-dim)">+</span> 더 배우기</a>
-  </nav>
+  <p>컴공을 나오지 않아도 괜찮습니다. 이진수부터 네트워크까지 — 컴퓨터 공학의 핵심 개념을 인터랙티브 시각화로 직접 체험하세요.</p>
+  <div class="chapter-nav">
+    <a href="#ch1" class="ch-card ch1">
+      <div class="ch-card-num">CHAPTER 01</div>
+      <div class="ch-card-name">컴퓨터의 언어</div>
+      <div class="ch-card-topics">이진수 · 논리게이트 · 진법변환 · 문자인코딩</div>
+    </a>
+    <a href="#ch2" class="ch-card ch2">
+      <div class="ch-card-num">CHAPTER 02</div>
+      <div class="ch-card-name">자료구조</div>
+      <div class="ch-card-topics">배열/링크드리스트 · 스택&큐 · BST · 해시테이블</div>
+    </a>
+    <a href="#ch3" class="ch-card ch3">
+      <div class="ch-card-num">CHAPTER 03</div>
+      <div class="ch-card-name">알고리즘</div>
+      <div class="ch-card-topics">정렬 · 탐색 · 재귀 · 빅오표기법</div>
+    </a>
+    <a href="#ch4" class="ch-card ch4">
+      <div class="ch-card-num">CHAPTER 04</div>
+      <div class="ch-card-name">운영체제</div>
+      <div class="ch-card-topics">메모리 · 가상메모리 · 스케줄링 · 데드락</div>
+    </a>
+    <a href="#ch5" class="ch-card ch5">
+      <div class="ch-card-num">CHAPTER 05</div>
+      <div class="ch-card-name">컴퓨터 구조</div>
+      <div class="ch-card-topics">CPU동작원리 · 캐시메모리</div>
+    </a>
+    <a href="#ch6" class="ch-card ch6">
+      <div class="ch-card-num">CHAPTER 06</div>
+      <div class="ch-card-name">네트워크</div>
+      <div class="ch-card-topics">OSI7계층 · TCP · HTTP · DNS</div>
+    </a>
+    <a href="#ch7" class="ch-card ch7">
+      <div class="ch-card-num">CHAPTER 07</div>
+      <div class="ch-card-name">보안</div>
+      <div class="ch-card-topics">암호화 · 해시함수</div>
+    </a>
+  </div>
 </header>
 
-<!-- BINARY -->
+<!-- ===== CHAPTER 1 ===== -->
+<div id="ch1" class="chapter-banner cb1">
+  <div class="ch-num">CHAPTER 01</div>
+  <h2>컴퓨터의 언어</h2>
+  <p class="ch-desc">모든 컴퓨터는 0과 1만 이해합니다. 전기가 흐르면 1, 흐르지 않으면 0. 이 단순한 원리로 어떻게 문자, 이미지, 영상, 소리를 표현하는지 — 직접 손으로 만져보며 배웁니다.</p>
+  <div class="ch-pills"><span>이진수</span><span>논리 게이트</span><span>진법 변환</span><span>문자 인코딩</span></div>
+</div>
+
 <div class="section-divider"></div>
 <section id="binary">
   <div class="section-header">
-    <div class="tag level-1">Lv.1 기초</div>
+    <div class="tag tag-ch1">Ch.1 기초</div>
     <h2>이진수 (Binary)</h2>
-    <p>컴퓨터는 0과 1만 이해합니다. 비트를 클릭해 켜고 끄면서 이진수↔십진수 변환을 확인하세요.</p>
+    <p>컴퓨터는 0과 1만 이해합니다. 비트를 클릭해 켜고 끄면서 이진수↔십진수 변환을 직접 확인하세요. 8개의 비트(1바이트)로 0~255까지 표현할 수 있습니다.</p>
   </div>
   <div class="viz-box">
     <div class="binary-display" id="binaryDisplay"></div>
@@ -308,17 +460,16 @@ footer { text-align:center; padding:60px 24px; color:var(--text-dim); font-size:
       <button class="btn" onclick="randomBinary()">랜덤</button>
       <button class="btn" onclick="incrementBinary()">+1 증가</button>
     </div>
-    <div class="info-text">💡 각 비트의 자릿값은 오른쪽부터 2⁰, 2¹, 2², ... 입니다. 켜진 비트의 자릿값을 모두 더하면 십진수 값이 됩니다.</div>
+    <div class="info-text">💡 각 비트의 자릿값은 오른쪽부터 2⁰=1, 2¹=2, 2²=4, 2³=8 ... 입니다. 켜진(1) 비트의 자릿값을 모두 더하면 십진수 값이 됩니다. 예: 00001010 = 8+2 = 10</div>
   </div>
 </section>
 
-<!-- LOGIC GATES -->
 <div class="section-divider"></div>
 <section id="gates">
   <div class="section-header">
-    <div class="tag level-1">Lv.1 기초</div>
+    <div class="tag tag-ch1">Ch.1 기초</div>
     <h2>논리 게이트 (Logic Gates)</h2>
-    <p>디지털 회로의 기본 구성 요소입니다. 입력값을 클릭해 토글하고 각 게이트의 동작을 확인하세요.</p>
+    <p>디지털 회로의 기본 부품입니다. AND, OR, NOT 같은 게이트들을 조합해 덧셈, 곱셈, 심지어 CPU까지 만들 수 있습니다. 입력값을 클릭해 토글해보세요.</p>
   </div>
   <div class="viz-box">
     <div class="controls" id="gateTabs"></div>
@@ -327,36 +478,121 @@ footer { text-align:center; padding:60px 24px; color:var(--text-dim); font-size:
   </div>
 </section>
 
-<!-- SORTING -->
 <div class="section-divider"></div>
-<section id="sorting">
+<section id="numconv">
   <div class="section-header">
-    <div class="tag level-2">Lv.2 중급</div>
-    <h2>정렬 알고리즘 (Sorting)</h2>
-    <p>같은 데이터를 정렬하는 다양한 전략을 비교해보세요.</p>
+    <div class="tag tag-ch1">Ch.1 기초</div>
+    <h2>진법 변환 (Number Systems)</h2>
+    <p>컴퓨터는 2진수(Binary), 프로그래머는 주로 16진수(Hex)를 씁니다. 색상 코드 #FF5733도 16진수입니다. 숫자를 입력하면 모든 진법으로 변환해줍니다.</p>
   </div>
   <div class="viz-box">
-    <div class="controls">
-      <button class="btn" onclick="startSort('bubble')">버블</button>
-      <button class="btn" onclick="startSort('selection')">선택</button>
-      <button class="btn" onclick="startSort('insertion')">삽입</button>
-      <button class="btn" onclick="startSort('quick')">퀵</button>
-      <button class="btn" onclick="startSort('merge')">병합</button>
-      <button class="btn" onclick="resetSort()">새 배열</button>
-      <div class="sort-speed">🏎️<input type="range" id="sortSpeed" min="1" max="100" value="50"></div>
+    <div class="numconv-row">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-bottom:8px;">입력값</div>
+        <div class="numconv-input-group">
+          <input class="numconv-input" id="numconvInput" placeholder="숫자 입력" oninput="convertNum()" value="255">
+          <select class="numconv-select" id="numconvBase" onchange="convertNum()">
+            <option value="10">10진수 (DEC)</option>
+            <option value="2">2진수 (BIN)</option>
+            <option value="8">8진수 (OCT)</option>
+            <option value="16">16진수 (HEX)</option>
+          </select>
+        </div>
+      </div>
+      <div class="numconv-arrow">→</div>
+      <div id="colorPreviewWrap" style="display:none">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-bottom:8px;">색상 미리보기</div>
+        <div class="color-preview" id="colorPreview">#FFFFFF</div>
+      </div>
     </div>
-    <div class="sort-bars" id="sortBars"></div>
-    <div class="info-text" id="sortInfo">정렬 알고리즘을 선택하세요.</div>
+    <div class="numconv-grid">
+      <div class="numconv-card" id="nc-bin">
+        <div class="numconv-base">2진수 (Binary)</div>
+        <div class="numconv-value" id="nc-bin-val">11111111</div>
+      </div>
+      <div class="numconv-card" id="nc-oct">
+        <div class="numconv-base">8진수 (Octal)</div>
+        <div class="numconv-value" id="nc-oct-val">377</div>
+      </div>
+      <div class="numconv-card" id="nc-dec">
+        <div class="numconv-base">10진수 (Decimal)</div>
+        <div class="numconv-value" id="nc-dec-val">255</div>
+      </div>
+      <div class="numconv-card" id="nc-hex">
+        <div class="numconv-base">16진수 (Hexadecimal)</div>
+        <div class="numconv-value" id="nc-hex-val">FF</div>
+      </div>
+    </div>
+    <div class="info-text">💡 프로그래머가 16진수를 선호하는 이유: 4비트를 정확히 1자리 hex로 표현합니다. 8비트(1바이트) = 2자리 hex. 예: RGB 색상 #FF5733 = R:255 G:87 B:51</div>
   </div>
 </section>
 
-<!-- STACK & QUEUE -->
+<div class="section-divider"></div>
+<section id="encoding">
+  <div class="section-header">
+    <div class="tag tag-ch1">Ch.1 기초</div>
+    <h2>문자 인코딩 (Character Encoding)</h2>
+    <p>컴퓨터는 문자를 저장할 수 없습니다. 대신 숫자로 변환해 저장합니다. 'A'는 65, 'a'는 97 — 이 약속이 ASCII입니다. Unicode는 전 세계 문자를 담기 위해 만들어졌습니다.</p>
+  </div>
+  <div class="viz-box">
+    <input class="enc-input" id="encInput" placeholder="텍스트를 입력하세요 (예: Hello, CS!)" oninput="updateEncoding()" value="Hello">
+    <div class="enc-display" id="encDisplay"></div>
+    <div class="info-text" id="encInfo">💡 ASCII는 7비트(0~127)로 128개 문자를 정의합니다. 영문 대소문자, 숫자, 특수문자. 한글은 UTF-8에서 3바이트(24비트)가 필요합니다.</div>
+  </div>
+</section>
+
+<!-- ===== CHAPTER 2 ===== -->
+<div id="ch2" class="chapter-banner cb2">
+  <div class="ch-num">CHAPTER 02</div>
+  <h2>자료구조</h2>
+  <p class="ch-desc">데이터를 어떻게 담느냐에 따라 프로그램의 속도가 수백 배 차이 납니다. 배열과 링크드 리스트, 트리, 해시 테이블 — 각각 어떤 상황에 어떤 그릇을 써야 할지 눈으로 확인합니다.</p>
+  <div class="ch-pills"><span>배열 vs 링크드 리스트</span><span>스택 & 큐</span><span>이진 탐색 트리</span><span>해시 테이블</span></div>
+</div>
+
+<div class="section-divider"></div>
+<section id="linkedlist">
+  <div class="section-header">
+    <div class="tag tag-ch2">Ch.2 자료구조</div>
+    <h2>배열 vs 링크드 리스트</h2>
+    <p>배열은 연속된 메모리 공간에 데이터를 저장합니다. 링크드 리스트는 각 노드가 다음 노드의 주소를 가집니다. 삽입/삭제 속도가 완전히 다릅니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="llAppend()">끝에 추가</button>
+      <button class="btn" onclick="llInsertFront()">앞에 삽입</button>
+      <button class="btn" onclick="llRemoveLast()">마지막 삭제</button>
+      <button class="btn danger" onclick="llClear()">초기화</button>
+    </div>
+    <div class="ll-compare">
+      <div>
+        <div class="ll-panel-title" style="color:var(--accent3)">📦 배열 (Array)</div>
+        <div class="arr-visual" id="arrVisual"></div>
+        <div class="complexity-row">
+          <span class="complexity-badge fast">인덱스 접근 O(1)</span>
+          <span class="complexity-badge slow">중간 삽입 O(n)</span>
+          <span class="complexity-badge slow">중간 삭제 O(n)</span>
+        </div>
+      </div>
+      <div>
+        <div class="ll-panel-title" style="color:var(--accent)">🔗 링크드 리스트 (Linked List)</div>
+        <div class="ll-visual" id="llVisual"></div>
+        <div class="complexity-row">
+          <span class="complexity-badge slow">인덱스 접근 O(n)</span>
+          <span class="complexity-badge fast">앞에 삽입 O(1)</span>
+          <span class="complexity-badge fast">앞에 삭제 O(1)</span>
+        </div>
+      </div>
+    </div>
+    <div class="info-text">💡 배열: 인덱스로 바로 접근 가능(O(1))하지만 중간 삽입 시 뒤 원소를 모두 밀어야 합니다. 링크드 리스트: 포인터만 바꾸면 O(1) 삽입 가능하지만 탐색은 처음부터 순서대로 O(n).</div>
+  </div>
+</section>
+
 <div class="section-divider"></div>
 <section id="datastructure">
   <div class="section-header">
-    <div class="tag level-2">Lv.2 중급</div>
+    <div class="tag tag-ch2">Ch.2 자료구조</div>
     <h2>스택 & 큐 (Stack & Queue)</h2>
-    <p>스택은 LIFO(후입선출), 큐는 FIFO(선입선출). 직접 조작해보세요.</p>
+    <p>스택은 LIFO(후입선출) — 브라우저 뒤로가기, 함수 호출 스택이 이 원리. 큐는 FIFO(선입선출) — 프린터 대기열, 키보드 입력 버퍼가 이 원리. 직접 조작해보세요.</p>
   </div>
   <div class="viz-box">
     <div class="ds-container">
@@ -379,38 +615,233 @@ footer { text-align:center; padding:60px 24px; color:var(--text-dim); font-size:
         </div>
       </div>
     </div>
-    <div class="info-text">💡 스택: 접시 쌓기처럼 마지막에 넣은 것이 먼저 나옵니다. 큐: 줄 서기처럼 먼저 온 것이 먼저 나갑니다.</div>
+    <div class="info-text">💡 스택: 접시 쌓기처럼 마지막에 넣은 것이 먼저 나옵니다(LIFO). 큐: 줄 서기처럼 먼저 온 것이 먼저 나갑니다(FIFO). 실제로 함수 호출은 콜 스택(stack)으로, 네트워크 패킷 처리는 큐로 관리됩니다.</div>
   </div>
 </section>
 
-<!-- MEMORY -->
 <div class="section-divider"></div>
-<section id="memory">
+<section id="bst">
   <div class="section-header">
-    <div class="tag level-3">Lv.3 고급</div>
-    <h2>메모리 관리 (Memory Management)</h2>
-    <p>프로세스에 메모리를 할당/해제하면서 단편화가 어떻게 발생하는지 관찰하세요.</p>
+    <div class="tag tag-ch2">Ch.2 자료구조</div>
+    <h2>이진 탐색 트리 (Binary Search Tree)</h2>
+    <p>왼쪽 자식은 항상 부모보다 작고, 오른쪽 자식은 항상 큽니다. 이 규칙 덕분에 100만 개 데이터에서도 최대 20번만 비교하면 원하는 값을 찾을 수 있습니다(log₂ 1,000,000 ≈ 20).</p>
+  </div>
+  <div class="viz-box">
+    <div class="bst-controls">
+      <input class="bst-input" id="bstInput" type="number" min="1" max="99" placeholder="1-99">
+      <button class="btn" onclick="bstInsert()">삽입</button>
+      <button class="btn" onclick="bstSearch()">탐색</button>
+      <button class="btn danger" onclick="bstReset()">초기화</button>
+      <button class="btn" onclick="bstRandom()">랜덤 5개</button>
+    </div>
+    <canvas id="bstCanvas" height="300" style="background:var(--surface2);border-radius:8px;"></canvas>
+    <div class="bst-info" id="bstInfo">숫자를 입력하고 삽입해보세요.</div>
+    <div class="info-text">💡 BST에서 탐색: 찾는 값이 현재 노드보다 작으면 왼쪽, 크면 오른쪽으로 이동. 평균 O(log n)이지만 정렬된 데이터를 순서대로 삽입하면 O(n)으로 퇴화합니다.</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+<section id="hashtable">
+  <div class="section-header">
+    <div class="tag tag-ch2">Ch.2 자료구조</div>
+    <h2>해시 테이블 (Hash Table)</h2>
+    <p>파이썬의 dict, 자바스크립트의 Object가 바로 해시 테이블입니다. 키(key)를 해시 함수로 변환해 배열 인덱스를 구하므로 평균 O(1)에 데이터를 저장하고 찾습니다. 충돌(Collision)이 생기면 체이닝으로 해결합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="ht-inputs">
+      <input class="ht-input" id="htKey" placeholder="키 (예: name)" maxlength="10">
+      <input class="ht-input" id="htVal" placeholder="값 (예: Alice)" maxlength="15">
+      <button class="btn" onclick="htInsert()">저장</button>
+      <button class="btn" onclick="htDelete()">삭제</button>
+      <button class="btn danger" onclick="htClear()">초기화</button>
+    </div>
+    <div class="ht-formula" id="htFormula">hash("key") = (각 문자 코드 합계) % 8 = 버킷 번호</div>
+    <div class="ht-visual" id="htVisual"></div>
+    <div class="info-text">💡 해시 충돌(서로 다른 키가 같은 버킷에 배정): 체이닝(Chaining) 방식으로 같은 버킷에 연결 리스트로 이어붙입니다. 충돌이 많아지면 탐색이 O(n)으로 느려지므로, 버킷 수와 데이터 수의 비율(Load Factor)을 0.7 이하로 유지합니다.</div>
+  </div>
+</section>
+
+<!-- ===== CHAPTER 3 ===== -->
+<div id="ch3" class="chapter-banner cb3">
+  <div class="ch-num">CHAPTER 03</div>
+  <h2>알고리즘</h2>
+  <p class="ch-desc">같은 문제도 어떤 방법으로 푸느냐에 따라 1초와 1000시간이 갈립니다. 알고리즘은 문제를 푸는 절차이고, 빅오 표기법은 그 효율을 평가하는 언어입니다.</p>
+  <div class="ch-pills"><span>정렬 알고리즘</span><span>탐색 알고리즘</span><span>재귀</span><span>빅오 표기법</span></div>
+</div>
+
+<div class="section-divider"></div>
+<section id="sorting">
+  <div class="section-header">
+    <div class="tag tag-ch3">Ch.3 알고리즘</div>
+    <h2>정렬 알고리즘 (Sorting)</h2>
+    <p>같은 데이터를 정렬하는 다양한 전략을 비교해보세요. 버블정렬은 O(n²), 퀵/병합정렬은 O(n log n). 데이터가 많을수록 차이가 극적으로 벌어집니다.</p>
   </div>
   <div class="viz-box">
     <div class="controls">
-      <button class="btn" onclick="memAlloc()">할당</button>
-      <button class="btn" onclick="memFree()">해제</button>
-      <button class="btn" onclick="memCompact()">압축</button>
+      <button class="btn" onclick="startSort('bubble')">버블</button>
+      <button class="btn" onclick="startSort('selection')">선택</button>
+      <button class="btn" onclick="startSort('insertion')">삽입</button>
+      <button class="btn" onclick="startSort('quick')">퀵</button>
+      <button class="btn" onclick="startSort('merge')">병합</button>
+      <button class="btn" onclick="resetSort()">새 배열</button>
+      <div class="sort-speed">🏎️<input type="range" id="sortSpeed" min="1" max="100" value="50"></div>
+    </div>
+    <div class="sort-bars" id="sortBars"></div>
+    <div class="info-text" id="sortInfo">정렬 알고리즘을 선택하세요. 노란색=비교중, 분홍=교환중, 초록=정렬완료</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+<section id="search">
+  <div class="section-header">
+    <div class="tag tag-ch3">Ch.3 알고리즘</div>
+    <h2>탐색 알고리즘 (Searching)</h2>
+    <p>선형 탐색은 처음부터 하나씩 확인합니다(O(n)). 이진 탐색은 정렬된 배열에서 절반씩 줄여가며 찾습니다(O(log n)). 100만 개 데이터에서 선형은 최대 1,000,000번, 이진은 최대 20번!</p>
+  </div>
+  <div class="viz-box">
+    <div class="search-input-row">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim)">찾을 값:</span>
+      <input class="search-input" id="searchTarget" type="number" value="37">
+      <button class="btn" onclick="runSearch()">▶ 동시 실행</button>
+      <button class="btn" onclick="resetSearch()">새 배열</button>
+    </div>
+    <div class="search-grid">
+      <div>
+        <div class="search-label">선형 탐색 (Linear Search)</div>
+        <div class="search-arr" id="linearArr"></div>
+        <div class="search-steps" id="linearSteps"><small>—</small></div>
+      </div>
+      <div>
+        <div class="search-label">이진 탐색 (Binary Search)</div>
+        <div class="search-arr" id="binaryArr"></div>
+        <div class="search-steps" id="binarySteps"><small>—</small></div>
+      </div>
+    </div>
+    <div class="info-text">💡 이진 탐색 조건: 배열이 정렬되어 있어야 합니다. 범위를 반씩 줄이므로 10억 개에서도 최대 30번이면 찾을 수 있습니다.</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+<section id="recursion">
+  <div class="section-header">
+    <div class="tag tag-ch3">Ch.3 알고리즘</div>
+    <h2>재귀 (Recursion)</h2>
+    <p>함수가 자기 자신을 호출하는 것. 수학의 귀납법처럼 "작은 문제를 풀 수 있으면 큰 문제도 풀 수 있다"는 아이디어입니다. 콜 스택이 어떻게 쌓이고 풀리는지 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="recursion-controls">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim)">n =</span>
+      <input type="range" id="recursionN" min="1" max="8" value="5" oninput="updateRecursion()" style="width:140px;">
+      <span class="recursion-n-display" id="recursionNDisplay">5</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim)">→ factorial(n) =</span>
+      <span class="recursion-n-display" id="recursionResult">120</span>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-bottom:8px;">↓ 콜 스택 (아래=먼저 호출, 위=나중에 호출)</div>
+    <div class="recursion-stack-visual" id="recursionStack"></div>
+    <div class="info-text">💡 재귀의 핵심: ① 기저 조건(Base Case): factorial(0) = 1 — 재귀를 멈출 조건. ② 재귀 조건(Recursive Case): factorial(n) = n × factorial(n-1). 기저 조건 없이 재귀 호출하면 스택 오버플로우!</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+<section id="bigo">
+  <div class="section-header">
+    <div class="tag tag-ch3">Ch.3 알고리즘</div>
+    <h2>빅오 표기법 (Big-O Notation)</h2>
+    <p>알고리즘의 효율을 표현하는 언어입니다. n이 커질수록 각 복잡도가 얼마나 다른지 직접 눈으로 확인하세요. O(n²) 알고리즘을 O(n log n)으로 개선하면 1억 개 데이터에서 1억배 빨라집니다.</p>
+  </div>
+  <div class="viz-box">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;flex-wrap:wrap;">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim)">n =</span>
+      <input type="range" id="bigoN" min="1" max="50" value="30" oninput="drawBigO()" style="width:150px;">
+      <span class="bigo-n-display" id="bigoNLabel">n = 30</span>
+    </div>
+    <canvas id="bigoCanvas" height="280" style="background:var(--surface2);border-radius:8px;"></canvas>
+    <div class="bigo-legend">
+      <div class="bigo-item"><div class="bigo-dot" style="background:#00ffaa"></div>O(1) 상수</div>
+      <div class="bigo-item"><div class="bigo-dot" style="background:#6b8aff"></div>O(log n) 로그</div>
+      <div class="bigo-item"><div class="bigo-dot" style="background:#ffaa00"></div>O(n) 선형</div>
+      <div class="bigo-item"><div class="bigo-dot" style="background:#ff6b9d"></div>O(n log n)</div>
+      <div class="bigo-item"><div class="bigo-dot" style="background:#ff4466"></div>O(n²) 이차</div>
+    </div>
+    <div id="bigoValues" style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-top:10px;"></div>
+    <div class="info-text">💡 실제 의미: O(1) = 캐시 조회 / O(log n) = 이진탐색 / O(n) = 배열 순회 / O(n log n) = 퀵/병합정렬 / O(n²) = 버블정렬. n=1,000,000일 때 O(n²)는 1조 번 연산!</div>
+  </div>
+</section>
+
+<!-- ===== CHAPTER 4 ===== -->
+<div id="ch4" class="chapter-banner cb4">
+  <div class="ch-num">CHAPTER 04</div>
+  <h2>운영체제</h2>
+  <p class="ch-desc">운영체제(OS)는 하드웨어와 프로그램 사이의 중재자입니다. 메모리를 나눠주고, CPU 시간을 배분하고, 프로그램들이 서로 방해하지 않게 관리합니다. Windows, macOS, Linux가 모두 OS입니다.</p>
+  <div class="ch-pills"><span>메모리 관리</span><span>가상 메모리</span><span>프로세스 스케줄링</span><span>데드락</span></div>
+</div>
+
+<div class="section-divider"></div>
+<section id="memory">
+  <div class="section-header">
+    <div class="tag tag-ch4">Ch.4 운영체제</div>
+    <h2>메모리 관리 (Memory Management)</h2>
+    <p>프로그램을 실행하면 OS가 RAM의 빈 공간을 찾아 할당해줍니다. 할당과 해제를 반복하다 보면 작은 빈 공간들이 흩어지는 "단편화(Fragmentation)"가 발생합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="memAlloc()">프로세스 할당</button>
+      <button class="btn" onclick="memFree()">랜덤 해제</button>
+      <button class="btn" onclick="memCompact()">메모리 압축</button>
       <button class="btn danger" onclick="memReset()">초기화</button>
     </div>
     <div class="memory-grid" id="memoryGrid"></div>
     <div class="mem-legend" id="memLegend"></div>
-    <div class="info-text" id="memInfo">메모리 할당과 해제를 반복하면 외부 단편화가 발생합니다.</div>
+    <div class="info-text" id="memInfo">메모리 할당과 해제를 반복하면 외부 단편화가 발생합니다. "압축" 버튼으로 빈 공간을 모을 수 있지만, 실행 중인 프로세스를 이동시켜야 해서 비용이 큽니다.</div>
   </div>
 </section>
 
-<!-- SCHEDULING -->
+<div class="section-divider"></div>
+<section id="virtualmem">
+  <div class="section-header">
+    <div class="tag tag-ch4">Ch.4 운영체제</div>
+    <h2>가상 메모리 (Virtual Memory)</h2>
+    <p>프로세스는 실제 RAM보다 훨씬 큰 메모리를 사용하는 것처럼 착각합니다. OS는 "페이지 테이블"로 가상 주소를 실제 RAM 주소로 변환합니다. 필요한 페이지만 RAM에 올리고 나머지는 디스크에 둡니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="vmAccessRandom()">랜덤 페이지 접근</button>
+      <button class="btn danger" onclick="vmReset()">초기화</button>
+    </div>
+    <div class="vm-layout">
+      <div>
+        <div class="vm-col-title">가상 주소 공간 (클릭해서 접근)</div>
+        <div class="vm-pages" id="vmPages"></div>
+      </div>
+      <div>
+        <div class="vm-col-title" style="margin-bottom:28px;">페이지 테이블</div>
+        <div class="vm-pt" id="vmPT"></div>
+      </div>
+      <div>
+        <div class="vm-col-title">물리 메모리 (RAM, 4 프레임)</div>
+        <div class="vm-frames" id="vmFrames"></div>
+      </div>
+    </div>
+    <div class="vm-stats">
+      <div class="vm-stat hit-stat">
+        <div class="vm-stat-val" id="vmHits">0</div>
+        <div class="vm-stat-label">PAGE HIT</div>
+      </div>
+      <div class="vm-stat fault-stat">
+        <div class="vm-stat-val" id="vmFaults">0</div>
+        <div class="vm-stat-label">PAGE FAULT</div>
+      </div>
+    </div>
+    <div class="info-text">💡 PAGE HIT: 요청한 페이지가 이미 RAM에 있음 → 빠름. PAGE FAULT: 디스크에서 RAM으로 불러와야 함 → 수천 배 느림. 이것이 RAM이 클수록 컴퓨터가 빠른 이유입니다.</div>
+  </div>
+</section>
+
 <div class="section-divider"></div>
 <section id="scheduling">
   <div class="section-header">
-    <div class="tag level-3">Lv.3 고급</div>
-    <h2>프로세스 스케줄링 (Scheduling)</h2>
-    <p>CPU 하나로 여러 프로세스를 어떻게 처리할까요?</p>
+    <div class="tag tag-ch4">Ch.4 운영체제</div>
+    <h2>프로세스 스케줄링 (CPU Scheduling)</h2>
+    <p>CPU는 하나인데 프로그램은 여러 개. OS는 어떤 프로세스에 CPU를 줄지 결정합니다. 전략에 따라 응답 시간과 처리량이 크게 달라집니다.</p>
   </div>
   <div class="viz-box">
     <div class="controls">
@@ -422,15 +853,14 @@ footer { text-align:center; padding:60px 24px; color:var(--text-dim); font-size:
     </div>
     <div class="process-timeline" id="processTimeline"></div>
     <div class="process-info" id="processInfo"></div>
-    <div class="info-text">FCFS: 먼저 온 순서 | SJF: 짧은 작업 우선 | Round Robin: 번갈아 처리</div>
+    <div class="info-text">FCFS(선입선출): 먼저 온 순서대로. 간단하지만 긴 작업 뒤 짧은 작업이 오래 기다림 | SJF(최단작업우선): 짧은 것부터 처리. 평균 대기시간 최소 | Round Robin: 타임 슬라이스(2단위)씩 번갈아 실행. 응답성 좋음</div>
   </div>
 </section>
 
-<!-- DEADLOCK -->
 <div class="section-divider"></div>
 <section id="deadlock">
   <div class="section-header">
-    <div class="tag level-4">Lv.4 심화</div>
+    <div class="tag tag-ch4">Ch.4 운영체제</div>
     <h2>데드락 (Deadlock)</h2>
     <p>식사하는 철학자 문제를 통해 데드락이 <strong>왜</strong> 발생하고, <strong>어떻게</strong> 해결하는지 처음부터 끝까지 자동으로 경험하세요.</p>
   </div>
@@ -463,96 +893,386 @@ footer { text-align:center; padding:60px 24px; color:var(--text-dim); font-size:
   </div>
 </section>
 
+<!-- ===== CHAPTER 5 ===== -->
+<div id="ch5" class="chapter-banner cb5">
+  <div class="ch-num">CHAPTER 05</div>
+  <h2>컴퓨터 구조</h2>
+  <p class="ch-desc">CPU는 어떻게 생각하는가? 메모리에서 명령어를 읽고, 해석하고, 실행하는 3단계 사이클을 반복합니다. 캐시는 느린 RAM과 빠른 CPU 사이의 속도 차이를 메워주는 완충지대입니다.</p>
+  <div class="ch-pills"><span>CPU 동작 원리</span><span>캐시 메모리</span></div>
+</div>
+
 <div class="section-divider"></div>
-<section id="resources">
+<section id="cpu">
   <div class="section-header">
-    <div class="tag" style="background:rgba(136,136,170,0.15);color:var(--text-dim)">더 배우기</div>
-    <h2>추천 학습 자료</h2>
-    <p>CS 개념을 더 깊이 탐험하고 싶다면 — 검증된 웹 시각화 도구, OS 시뮬레이터, 그리고 유명 강의 자료들을 모았습니다.</p>
+    <div class="tag tag-ch5">Ch.5 컴퓨터 구조</div>
+    <h2>CPU 동작 원리 (Fetch-Decode-Execute)</h2>
+    <p>CPU는 세 단계를 무한 반복합니다. ① Fetch: 메모리에서 명령어를 가져옴 ② Decode: 명령어를 해석 ③ Execute: 실행. "Next Step" 버튼으로 단계별로 확인해보세요.</p>
   </div>
-
-  <div class="resource-category">
-    <div class="resource-category-title">웹 기반 시각화 도구</div>
-    <div class="resources-grid">
-      <a class="resource-card cat-web" href="https://visualgo.net" target="_blank" rel="noopener">
-        <div class="resource-card-name">VisuAlgo <span class="resource-tag tag-web">Web</span></div>
-        <div class="resource-card-url">visualgo.net</div>
-        <div class="resource-card-desc">정렬, 그래프, 트리 등 자료구조와 알고리즘을 단계별 애니메이션으로 보여줍니다. 싱가포르 국립대(NUS)에서 만든 교육용 프로젝트입니다.</div>
-      </a>
-      <a class="resource-card cat-web" href="https://algorithm-visualizer.org" target="_blank" rel="noopener">
-        <div class="resource-card-name">Algorithm Visualizer <span class="resource-tag tag-web">Web</span></div>
-        <div class="resource-card-url">algorithm-visualizer.org</div>
-        <div class="resource-card-desc">오픈소스 프로젝트로, 코드와 함께 알고리즘 동작을 실시간으로 시각화해줍니다. 직접 코드를 수정하며 실험할 수 있습니다.</div>
-      </a>
-      <a class="resource-card cat-web" href="https://www.youtube.com/@BenEater" target="_blank" rel="noopener">
-        <div class="resource-card-name">Ben Eater <span class="resource-tag tag-video">YouTube</span></div>
-        <div class="resource-card-url">youtube.com/@BenEater</div>
-        <div class="resource-card-desc">CPU 동작 원리, 메모리 관리 등 하드웨어~OS 레벨 개념을 브레드보드로 직접 만들며 시각적으로 설명합니다.</div>
-      </a>
+  <div class="viz-box">
+    <div class="cpu-phase-bar">
+      <div class="cpu-phase-step fetch" id="cpuFetch">① FETCH<br><small style="opacity:0.6">명령어 가져오기</small></div>
+      <div class="cpu-phase-step decode" id="cpuDecode">② DECODE<br><small style="opacity:0.6">명령어 해석</small></div>
+      <div class="cpu-phase-step execute" id="cpuExecute">③ EXECUTE<br><small style="opacity:0.6">명령어 실행</small></div>
     </div>
+    <div class="cpu-layout">
+      <div>
+        <div class="cpu-box" id="cpuBoxPC">
+          <div class="cpu-box-title">PC (Program Counter) — 다음 실행할 명령어 주소</div>
+          <div class="cpu-box-val" id="cpuPCVal">0x00</div>
+        </div>
+        <div class="cpu-box" style="margin-top:10px;" id="cpuBoxIR">
+          <div class="cpu-box-title">IR (Instruction Register) — 현재 실행중인 명령어</div>
+          <div class="cpu-box-val" id="cpuIRVal">—</div>
+        </div>
+        <div class="cpu-box" style="margin-top:10px;" id="cpuBoxREG">
+          <div class="cpu-box-title">레지스터 (Registers)</div>
+          <div class="cpu-regs" id="cpuRegs">
+            <div class="cpu-reg"><span class="cpu-reg-name">R1</span><span class="cpu-reg-val">0</span></div>
+            <div class="cpu-reg"><span class="cpu-reg-name">R2</span><span class="cpu-reg-val">0</span></div>
+            <div class="cpu-reg"><span class="cpu-reg-name">R3</span><span class="cpu-reg-val">0</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:8px;">메모리 (프로그램)</div>
+        <div class="cpu-program" id="cpuProgram"></div>
+        <div class="cpu-desc-box" id="cpuDesc">▶ "다음 단계" 버튼을 눌러 CPU의 동작을 관찰하세요.</div>
+      </div>
+    </div>
+    <div class="controls" style="margin-bottom:0;margin-top:0;">
+      <button class="btn" onclick="cpuStep()">다음 단계 →</button>
+      <button class="btn danger" onclick="cpuReset()">초기화</button>
+    </div>
+    <div class="info-text">💡 현대 CPU는 이 사이클을 1초에 수십억 번 반복합니다(GHz = 10억Hz). 파이프라이닝 기법으로 여러 명령어를 동시에 처리해 효율을 높입니다.</div>
   </div>
+</section>
 
-  <div class="resource-category">
-    <div class="resource-category-title">OS 개념 (데드락 등) 특화</div>
-    <div class="resources-grid">
-      <a class="resource-card cat-os" href="https://os.ecci.ucr.ac.cr/slides/" target="_blank" rel="noopener">
-        <div class="resource-card-name">OS Concepts 공식 자료 <span class="resource-tag tag-tool">Simulator</span></div>
-        <div class="resource-card-url">os.ecci.ucr.ac.cr</div>
-        <div class="resource-card-desc">Operating System Concepts 교재의 공식 슬라이드 및 시뮬레이터. 자원 할당 그래프(Resource Allocation Graph)를 직접 조작해볼 수 있습니다.</div>
-      </a>
-      <a class="resource-card cat-os" href="https://github.com/search?q=deadlock+simulator&type=repositories" target="_blank" rel="noopener">
-        <div class="resource-card-name">Deadlock Simulator <span class="resource-tag tag-tool">GitHub</span></div>
-        <div class="resource-card-url">github.com — deadlock simulator</div>
-        <div class="resource-card-desc">Banker's Algorithm, 식사하는 철학자 문제 등을 인터랙티브하게 체험할 수 있는 오픈소스 웹앱들이 GitHub에 다수 올라와 있습니다.</div>
-      </a>
-    </div>
+<div class="section-divider"></div>
+<section id="cache">
+  <div class="section-header">
+    <div class="tag tag-ch5">Ch.5 컴퓨터 구조</div>
+    <h2>캐시 메모리 (Cache Memory)</h2>
+    <p>CPU는 RAM보다 100배 빠릅니다. 하지만 RAM은 CPU를 기다리게 합니다. 해결책: CPU 근처에 작지만 극도로 빠른 캐시 메모리를 두어, 자주 쓰는 데이터를 미리 올려놓습니다.</p>
   </div>
-
-  <div class="resource-category">
-    <div class="resource-category-title">그 외 추천</div>
-    <div class="resources-grid">
-      <a class="resource-card cat-etc" href="https://pythontutor.com" target="_blank" rel="noopener">
-        <div class="resource-card-name">Python Tutor <span class="resource-tag tag-web">Web</span></div>
-        <div class="resource-card-url">pythontutor.com</div>
-        <div class="resource-card-desc">코드 실행 과정에서 메모리, 스택, 힙, 포인터 등이 어떻게 변하는지 프레임 단위로 시각화해줍니다. Python, Java, C 지원.</div>
-      </a>
-      <a class="resource-card cat-etc" href="https://www.nand2tetris.org" target="_blank" rel="noopener">
-        <div class="resource-card-name">Nand2Tetris <span class="resource-tag tag-tool">Course</span></div>
-        <div class="resource-card-url">nand2tetris.org</div>
-        <div class="resource-card-desc">논리 게이트부터 컴퓨터 한 대를 직접 만들어보는 과정. 추상화 계층 전체를 체감할 수 있는 최고의 CS 실습 커리큘럼입니다.</div>
-      </a>
-      <a class="resource-card cat-etc" href="https://www.youtube.com/@3blue1brown" target="_blank" rel="noopener">
-        <div class="resource-card-name">3Blue1Brown <span class="resource-tag tag-video">YouTube</span></div>
-        <div class="resource-card-url">youtube.com/@3blue1brown</div>
-        <div class="resource-card-desc">수학·CS 개념의 시각화로는 최고 수준. 네트워크, 정보이론, 선형대수 관련 영상이 압도적인 퀄리티로 제공됩니다.</div>
-      </a>
+  <div class="viz-box">
+    <div class="cache-pyramid">
+      <div class="cache-level l1" id="cacheL1">
+        <div><div class="cache-level-name">L1 Cache</div><div class="cache-level-info">32KB · CPU 내부</div></div>
+        <div class="cache-level-info">~1ns</div>
+      </div>
+      <div class="cache-level l2" id="cacheL2">
+        <div><div class="cache-level-name">L2 Cache</div><div class="cache-level-info">256KB · CPU 근처</div></div>
+        <div class="cache-level-info">~4ns</div>
+      </div>
+      <div class="cache-level l3" id="cacheL3">
+        <div><div class="cache-level-name">L3 Cache</div><div class="cache-level-info">8MB · CPU 칩 공유</div></div>
+        <div class="cache-level-info">~10ns</div>
+      </div>
+      <div class="cache-level ram" id="cacheRAM">
+        <div><div class="cache-level-name">RAM (Main Memory)</div><div class="cache-level-info">16GB+</div></div>
+        <div class="cache-level-info">~100ns</div>
+      </div>
+      <div class="cache-level ssd" id="cacheSSD">
+        <div><div class="cache-level-name">SSD / HDD (Storage)</div><div class="cache-level-info">수백GB~TB</div></div>
+        <div class="cache-level-info">~100μs</div>
+      </div>
     </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin:12px 0 6px;">L1 캐시 슬롯 (4개, LRU 정책)</div>
+    <div class="cache-slots" id="cacheSlots"></div>
+    <div class="cache-stats-row">
+      <div class="cache-stat hit-c"><div class="cache-stat-val" id="cacheHitCount">0</div><div>캐시 HIT</div></div>
+      <div class="cache-stat miss-c"><div class="cache-stat-val" id="cacheMissCount">0</div><div>캐시 MISS</div></div>
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn" onclick="cacheAccess()">랜덤 메모리 접근</button>
+      <button class="btn" onclick="cacheAccessSequential()">순차 접근 (×5)</button>
+      <button class="btn danger" onclick="cacheReset()">초기화</button>
+    </div>
+    <div class="info-text">💡 캐시 히트율(Hit Rate)이 95%인 CPU는, 5%의 캐시 미스만으로도 평균 접근 시간이 크게 늘어납니다. 프로그래머가 배열을 순서대로 접근하면 캐시 히트율이 올라가 프로그램이 빨라집니다(지역성 원리).</div>
+  </div>
+</section>
+
+<!-- ===== CHAPTER 6 ===== -->
+<div id="ch6" class="chapter-banner cb6">
+  <div class="ch-num">CHAPTER 06</div>
+  <h2>네트워크</h2>
+  <p class="ch-desc">인터넷은 어떻게 동작하는가? 여러분이 브라우저에 주소를 입력하는 순간, 수십 개의 서버와 프로토콜이 협력해 0.1초 안에 화면을 채웁니다. 그 여정을 추적합니다.</p>
+  <div class="ch-pills"><span>OSI 7계층</span><span>TCP 연결</span><span>HTTP 요청/응답</span><span>DNS 조회</span></div>
+</div>
+
+<div class="section-divider"></div>
+<section id="osi">
+  <div class="section-header">
+    <div class="tag tag-ch6">Ch.6 네트워크</div>
+    <h2>OSI 7계층 모델</h2>
+    <p>네트워크 통신을 7개 계층으로 분리해 표준화한 모델입니다. 각 계층은 바로 아래 계층의 서비스를 사용하고 위 계층에 서비스를 제공합니다. 계층을 클릭해 상세 내용을 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="osi-stack" id="osiStack"></div>
+    <div class="info-text">💡 데이터 전송 시 각 계층을 거치며 헤더(Header)가 추가됩니다 — 이를 캡슐화(Encapsulation)라 합니다. 수신 측에서는 반대로 역캡슐화(Decapsulation)하며 헤더를 벗겨냅니다.</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+<section id="tcp">
+  <div class="section-header">
+    <div class="tag tag-ch6">Ch.6 네트워크</div>
+    <h2>TCP 3-way 핸드셰이크</h2>
+    <p>HTTP, FTP, SSH 등 신뢰성이 필요한 통신은 TCP 위에서 동작합니다. TCP는 데이터를 보내기 전 먼저 연결을 맺습니다. 그 과정이 바로 3-way Handshake — 3번의 패킷 교환으로 연결을 확립합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div style="display:flex;gap:16px;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+      <div class="tcp-node" id="tcpClient">
+        <div class="tcp-node-title">클라이언트</div>
+        <div class="tcp-node-state" id="tcpClientState">CLOSED</div>
+      </div>
+      <div class="tcp-node" id="tcpServer">
+        <div class="tcp-node-title">서버</div>
+        <div class="tcp-node-state" id="tcpServerState">LISTEN</div>
+      </div>
+    </div>
+    <div class="tcp-messages" id="tcpMessages"></div>
+    <div class="tcp-step-desc" id="tcpDesc">▶ "다음 단계" 버튼을 눌러 TCP 연결 과정을 관찰하세요.</div>
+    <div class="controls" style="margin-top:16px;margin-bottom:0;">
+      <button class="btn" onclick="tcpNext()">다음 단계 →</button>
+      <button class="btn danger" onclick="tcpReset()">처음부터</button>
+    </div>
+    <div class="info-text">💡 왜 3번인가? SYN(연결 요청) + SYN-ACK(수락+요청) + ACK(확인). 2번이면 서버가 클라이언트의 수신 능력을 확인 못 하고, 4번은 불필요합니다. UDP는 핸드셰이크 없이 바로 전송해서 빠르지만 신뢰성이 없습니다(스트리밍, 게임에 사용).</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+<section id="http">
+  <div class="section-header">
+    <div class="tag tag-ch6">Ch.6 네트워크</div>
+    <h2>HTTP 요청 / 응답</h2>
+    <p>웹 브라우저와 서버가 대화하는 규칙입니다. 브라우저가 "GET /index.html"이라 요청하면 서버가 "200 OK"와 함께 HTML을 돌려줍니다. 이 단순한 규칙 위에 모든 웹이 만들어져 있습니다.</p>
+  </div>
+  <div class="viz-box">
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <select class="http-select" id="httpMethod" onchange="updateHTTP()" style="width:120px;">
+        <option value="GET">GET</option>
+        <option value="POST">POST</option>
+        <option value="PUT">PUT</option>
+        <option value="DELETE">DELETE</option>
+      </select>
+      <select class="http-select" id="httpStatus" onchange="updateHTTP()" style="width:200px;">
+        <option value="200">200 OK</option>
+        <option value="201">201 Created</option>
+        <option value="301">301 Moved Permanently</option>
+        <option value="400">400 Bad Request</option>
+        <option value="401">401 Unauthorized</option>
+        <option value="403">403 Forbidden</option>
+        <option value="404">404 Not Found</option>
+        <option value="500">500 Internal Server Error</option>
+      </select>
+    </div>
+    <div class="http-layout">
+      <div class="http-panel">
+        <div class="http-panel-title">REQUEST (클라이언트 → 서버)</div>
+        <div id="httpRequest"></div>
+      </div>
+      <div class="http-panel">
+        <div class="http-panel-title">RESPONSE (서버 → 클라이언트)</div>
+        <div id="httpResponse"></div>
+      </div>
+    </div>
+    <table class="status-table">
+      <tr><th>코드</th><th>이름</th><th>의미</th></tr>
+      <tr><td class="http-status-2">2xx</td><td>Success</td><td>성공. 200 OK, 201 Created</td></tr>
+      <tr><td class="http-status-3">3xx</td><td>Redirect</td><td>다른 주소로 이동. 301(영구), 302(임시)</td></tr>
+      <tr><td class="http-status-4">4xx</td><td>Client Error</td><td>클라이언트 잘못. 404 Not Found, 401 Unauthorized</td></tr>
+      <tr><td class="http-status-5">5xx</td><td>Server Error</td><td>서버 문제. 500 Internal, 503 Service Unavailable</td></tr>
+    </table>
+    <div class="info-text">💡 HTTPS는 HTTP에 TLS(전송 계층 보안)를 추가한 것입니다. 데이터가 암호화되어 중간에 누가 가로채도 읽을 수 없습니다. 브라우저 주소창의 자물쇠 아이콘이 HTTPS를 의미합니다.</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+<section id="dns">
+  <div class="section-header">
+    <div class="tag tag-ch6">Ch.6 네트워크</div>
+    <h2>DNS 조회 과정</h2>
+    <p>도메인 이름(google.com)을 IP 주소(142.250.196.46)로 변환하는 과정입니다. 인터넷의 전화번호부 같은 시스템. 브라우저에 주소를 입력하는 순간 이 과정이 일어납니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="dns-nodes" id="dnsNodes"></div>
+    <div class="controls" style="margin-top:16px;margin-bottom:0;">
+      <button class="btn" onclick="dnsNext()">다음 단계 →</button>
+      <button class="btn danger" onclick="dnsReset()">처음부터</button>
+    </div>
+    <div class="info-text">💡 DNS 캐싱: 한번 조회한 결과는 TTL(Time To Live) 동안 브라우저와 OS에 캐시됩니다. 그래서 두 번째 방문은 훨씬 빠릅니다. DNS 서버를 8.8.8.8(Google), 1.1.1.1(Cloudflare)로 바꾸면 인터넷이 빨라질 수 있습니다.</div>
+  </div>
+</section>
+
+<!-- ===== CHAPTER 7 ===== -->
+<div id="ch7" class="chapter-banner cb7">
+  <div class="ch-num">CHAPTER 07</div>
+  <h2>보안</h2>
+  <p class="ch-desc">데이터를 안전하게 보호하는 방법. 암호화는 정보를 뒤섞어 권한 없는 자가 읽지 못하게 하고, 해시 함수는 데이터 무결성을 검증합니다. 여러분의 비밀번호도 해시로 저장됩니다.</p>
+  <div class="ch-pills"><span>시저 암호 (고전 암호)</span><span>해시 함수</span></div>
+</div>
+
+<div class="section-divider"></div>
+<section id="crypto">
+  <div class="section-header">
+    <div class="tag tag-ch7">Ch.7 보안</div>
+    <h2>암호화 — 시저 암호 (Caesar Cipher)</h2>
+    <p>가장 단순한 고전 암호입니다. 각 문자를 알파벳에서 N칸씩 밀어 암호화합니다. 시프트가 3이면 A→D, B→E. 실제 현대 암호(AES, RSA)도 이 아이디어의 수학적 발전입니다.</p>
+  </div>
+  <div class="viz-box">
+    <input class="cipher-input" id="cipherInput" placeholder="암호화할 텍스트를 입력하세요 (영문)" oninput="updateCipher()" value="Hello World">
+    <div class="cipher-shift-row">
+      <span>시프트:</span>
+      <input type="range" id="cipherShift" min="1" max="25" value="3" oninput="updateCipher()" style="width:160px;">
+      <span class="cipher-shift-val" id="cipherShiftVal">3</span>
+    </div>
+    <div class="cipher-io">
+      <div class="cipher-box">
+        <div class="cipher-box-label">PLAINTEXT (평문)</div>
+        <div class="cipher-text" id="cipherPlain"></div>
+      </div>
+      <div class="cipher-box">
+        <div class="cipher-box-label">CIPHERTEXT (암호문)</div>
+        <div class="cipher-text encrypted" id="cipherEncrypted"></div>
+      </div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin:12px 0 6px;">알파벳 매핑표</div>
+    <div class="cipher-alphabet" id="cipherAlphabet"></div>
+    <div class="info-text">💡 시저 암호의 약점: 경우의 수가 25가지뿐이라 모든 경우를 시도하면(브루트포스) 즉시 해독됩니다. 현대 AES-256은 2²⁵⁶가지 키가 존재해 우주의 나이보다 긴 시간이 필요합니다.</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+<section id="hashfn">
+  <div class="section-header">
+    <div class="tag tag-ch7">Ch.7 보안</div>
+    <h2>해시 함수 (Hash Function)</h2>
+    <p>임의 길이의 데이터를 고정 길이의 값(해시)으로 변환합니다. 단방향이라 해시에서 원본을 복원할 수 없습니다. 비밀번호 저장, 파일 무결성 검증, 블록체인에 사용됩니다.</p>
+  </div>
+  <div class="viz-box">
+    <input class="hash-input" id="hashInput" placeholder="텍스트를 입력하세요..." oninput="updateHash()" value="password">
+    <div class="hash-visual">
+      <div class="hash-io-box">
+        <div class="hash-io-label">INPUT</div>
+        <div class="hash-io-val" id="hashInputDisplay">password</div>
+      </div>
+      <div class="hash-fn-box">DJB2<br>Hash<br>Function</div>
+      <div class="hash-io-box">
+        <div class="hash-io-label">HASH (32-bit hex)</div>
+        <div class="hash-io-val" id="hashOutput">—</div>
+      </div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-top:16px;margin-bottom:6px;">🌊 눈사태 효과 (Avalanche Effect) — 입력 1자리 차이 → 출력 완전 다름</div>
+    <div class="hash-avalanche">
+      <div class="hash-avl-item">
+        <div class="hash-avl-label">원본 입력</div>
+        <div class="hash-avl-input" id="avlInput1">—</div>
+        <div class="hash-avl-hash" id="avlHash1">—</div>
+      </div>
+      <div class="hash-avl-item">
+        <div class="hash-avl-label">마지막 문자 +1</div>
+        <div class="hash-avl-input" id="avlInput2">—</div>
+        <div class="hash-avl-hash" id="avlHash2">—</div>
+        <div class="hash-diff-count" id="avlDiff">—</div>
+      </div>
+    </div>
+    <div class="info-text">💡 실제 비밀번호 저장: DB에 비밀번호를 그대로 저장하지 않고, bcrypt/SHA-256 해시값을 저장합니다. 로그인 시 입력값을 해시해서 저장된 해시와 비교합니다. DB가 털려도 원본 비밀번호는 알 수 없습니다.</div>
   </div>
 </section>
 
 <footer>
-  <p>CS Visualizer — 컴퓨터 공학 개념 시각화</p>
-  <p style="margin-top:8px">Built with ❤️ for learners everywhere</p>
+  <p style="font-family:'JetBrains Mono',monospace;">CS Visualizer — 컴퓨터 공학 개념 시각화</p>
+  <p style="margin-top:8px">컴공을 나오지 않아도, 코드를 몰라도 괜찮습니다 🎓</p>
 </footer>
 
 <script>
 // ===== BINARY =====
-const BITS=8; let binaryBits=new Array(BITS).fill(0);
-function initBinary(){
-  const d=document.getElementById('binaryDisplay');d.innerHTML='';
-  for(let i=BITS-1;i>=0;i--){const c=document.createElement('div');c.className='bit-cell'+(binaryBits[i]?' on':'');c.innerHTML=`<div class="bit-val">${binaryBits[i]}</div><div class="bit-weight">2<sup>${i}</sup>=${1<<i}</div>`;c.onclick=()=>{binaryBits[i]^=1;initBinary()};d.appendChild(c);}
-  let v=0;for(let i=0;i<BITS;i++)v+=binaryBits[i]*(1<<i);
-  document.getElementById('decimalResult').innerHTML=`<small>= </small>${v}<small> (10진수)</small>`;
-}
+const BITS=8;let binaryBits=new Array(BITS).fill(0);
+function initBinary(){const d=document.getElementById('binaryDisplay');d.innerHTML='';for(let i=BITS-1;i>=0;i--){const c=document.createElement('div');c.className='bit-cell'+(binaryBits[i]?' on':'');c.innerHTML=`<div class="bit-val">${binaryBits[i]}</div><div class="bit-weight">2<sup>${i}</sup>=${1<<i}</div>`;c.onclick=()=>{binaryBits[i]^=1;initBinary()};d.appendChild(c);}let v=0;for(let i=0;i<BITS;i++)v+=binaryBits[i]*(1<<i);document.getElementById('decimalResult').innerHTML=`<small>= </small>${v}<small> (10진수)</small>`;}
 function resetBinary(){binaryBits.fill(0);initBinary();}
 function randomBinary(){binaryBits=binaryBits.map(()=>Math.random()>0.5?1:0);initBinary();}
 function incrementBinary(){let c=1;for(let i=0;i<BITS&&c;i++){let s=binaryBits[i]+c;binaryBits[i]=s%2;c=s>>1;}initBinary();}
 
 // ===== LOGIC GATES =====
-const gates=[{name:'AND',n:2,fn:(a,b)=>a&b,d:'두 입력이 모두 1일 때만 출력 1'},{name:'OR',n:2,fn:(a,b)=>a|b,d:'하나라도 1이면 출력 1'},{name:'NOT',n:1,fn:a=>a?0:1,d:'입력을 반전 (0→1, 1→0)'},{name:'XOR',n:2,fn:(a,b)=>a^b,d:'두 입력이 다를 때 출력 1'},{name:'NAND',n:2,fn:(a,b)=>(a&b)?0:1,d:'AND의 반전. 범용 게이트'},{name:'NOR',n:2,fn:(a,b)=>(a|b)?0:1,d:'OR의 반전. 범용 게이트'}];
+const gates=[{name:'AND',n:2,fn:(a,b)=>a&b,d:'두 입력이 모두 1일 때만 출력 1. 직렬 스위치와 같습니다.'},{name:'OR',n:2,fn:(a,b)=>a|b,d:'하나라도 1이면 출력 1. 병렬 스위치와 같습니다.'},{name:'NOT',n:1,fn:a=>a?0:1,d:'입력을 반전합니다 (0→1, 1→0). 인버터라고도 합니다.'},{name:'XOR',n:2,fn:(a,b)=>a^b,d:'두 입력이 다를 때 출력 1. 같으면 0. 덧셈 회로의 핵심입니다.'},{name:'NAND',n:2,fn:(a,b)=>(a&b)?0:1,d:'AND의 반전. NAND 게이트만으로 모든 논리회로를 만들 수 있습니다(범용성).'},{name:'NOR',n:2,fn:(a,b)=>(a|b)?0:1,d:'OR의 반전. NOR 게이트도 범용 게이트입니다.'}];
 let gI=[0,0],cG=0;
 function initGates(){document.getElementById('gateTabs').innerHTML=gates.map((g,i)=>`<button class="btn ${i===cG?'active':''}" onclick="cG=${i};gI=[0,0];initGates()">${g.name}</button>`).join('');rGate();}
 function rGate(){const g=gates[cG];const o=g.n===1?g.fn(gI[0]):g.fn(gI[0],gI[1]);let h='<div class="gate-row">';h+=`<div class="gate-input ${gI[0]?'on':''}" onclick="gI[0]^=1;rGate()">${gI[0]}</div>`;if(g.n===2)h+=`<div class="gate-input ${gI[1]?'on':''}" onclick="gI[1]^=1;rGate()">${gI[1]}</div>`;h+=`<div class="gate-symbol">${g.name}</div><div class="gate-output ${o?'on':''}">${o}</div></div>`;document.getElementById('gateContainer').innerHTML=h;document.getElementById('gateInfo').textContent='💡 '+g.d;}
+
+// ===== NUMBER CONVERTER =====
+function convertNum(){
+  const raw=document.getElementById('numconvInput').value.trim();
+  const base=parseInt(document.getElementById('numconvBase').value);
+  if(!raw){['bin','oct','dec','hex'].forEach(b=>{document.getElementById('nc-'+b+'-val').textContent='—';document.getElementById('nc-'+b).classList.remove('highlight');});return;}
+  const dec=parseInt(raw,base);
+  if(isNaN(dec)||dec<0){['bin','oct','dec','hex'].forEach(b=>document.getElementById('nc-'+b+'-val').textContent='잘못된 입력');return;}
+  const fromBase=document.getElementById('numconvBase').value;
+  document.getElementById('nc-bin-val').textContent=dec.toString(2);
+  document.getElementById('nc-oct-val').textContent=dec.toString(8);
+  document.getElementById('nc-dec-val').textContent=dec.toString(10);
+  document.getElementById('nc-hex-val').textContent=dec.toString(16).toUpperCase();
+  ['bin','oct','dec','hex'].forEach(b=>document.getElementById('nc-'+b).classList.remove('highlight'));
+  const bmap={2:'bin',8:'oct',10:'dec',16:'hex'};
+  if(bmap[fromBase])document.getElementById('nc-'+bmap[fromBase]).classList.add('highlight');
+  const hexStr=dec.toString(16).toUpperCase().padStart(6,'0');
+  const colorWrap=document.getElementById('colorPreviewWrap');
+  const colorEl=document.getElementById('colorPreview');
+  if(dec>=0&&dec<=16777215){colorWrap.style.display='block';const c='#'+hexStr.slice(-6);colorEl.style.background=c;colorEl.textContent=c;const brightness=(parseInt(hexStr.slice(-6,hexStr.length-4),16)+parseInt(hexStr.slice(-4,hexStr.length-2),16)+parseInt(hexStr.slice(-2),16))/3;colorEl.style.color=brightness>127?'#000':'#fff';}else{colorWrap.style.display='none';}
+}
+
+// ===== ENCODING =====
+function updateEncoding(){
+  const text=document.getElementById('encInput').value;
+  const display=document.getElementById('encDisplay');
+  if(!text){display.innerHTML='<span style="font-family:\'JetBrains Mono\',monospace;font-size:0.8rem;color:var(--text-dim);padding:20px;">텍스트를 입력하세요...</span>';return;}
+  display.innerHTML=text.slice(0,30).split('').map(ch=>{
+    const code=ch.charCodeAt(0);
+    const isAscii=code<128;
+    return`<div class="enc-char-card"><div class="enc-glyph">${ch==='<'?'&lt;':ch==='>'?'&gt;':ch==='&'?'&amp;':ch===' '?'SPC':ch}</div><div class="enc-row">DEC: <span>${code}</span></div><div class="enc-row">HEX: <span>${code.toString(16).toUpperCase().padStart(2,'0')}</span></div><div class="enc-row">BIN: <span>${code.toString(2).padStart(isAscii?7:8,'0')}</span></div><div class="enc-row">${isAscii?'ASCII':'Unicode'}</div></div>`;
+  }).join('');
+}
+
+// ===== LINKED LIST =====
+let arrData=[],llData=[],llCounter=0;
+function llRender(highlightIdx=-1){
+  document.getElementById('arrVisual').innerHTML=arrData.length?arrData.map((v,i)=>`<div class="arr-cell${i===highlightIdx?' highlight':''}">${v}<div class="arr-idx">[${i}]</div></div>`).join(''):'<span style="font-family:\'JetBrains Mono\',monospace;font-size:0.8rem;color:var(--text-dim)">비어있음</span>';
+  document.getElementById('llVisual').innerHTML=llData.length?llData.map((v,i)=>`<div class="ll-node${i===highlightIdx?' highlight':''}"><div class="ll-val-box">${v}</div><div class="ll-ptr-box">→</div></div>`).join('')+'<span class="ll-null">null</span>':'<span style="font-family:\'JetBrains Mono\',monospace;font-size:0.8rem;color:var(--text-dim)">비어있음</span>';
+}
+function llAppend(){llCounter++;arrData.push(llCounter);llData.push(llCounter);llRender(arrData.length-1);}
+function llInsertFront(){llCounter++;arrData.unshift(llCounter);llData.unshift(llCounter);llRender(0);}
+function llRemoveLast(){if(!arrData.length)return;arrData.pop();llData.pop();llRender();}
+function llClear(){arrData=[];llData=[];llCounter=0;llRender();}
+
+// ===== BST =====
+class BSTNode{constructor(v){this.v=v;this.l=null;this.r=null;}}
+let bstRoot=null,bstHighlight=[],bstFoundNode=null;
+function bstInsertNode(root,v){if(!root)return new BSTNode(v);if(v<root.v)root.l=bstInsertNode(root.l,v);else if(v>root.v)root.r=bstInsertNode(root.r,v);return root;}
+function bstSearchNode(root,v,path){if(!root)return{found:false,path};path=[...path,root.v];if(v===root.v)return{found:true,path};if(v<root.v)return bstSearchNode(root.l,v,path);return bstSearchNode(root.r,v,path);}
+function bstInsert(){const v=parseInt(document.getElementById('bstInput').value);if(isNaN(v)||v<1||v>99){document.getElementById('bstInfo').textContent='1~99 사이의 정수를 입력하세요';return;}bstRoot=bstInsertNode(bstRoot,v);bstHighlight=[];bstFoundNode=null;drawBST();document.getElementById('bstInfo').textContent=`${v} 삽입 완료`;}
+function bstSearch(){const v=parseInt(document.getElementById('bstInput').value);if(isNaN(v)||!bstRoot){document.getElementById('bstInfo').textContent='먼저 노드를 삽입하세요';return;}const{found,path}=bstSearchNode(bstRoot,v,[]);bstHighlight=path;bstFoundNode=found?v:null;drawBST();document.getElementById('bstInfo').textContent=found?`✅ ${v} 발견! (${path.length}번 비교)`:`❌ ${v} 없음 (${path.length}번 비교)`;}
+function bstReset(){bstRoot=null;bstHighlight=[];bstFoundNode=null;const c=document.getElementById('bstCanvas');const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);document.getElementById('bstInfo').textContent='초기화 완료';}
+function bstRandom(){bstRoot=null;bstHighlight=[];bstFoundNode=null;const vals=[];while(vals.length<5){const v=Math.floor(Math.random()*80)+10;if(!vals.includes(v))vals.push(v);}vals.forEach(v=>bstRoot=bstInsertNode(bstRoot,v));drawBST();document.getElementById('bstInfo').textContent='랜덤 5개 삽입: '+vals.join(', ');}
+function drawBST(){
+  const c=document.getElementById('bstCanvas');c.width=c.parentElement.clientWidth;
+  const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);
+  if(!bstRoot)return;
+  const pos=new Map();
+  function calcPos(node,x,y,spread){if(!node)return;pos.set(node.v,{x,y});calcPos(node.l,x-spread,y+60,Math.max(spread/1.7,25));calcPos(node.r,x+spread,y+60,Math.max(spread/1.7,25));}
+  calcPos(bstRoot,c.width/2,36,c.width/4);
+  function drawEdges(node){if(!node)return;const p=pos.get(node.v);if(node.l){const q=pos.get(node.l.v);ctx.beginPath();ctx.strokeStyle='#2a2a3a';ctx.lineWidth=2;ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();drawEdges(node.l);}if(node.r){const q=pos.get(node.r.v);ctx.beginPath();ctx.strokeStyle='#2a2a3a';ctx.lineWidth=2;ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();drawEdges(node.r);}}
+  drawEdges(bstRoot);
+  function drawNodes(node){if(!node)return;const{x,y}=pos.get(node.v);const isHl=bstHighlight.includes(node.v);const isFd=node.v===bstFoundNode;ctx.beginPath();ctx.arc(x,y,20,0,Math.PI*2);ctx.fillStyle=isFd?'#00ffaa':isHl?'rgba(107,138,255,0.3)':'#1a1a28';ctx.fill();ctx.strokeStyle=isFd?'#00ffaa':isHl?'#6b8aff':'#2a2a3a';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=isFd?'#0a0a0f':isHl?'#6b8aff':'#e0e0f0';ctx.font='bold 12px JetBrains Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(node.v,x,y);drawNodes(node.l);drawNodes(node.r);}
+  drawNodes(bstRoot);
+}
+
+// ===== HASH TABLE =====
+const HT_SIZE=8;let htTable=Array(HT_SIZE).fill(null).map(()=>[]);
+function htHash(key){let h=0;for(let i=0;i<key.length;i++)h=(h+key.charCodeAt(i))%HT_SIZE;return h;}
+function htInsert(){const k=document.getElementById('htKey').value.trim();const v=document.getElementById('htVal').value.trim();if(!k||!v)return;const idx=htHash(k);const ex=htTable[idx].findIndex(e=>e.k===k);if(ex>=0)htTable[idx][ex].v=v;else htTable[idx].push({k,v});const codes=k.split('').map(c=>c.charCodeAt(0)).join('+');document.getElementById('htFormula').textContent=`hash("${k}") = (${codes}) % 8 = ${idx}`;renderHT(idx);}
+function htDelete(){const k=document.getElementById('htKey').value.trim();if(!k)return;const idx=htHash(k);htTable[idx]=htTable[idx].filter(e=>e.k!==k);document.getElementById('htFormula').textContent=`"${k}" 삭제됨 (버킷 ${idx})`;renderHT(idx);}
+function htClear(){htTable=Array(HT_SIZE).fill(null).map(()=>[]);document.getElementById('htFormula').textContent='hash("key") = (각 문자 코드 합계) % 8 = 버킷 번호';renderHT();}
+function renderHT(highlight=-1){document.getElementById('htVisual').innerHTML=htTable.map((bucket,i)=>`<div class="ht-bucket${i===highlight?' ht-highlight':''}"><div class="ht-idx">[${i}]</div><div class="ht-chain">${bucket.length===0?'<div class="ht-empty">— empty —</div>':bucket.map((e,j)=>(j>0?'<div class="ht-link">→</div>':'')+`<div class="ht-entry"><span class="ht-key">${e.k}</span><span class="ht-sep">:</span><span class="ht-val">${e.v}</span></div>`).join('')}</div></div>`).join('');}
 
 // ===== SORTING =====
 let sA=[],sR=false;
@@ -560,14 +1280,14 @@ function initSort(){sA=Array.from({length:50},()=>Math.random()*0.9+0.1);rSB();}
 function rSB(c=[],s=[],d=[]){document.getElementById('sortBars').innerHTML=sA.map((v,i)=>{let cl='sort-bar';if(d.includes(i))cl+=' sorted';else if(s.includes(i))cl+=' swapping';else if(c.includes(i))cl+=' comparing';return`<div class="${cl}" style="height:${v*100}%"></div>`;}).join('');}
 function gD(){return 200-document.getElementById('sortSpeed').value*1.8;}
 const sl=ms=>new Promise(r=>setTimeout(r,ms));
-function resetSort(){sR=false;initSort();document.getElementById('sortInfo').textContent='정렬 알고리즘을 선택하세요.';}
+function resetSort(){sR=false;initSort();document.getElementById('sortInfo').textContent='정렬 알고리즘을 선택하세요. 노란색=비교중, 분홍=교환중, 초록=정렬완료';}
 async function startSort(t){if(sR)return;sR=true;let cp=0;const info=document.getElementById('sortInfo'),nm={bubble:'버블',selection:'선택',insertion:'삽입',quick:'퀵',merge:'병합'};info.textContent=`🔄 ${nm[t]} 정렬 진행 중...`;
 if(t==='bubble'){for(let i=0;i<sA.length&&sR;i++)for(let j=0;j<sA.length-i-1&&sR;j++){cp++;rSB([j,j+1]);await sl(gD());if(sA[j]>sA[j+1]){[sA[j],sA[j+1]]=[sA[j+1],sA[j]];rSB([],[j,j+1]);await sl(gD());}}}
 else if(t==='selection'){for(let i=0;i<sA.length&&sR;i++){let m=i;for(let j=i+1;j<sA.length&&sR;j++){cp++;rSB([m,j]);await sl(gD());if(sA[j]<sA[m])m=j;}if(m!==i){[sA[i],sA[m]]=[sA[m],sA[i]];rSB([],[i,m]);await sl(gD());}}}
 else if(t==='insertion'){for(let i=1;i<sA.length&&sR;i++){let k=sA[i],j=i-1;while(j>=0&&sA[j]>k&&sR){cp++;rSB([j,j+1]);await sl(gD());sA[j+1]=sA[j];j--;}sA[j+1]=k;}}
 else if(t==='quick'){async function qs(l,h){if(l>=h||!sR)return;let p=sA[h],i=l;for(let j=l;j<h&&sR;j++){cp++;rSB([j,h]);await sl(gD());if(sA[j]<p){[sA[i],sA[j]]=[sA[j],sA[i]];i++;}}[sA[i],sA[h]]=[sA[h],sA[i]];await sl(gD());await qs(l,i-1);await qs(i+1,h);}await qs(0,sA.length-1);}
 else if(t==='merge'){async function ms(a,l,r){if(l>=r||!sR)return;const m=(l+r)>>1;await ms(a,l,m);await ms(a,m+1,r);let L=a.slice(l,m+1),R=a.slice(m+1,r+1),i=0,j=0,k=l;while(i<L.length&&j<R.length&&sR){cp++;rSB([k]);await sl(gD());a[k++]=L[i]<=R[j]?L[i++]:R[j++];}while(i<L.length&&sR){a[k++]=L[i++];await sl(gD());}while(j<R.length&&sR){a[k++]=R[j++];await sl(gD());}}await ms(sA,0,sA.length-1);}
-if(sR){rSB([],[],Array.from({length:sA.length},(_,i)=>i));info.textContent=`✅ ${nm[t]} 정렬 완료! 비교: ${cp}`;}sR=false;}
+if(sR){rSB([],[],Array.from({length:sA.length},(_,i)=>i));info.textContent=`✅ ${nm[t]} 정렬 완료! 비교횟수: ${cp}`;}sR=false;}
 
 // ===== STACK & QUEUE =====
 let stk=[],que=[],dsC=0;
@@ -576,15 +1296,115 @@ function rStk(){const e=document.getElementById('stackVisual');if(!stk.length){e
 function queueEnqueue(){dsC++;que.push(dsC);rQue();}function queueDequeue(){que.shift();rQue();}function queueClear(){que=[];rQue();}
 function rQue(){const e=document.getElementById('queueVisual');if(!que.length){e.innerHTML='<div class="ds-empty">비어있음</div>';return;}e.innerHTML=que.map((v,i)=>`<div class="ds-item queue-item"><span>${v}</span><span class="idx">${i===0?'← FRONT':i===que.length-1?'REAR →':''}</span></div>`).join('');}
 
+// ===== SEARCH =====
+let searchArr=[];
+function initSearch(){searchArr=Array.from({length:20},(_,i)=>(i+1)*3+Math.floor(Math.random()*3)).sort((a,b)=>a-b);renderSearchBoth(-1,-1,-1,-1,-1,-1);}
+function renderSearch(id,arr,curIdx,foundIdx,lo,hi,mid){document.getElementById(id).innerHTML=arr.map((v,i)=>{let cls='search-cell';if(i===foundIdx)cls+=' found';else if(i===curIdx)cls+=' cur';else if(id.includes('binary')&&lo>=0&&i>=lo&&i<=hi)cls+=' range';if(i===mid&&id.includes('binary'))cls=cls.replace('range','mid');return`<div class="${cls}">${v}</div>`;}).join('');}
+function renderSearchBoth(lc,lf,lo,hi,bm,bf){renderSearch('linearArr',searchArr,lc,lf,-1,-1,-1);renderSearch('binaryArr',searchArr,-1,bf,lo,hi,bm);}
+let searchRunning=false;
+async function runSearch(){
+  if(searchRunning)return;searchRunning=true;
+  const target=parseInt(document.getElementById('searchTarget').value);
+  if(isNaN(target)){searchRunning=false;return;}
+  document.getElementById('linearSteps').innerHTML='<small>실행중...</small>';
+  document.getElementById('binarySteps').innerHTML='<small>실행중...</small>';
+  let lSteps=0,bSteps=0,lFound=-1,bFound=-1;
+  const delay=ms=>new Promise(r=>setTimeout(r,ms));
+  const linearDone=new Promise(async resolve=>{
+    for(let i=0;i<searchArr.length;i++){lSteps++;renderSearch('linearArr',searchArr,i,lFound,-1,-1,-1);await delay(120);if(searchArr[i]===target){lFound=i;renderSearch('linearArr',searchArr,-1,lFound,-1,-1,-1);break;}}
+    document.getElementById('linearSteps').innerHTML=`${lSteps}<br><small>비교횟수</small>`;resolve();
+  });
+  const binaryDone=new Promise(async resolve=>{
+    let lo=0,hi=searchArr.length-1;
+    while(lo<=hi){const mid=Math.floor((lo+hi)/2);bSteps++;renderSearch('binaryArr',searchArr,-1,bFound,lo,hi,mid);await delay(300);if(searchArr[mid]===target){bFound=mid;renderSearch('binaryArr',searchArr,-1,bFound,-1,-1,-1);break;}else if(searchArr[mid]<target)lo=mid+1;else hi=mid-1;}
+    document.getElementById('binarySteps').innerHTML=`${bSteps}<br><small>비교횟수</small>`;resolve();
+  });
+  await Promise.all([linearDone,binaryDone]);searchRunning=false;
+}
+function resetSearch(){initSearch();document.getElementById('linearSteps').innerHTML='<small>—</small>';document.getElementById('binarySteps').innerHTML='<small>—</small>';}
+
+// ===== RECURSION =====
+function factorial(n){return n<=0?1:n*factorial(n-1);}
+function updateRecursion(){
+  const n=parseInt(document.getElementById('recursionN').value);
+  document.getElementById('recursionNDisplay').textContent=n;
+  document.getElementById('recursionResult').textContent=factorial(n).toLocaleString();
+  const container=document.getElementById('recursionStack');
+  let html='';
+  for(let k=0;k<=n;k++){
+    const isBase=k===0;
+    html+=`<div class="call-frame${isBase?' base-case':''}"><span class="call-fn">factorial(${k})</span><span class="call-result">${isBase?'= 1  ← 기저 조건(Base Case)!':'= '+k+' × factorial('+(k-1)+') = '+factorial(k)}</span></div>`;
+  }
+  container.innerHTML=html;
+}
+
+// ===== BIG-O =====
+function drawBigO(){
+  const canvas=document.getElementById('bigoCanvas');canvas.width=canvas.parentElement.clientWidth;
+  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;
+  const n=parseInt(document.getElementById('bigoN').value);
+  document.getElementById('bigoNLabel').textContent='n = '+n;
+  ctx.clearRect(0,0,W,H);
+  const PAD={l:48,r:20,t:16,b:32};const gW=W-PAD.l-PAD.r,gH=H-PAD.t-PAD.b;
+  const N=50,maxY=N*N/4;
+  ctx.strokeStyle='#2a2a3a';ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){const y=PAD.t+gH*(1-i/5);ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+gW,y);ctx.stroke();ctx.fillStyle='#8888aa';ctx.font='10px JetBrains Mono';ctx.textAlign='right';ctx.fillText(Math.round(maxY*i/5),PAD.l-4,y+4);}
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+gH);ctx.lineTo(PAD.l+gW,PAD.t+gH);ctx.strokeStyle='#2a2a3a';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#8888aa';ctx.font='10px JetBrains Mono';ctx.textAlign='center';ctx.fillText('n →',PAD.l+gW/2,H-4);
+  const fns=[
+    {fn:()=>1,color:'#00ffaa',label:'O(1)'},
+    {fn:x=>Math.log2(x+1),color:'#6b8aff',label:'O(log n)'},
+    {fn:x=>x,color:'#ffaa00',label:'O(n)'},
+    {fn:x=>x*Math.log2(x+1),color:'#ff6b9d',label:'O(n log n)'},
+    {fn:x=>x*x/4,color:'#ff4466',label:'O(n²)'},
+  ];
+  fns.forEach(({fn,color,label})=>{
+    ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineJoin='round';
+    for(let x=1;x<=N;x++){const px=PAD.l+((x-1)/(N-1))*gW;const vy=Math.min(fn(x),maxY);const py=PAD.t+gH*(1-vy/maxY);if(x===1)ctx.moveTo(px,py);else ctx.lineTo(px,py);}
+    ctx.stroke();
+  });
+  const nLine=PAD.l+((n-1)/(N-1))*gW;ctx.beginPath();ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.moveTo(nLine,PAD.t);ctx.lineTo(nLine,PAD.t+gH);ctx.stroke();ctx.setLineDash([]);
+  const vals=fns.map(({fn,label})=>`${label}: ${Math.round(fn(n)).toLocaleString()}`);
+  document.getElementById('bigoValues').textContent='n='+n+' 일 때 → '+vals.join(' | ');
+}
+
 // ===== MEMORY =====
 const MS=128;let mb=new Array(MS).fill(null),mp=0;
 const mc=['#00cc88','#6b8aff','#ff6b9d','#ffaa00','#aa66ff','#ff8844','#44dddd','#88cc44'];
 function initMem(){rMem();}
-function memAlloc(){const sz=4+Math.floor(Math.random()*16);mp++;let st=-1,cn=0;for(let i=0;i<MS;i++){if(mb[i]===null){if(st===-1)st=i;cn++;if(cn>=sz){for(let j=st;j<st+sz;j++)mb[j]=mp;rMem();document.getElementById('memInfo').textContent=`✅ P${mp} 할당 (${sz} blocks)`;return;}}else{st=-1;cn=0;}}document.getElementById('memInfo').textContent=`❌ 공간 부족! 외부 단편화.`;}
-function memFree(){const ps=[...new Set(mb.filter(x=>x!==null))];if(!ps.length)return;const p=ps[Math.floor(Math.random()*ps.length)];for(let i=0;i<MS;i++)if(mb[i]===p)mb[i]=null;rMem();document.getElementById('memInfo').textContent=`🗑️ P${p} 해제.`;}
-function memCompact(){const u=mb.filter(x=>x!==null);mb=[...u,...new Array(MS-u.length).fill(null)];rMem();document.getElementById('memInfo').textContent='🔧 압축 완료!';}
+function memAlloc(){const sz=4+Math.floor(Math.random()*16);mp++;let st=-1,cn=0;for(let i=0;i<MS;i++){if(mb[i]===null){if(st===-1)st=i;cn++;if(cn>=sz){for(let j=st;j<st+sz;j++)mb[j]=mp;rMem();document.getElementById('memInfo').textContent=`✅ P${mp} 할당 (${sz} 블록)`;return;}}else{st=-1;cn=0;}}document.getElementById('memInfo').textContent=`❌ 연속된 공간 부족! 외부 단편화 발생. "압축" 버튼을 눌러보세요.`;}
+function memFree(){const ps=[...new Set(mb.filter(x=>x!==null))];if(!ps.length)return;const p=ps[Math.floor(Math.random()*ps.length)];for(let i=0;i<MS;i++)if(mb[i]===p)mb[i]=null;rMem();document.getElementById('memInfo').textContent=`🗑️ P${p} 해제 완료. 빈 공간이 흩어져 있습니다.`;}
+function memCompact(){const u=mb.filter(x=>x!==null);mb=[...u,...new Array(MS-u.length).fill(null)];rMem();document.getElementById('memInfo').textContent='🔧 메모리 압축 완료! 빈 공간이 한쪽으로 모였습니다.';}
 function memReset(){mb.fill(null);mp=0;rMem();document.getElementById('memInfo').textContent='메모리 할당과 해제를 반복하면 외부 단편화가 발생합니다.';}
 function rMem(){document.getElementById('memoryGrid').innerHTML=mb.map(v=>{if(v===null)return'<div class="mem-cell"></div>';const c=mc[(v-1)%mc.length];return`<div class="mem-cell allocated" style="background:${c};border-color:${c}">P${v}</div>`;}).join('');const ps=[...new Set(mb.filter(x=>x!==null))];document.getElementById('memLegend').innerHTML=ps.map(p=>`<div class="mem-legend-item"><div class="mem-legend-color" style="background:${mc[(p-1)%mc.length]}"></div>P${p}(${mb.filter(x=>x===p).length})</div>`).join('')+`<div class="mem-legend-item"><div class="mem-legend-color" style="background:var(--surface2);border:1px solid var(--border)"></div>빈(${mb.filter(x=>x===null).length})</div>`;}
+
+// ===== VIRTUAL MEMORY =====
+const VM_PAGES=8,VM_FRAMES=4;
+let vmPT=Array(VM_PAGES).fill(null).map((_,i)=>({vpn:i,pfn:i<VM_FRAMES?i:null,present:i<VM_FRAMES}));
+let vmQueue=[0,1,2,3],vmHits=0,vmFaults=0;
+function vmRender(lastVPN=-1,status=''){
+  document.getElementById('vmPages').innerHTML=vmPT.map(p=>`<div class="vm-page${p.present?' present':''}" onclick="vmAccess(${p.vpn})"><span>VP ${p.vpn}</span><span style="font-size:0.7rem;opacity:0.6">${p.present?'→ RAM':' (디스크)'}</span></div>`).join('');
+  document.getElementById('vmPT').innerHTML=vmPT.map(p=>`<div class="vm-pt-row${p.present?' mapped':' unmapped'}">VP${p.vpn} → ${p.present?'PF'+p.pfn:'디스크'}</div>`).join('');
+  document.getElementById('vmFrames').innerHTML=Array(VM_FRAMES).fill(null).map((_,f)=>{const p=vmPT.find(e=>e.present&&e.pfn===f);let cls='vm-frame';if(p){cls+=' occupied';if(status==='hit'&&p.vpn===lastVPN)cls+=' hit';else if(status==='fault'&&p.vpn===lastVPN)cls+=' fault';}return`<div class="${cls}"><span>PF ${f}</span><span>${p?'VP'+p.vpn:'empty'}</span></div>`;}).join('');
+  document.getElementById('vmHits').textContent=vmHits;
+  document.getElementById('vmFaults').textContent=vmFaults;
+}
+function vmAccess(vpn){
+  const entry=vmPT[vpn];
+  if(entry.present){vmHits++;vmRender(vpn,'hit');}
+  else{
+    vmFaults++;
+    const evictVPN=vmQueue.shift();
+    const evictEntry=vmPT[evictVPN];
+    const freePFN=evictEntry.pfn;
+    evictEntry.present=false;evictEntry.pfn=null;
+    entry.pfn=freePFN;entry.present=true;
+    vmQueue.push(vpn);
+    vmRender(vpn,'fault');
+  }
+}
+function vmAccessRandom(){vmAccess(Math.floor(Math.random()*VM_PAGES));}
+function vmReset(){vmPT=Array(VM_PAGES).fill(null).map((_,i)=>({vpn:i,pfn:i<VM_FRAMES?i:null,present:i<VM_FRAMES}));vmQueue=[0,1,2,3];vmHits=0;vmFaults=0;vmRender();}
 
 // ===== SCHEDULING =====
 let schT='fcfs';
@@ -600,278 +1420,191 @@ document.getElementById('processTimeline').innerHTML=pids.map(pid=>{const bl=sch
 const aw=ps.reduce((s,p)=>s+(p.fin-p.arrival-p.burst),0)/ps.length,at=ps.reduce((s,p)=>s+(p.fin-p.arrival),0)/ps.length;
 document.getElementById('processInfo').innerHTML=ps.map(p=>`<div class="process-stat"><div class="process-dot" style="background:${p.color}"></div>${p.id}:대기${p.fin-p.arrival-p.burst}</div>`).join('')+`<div class="process-stat" style="color:var(--accent)">평균 대기:${aw.toFixed(1)} | 반환:${at.toFixed(1)}</div>`;}
 
-// ===== DEADLOCK - Storytelling =====
-const DLC=document.getElementById('deadlockCanvas'), ctx=DLC.getContext('2d');
-const NP=5, PC=['#00cc88','#6b8aff','#ff6b9d','#ffaa00','#aa66ff'];
+// ===== DEADLOCK =====
+const DLC=document.getElementById('deadlockCanvas'),ctx=DLC.getContext('2d');
+const NP=5,PC=['#00cc88','#6b8aff','#ff6b9d','#ffaa00','#aa66ff'];
 const ST={THINK:0,HUNGRY:1,EAT:2,WAIT_L:3,WAIT_R:4,BLOCKED:5};
 let phil=[],fk=[],dlAn=null,dlT=0,dlRun=false;
-
 function resizeDL(){DLC.width=DLC.parentElement.clientWidth;DLC.height=400;}
 function hexRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)].join(',');}
-
-function initDL(){
-  resizeDL();
-  phil=Array.from({length:NP},(_,i)=>({state:ST.THINK,lf:false,rf:false,angle:(i/NP)*Math.PI*2-Math.PI/2}));
-  fk=Array.from({length:NP},()=>({owner:-1}));
-  dlT=0; dlRun=false;
-  document.getElementById('narrationLog').innerHTML='';
-  setStatus('safe','▶ 시작을 눌러보세요');
-  setProg(0,'');
-  for(let i=0;i<5;i++)document.getElementById('phase'+i).className='dl-phase-step';
-  drawDL();
-}
-
+function initDL(){resizeDL();phil=Array.from({length:NP},(_,i)=>({state:ST.THINK,lf:false,rf:false,angle:(i/NP)*Math.PI*2-Math.PI/2}));fk=Array.from({length:NP},()=>({owner:-1}));dlT=0;dlRun=false;document.getElementById('narrationLog').innerHTML='';setStatus('safe','▶ 시작을 눌러보세요');setProg(0,'');for(let i=0;i<5;i++)document.getElementById('phase'+i).className='dl-phase-step';drawDL();}
 function setStatus(t,txt){const e=document.getElementById('deadlockStatus');e.className='deadlock-status '+t;e.textContent=txt;}
 function setProg(p,t){const e=document.getElementById('dlProgress');e.style.width=p+'%';e.className='dl-progress '+t;}
 function actPhase(idx,t){for(let i=0;i<5;i++){const e=document.getElementById('phase'+i);e.className='dl-phase-step'+(i<idx?' done':i===idx?' active-'+t:'');}}
+function narrate(type,text){const log=document.getElementById('narrationLog');const e=document.createElement('div');e.className='narration-entry '+type;e.innerHTML=`<span class="narration-time">${dlT.toFixed(1)}s</span><span class="narration-text">${text}</span>`;log.appendChild(e);log.scrollTop=log.scrollHeight;}
+function drawDL(){const w=DLC.width,h=DLC.height,cx=w/2,cy=h/2,R=Math.min(w,h)*0.32;ctx.clearRect(0,0,w,h);ctx.beginPath();ctx.arc(cx,cy,R*0.55,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.03)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='rgba(255,255,255,0.06)';ctx.font='11px JetBrains Mono';ctx.textAlign='center';ctx.fillText('🍽️ 식탁',cx,cy);
+for(let i=0;i<NP;i++){const a=(i+0.5)/NP*Math.PI*2-Math.PI/2;const fx=cx+Math.cos(a)*R*0.55,fy=cy+Math.sin(a)*R*0.55;ctx.save();ctx.translate(fx,fy);ctx.rotate(a+Math.PI/2);const held=fk[i].owner!==-1;ctx.strokeStyle=held?PC[fk[i].owner]:'rgba(255,255,255,0.2)';ctx.lineWidth=held?3:2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(0,14);ctx.moveTo(-5,-14);ctx.lineTo(-5,-4);ctx.moveTo(5,-14);ctx.lineTo(5,-4);ctx.stroke();if(held){ctx.shadowColor=PC[fk[i].owner];ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;}ctx.restore();const fl=cx+Math.cos(a)*R*0.38,ft=cy+Math.sin(a)*R*0.38;ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='9px JetBrains Mono';ctx.textAlign='center';ctx.fillText(`F${i}`,fl,ft+4);}
+const fills={[ST.THINK]:'rgba(255,255,255,0.04)',[ST.HUNGRY]:'rgba(255,170,0,0.1)',[ST.EAT]:'placeholder',[ST.WAIT_L]:'rgba(255,170,0,0.12)',[ST.WAIT_R]:'rgba(255,170,0,0.15)',[ST.BLOCKED]:'rgba(255,68,102,0.15)'};
+const strokes={[ST.THINK]:'rgba(255,255,255,0.12)',[ST.HUNGRY]:'#ffaa00',[ST.EAT]:'placeholder',[ST.WAIT_L]:'#ffaa00',[ST.WAIT_R]:'#ffaa00',[ST.BLOCKED]:'#ff4466'};
+const emojis={[ST.THINK]:'🤔',[ST.HUNGRY]:'😤',[ST.EAT]:'🍝',[ST.WAIT_L]:'👈',[ST.WAIT_R]:'👉',[ST.BLOCKED]:'🔒'};
+const stateNames={[ST.THINK]:'THINK',[ST.HUNGRY]:'HUNGRY',[ST.EAT]:'EAT',[ST.WAIT_L]:'WAIT',[ST.WAIT_R]:'WAIT',[ST.BLOCKED]:'BLOCKED'};
+for(let i=0;i<NP;i++){const p=phil[i],px=cx+Math.cos(p.angle)*R,py=cy+Math.sin(p.angle)*R,rad=30;if(p.state===ST.EAT){ctx.beginPath();ctx.arc(px,py,rad+10,0,Math.PI*2);ctx.fillStyle=`rgba(${hexRgb(PC[i])},0.12)`;ctx.fill();}if(p.state===ST.BLOCKED){const ps=Math.sin(dlT*4)*3;ctx.beginPath();ctx.arc(px,py,rad+8+ps,0,Math.PI*2);ctx.fillStyle='rgba(255,68,102,0.12)';ctx.fill();}ctx.beginPath();ctx.arc(px,py,rad,0,Math.PI*2);ctx.fillStyle=p.state===ST.EAT?`rgba(${hexRgb(PC[i])},0.2)`:fills[p.state]||'rgba(255,255,255,0.04)';ctx.fill();ctx.strokeStyle=p.state===ST.EAT?PC[i]:strokes[p.state]||'rgba(255,255,255,0.12)';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=PC[i];ctx.font='bold 11px JetBrains Mono';ctx.textAlign='center';ctx.fillText(`P${i}`,px,py-10);ctx.font='14px sans-serif';ctx.fillText(emojis[p.state]||'',px,py+8);ctx.font='8px JetBrains Mono';ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText(stateNames[p.state]||'',px,py+22);}
+if(phil.every(p=>p.state===ST.BLOCKED)){ctx.setLineDash([6,4]);ctx.lineWidth=1.5;for(let i=0;i<NP;i++){const n=(i+1)%NP;const px=cx+Math.cos(phil[i].angle)*R,py=cy+Math.sin(phil[i].angle)*R;const nx=cx+Math.cos(phil[n].angle)*R,ny=cy+Math.sin(phil[n].angle)*R;ctx.beginPath();ctx.strokeStyle=`rgba(255,68,102,${0.4+Math.sin(dlT*3)*0.2})`;ctx.moveTo(px,py);ctx.lineTo(nx,ny);ctx.stroke();const ag=Math.atan2(ny-py,nx-px);ctx.beginPath();const ax=nx-Math.cos(ag)*30,ay=ny-Math.sin(ag)*30;ctx.moveTo(ax,ay);ctx.lineTo(ax-10*Math.cos(ag-0.4),ay-10*Math.sin(ag-0.4));ctx.moveTo(ax,ay);ctx.lineTo(ax-10*Math.cos(ag+0.4),ay-10*Math.sin(ag+0.4));ctx.stroke();}ctx.setLineDash([]);ctx.fillStyle=`rgba(255,68,102,${0.5+Math.sin(dlT*2)*0.3})`;ctx.font='bold 14px JetBrains Mono';ctx.textAlign='center';ctx.fillText('⚠️ CIRCULAR WAIT',cx,cy+22);}}
+function dlSleep(ms){return new Promise(resolve=>{const start=performance.now();function frame(now){dlT+=(now-(frame.last||now))/1000;frame.last=now;drawDL();if(now-start>=ms||!dlRun)resolve();else requestAnimationFrame(frame);}requestAnimationFrame(frame);});}
+async function dlStart(){if(dlRun)return;dlRun=true;document.getElementById('dlStartBtn').disabled=true;initDL();dlRun=true;document.getElementById('narrationLog').innerHTML='';await dlSleep(400);
+actPhase(0,'normal');setStatus('safe','✓ 정상 동작');narrate('normal','🍽️ <b>시나리오 시작!</b> 5명의 철학자가 원형 식탁에 앉아있습니다. 포크는 5개뿐이고, 식사하려면 <b>양쪽 포크 2개</b>가 모두 필요합니다.');await dlSleep(2500);
+narrate('normal','🤔 모두 조용히 생각 중입니다... (THINKING 상태)');await dlSleep(2000);
+narrate('normal',`✅ <b style="color:${PC[0]}">P0</b>이 배가 고파졌습니다! 왼쪽 포크(F0)와 오른쪽 포크(F1)를 <b>순서대로</b> 집습니다.`);phil[0].state=ST.HUNGRY;drawDL();await dlSleep(1000);fk[0].owner=0;phil[0].lf=true;phil[0].state=ST.WAIT_R;drawDL();await dlSleep(800);fk[1].owner=0;phil[0].rf=true;phil[0].state=ST.EAT;drawDL();narrate('normal',`🍝 <b style="color:${PC[0]}">P0</b> 양쪽 포크 확보! 맛있게 식사 중...`);setProg(15,'');await dlSleep(2500);
+narrate('normal',`✅ <b style="color:${PC[0]}">P0</b> 식사 완료! 포크를 내려놓습니다.`);fk[0].owner=-1;fk[1].owner=-1;phil[0].lf=false;phil[0].rf=false;phil[0].state=ST.THINK;drawDL();await dlSleep(1500);
+narrate('normal',`✅ <b style="color:${PC[2]}">P2</b>도 양쪽 포크(F2,F3)를 확보해 정상적으로 식사합니다.`);phil[2].state=ST.EAT;fk[2].owner=2;fk[3].owner=2;phil[2].lf=true;phil[2].rf=true;drawDL();setProg(30,'');await dlSleep(2000);fk[2].owner=-1;fk[3].owner=-1;phil[2].lf=false;phil[2].rf=false;phil[2].state=ST.THINK;drawDL();narrate('normal','👍 이렇게 <b>한 명씩</b> 포크를 잡으면 아무 문제 없습니다!');await dlSleep(2000);
+actPhase(1,'warning');setStatus('warning','⚡ 위험 징후');setProg(40,'danger');narrate('warning','⚡ <b>그런데 만약...</b> 모든 철학자가 <b>동시에</b> 배가 고파지면?');await dlSleep(2000);narrate('warning','😤 모든 철학자가 동시에 배가 고파졌습니다!');phil.forEach(p=>p.state=ST.HUNGRY);drawDL();await dlSleep(1500);narrate('warning','📌 규칙: 각 철학자는 항상 <b>왼쪽 포크부터</b> 집습니다. 이것이 문제의 핵심...');await dlSleep(2000);
+for(let i=0;i<NP;i++){fk[i].owner=i;phil[i].lf=true;phil[i].state=ST.WAIT_R;narrate('warning',`👈 <b style="color:${PC[i]}">P${i}</b> → 왼쪽 포크(F${i}) 확보! 오른쪽(F${(i+1)%NP}) 기다리는 중...`);drawDL();setProg(45+i*8,'danger');await dlSleep(1200);}await dlSleep(1000);
+actPhase(2,'danger');setStatus('deadlocked','⚠ DEADLOCK!');setProg(90,'danger');phil.forEach(p=>p.state=ST.BLOCKED);drawDL();narrate('danger','🔒 <b>DEADLOCK 발생!</b> 모두가 왼쪽을 잡은 채 오른쪽을 기다립니다. <b>영원히!</b>');await dlSleep(4000);
+actPhase(3,'warning');narrate('info','① <b>상호 배제</b> — 포크는 한 번에 한 명만');await dlSleep(1000);narrate('info','② <b>점유와 대기</b> — 하나를 잡은 채 다른 것을 기다림');await dlSleep(1000);narrate('info','③ <b>비선점</b> — 강제로 빼앗을 수 없음');await dlSleep(1000);narrate('info','④ <b>순환 대기</b> — P0→P1→P2→P3→P4→P0 원형 대기');await dlSleep(2000);narrate('info','💡 <b>하나만 깨도</b> 해결됩니다!');await dlSleep(2000);
+actPhase(4,'resolve');setStatus('resolving','🔧 해결 중...');setProg(95,'resolve');narrate('resolve','🔧 OS가 P0에게 강제로 포크를 내려놓게 합니다 (비선점 조건 깨기)');await dlSleep(1500);fk[0].owner=-1;phil[0].lf=false;phil[0].state=ST.THINK;drawDL();await dlSleep(1500);narrate('resolve',`🎉 P4가 F0 확보! 식사 시작!`);fk[0].owner=4;phil[4].rf=true;phil[4].state=ST.EAT;drawDL();await dlSleep(2000);fk[4].owner=-1;fk[0].owner=-1;phil[4].lf=false;phil[4].rf=false;phil[4].state=ST.THINK;drawDL();
+for(let i=3;i>=0;i--){const rf=(i+1)%NP;if(fk[rf].owner===-1||fk[rf].owner===i){fk[rf].owner=i;phil[i].rf=true;phil[i].state=ST.EAT;drawDL();await dlSleep(500);narrate('resolve',`🍝 P${i} 식사 완료!`);fk[i].owner=-1;fk[rf].owner=-1;phil[i].lf=false;phil[i].rf=false;phil[i].state=ST.THINK;drawDL();await dlSleep(300);}}
+setStatus('safe','✅ 해결 완료!');setProg(100,'');actPhase(4,'done');narrate('resolve','🎉 <b>데드락 완전 해결!</b>');dlRun=false;document.getElementById('dlStartBtn').disabled=false;}
+function dlReset(){dlRun=false;document.getElementById('dlStartBtn').disabled=false;initDL();}
 
-function narrate(type,text){
-  const log=document.getElementById('narrationLog');
-  const e=document.createElement('div');
-  e.className='narration-entry '+type;
-  e.innerHTML=`<span class="narration-time">${dlT.toFixed(1)}s</span><span class="narration-text">${text}</span>`;
-  log.appendChild(e);
-  log.scrollTop=log.scrollHeight;
+// ===== CPU =====
+const cpuProgram=[
+  {addr:'0x00',op:'LOAD',arg:'R1, 5',desc:'① FETCH: 0x00 주소의 명령어를 IR에 로드 → ② DECODE: "R1에 5를 저장하라" 해석 → ③ EXECUTE: R1 = 5'},
+  {addr:'0x01',op:'LOAD',arg:'R2, 3',desc:'① FETCH: 0x01 주소 명령어 → ② DECODE: "R2에 3을 저장하라" → ③ EXECUTE: R2 = 3'},
+  {addr:'0x02',op:'ADD',arg:'R3, R1, R2',desc:'① FETCH: 0x02 명령어 → ② DECODE: "R1+R2를 R3에 저장" → ③ EXECUTE: R3 = 5 + 3 = 8 (ALU 연산)'},
+  {addr:'0x03',op:'STORE',arg:'[0x10], R3',desc:'① FETCH: 0x03 명령어 → ② DECODE: "R3를 메모리 0x10에 저장" → ③ EXECUTE: 메모리[0x10] = 8'},
+  {addr:'0x04',op:'HLT',arg:'',desc:'① FETCH: 종료 명령어 → ② DECODE: "프로그램 종료" → ③ EXECUTE: CPU 정지'},
+];
+let cpuPC=0,cpuPhase=0,cpuRegs={R1:0,R2:0,R3:0};
+function cpuRenderProgram(){document.getElementById('cpuProgram').innerHTML=cpuProgram.map((instr,i)=>`<div class="cpu-instr${i===cpuPC?' current':i<cpuPC?' done':''}"><span class="cpu-addr">${instr.addr}</span><span class="cpu-op">${instr.op}</span><span class="cpu-arg">${instr.arg}</span></div>`).join('');}
+function cpuRenderRegs(){document.getElementById('cpuRegs').innerHTML=Object.entries(cpuRegs).map(([k,v])=>`<div class="cpu-reg"><span class="cpu-reg-name">${k}</span><span class="cpu-reg-val">${v}</span></div>`).join('');}
+const cpuPhaseNames=['fetch','decode','execute'];
+function cpuStep(){
+  if(cpuPC>=cpuProgram.length)return;
+  ['cpuFetch','cpuDecode','cpuExecute'].forEach((id,i)=>{document.getElementById(id).classList.toggle('active',i===cpuPhase);});
+  ['cpuBoxPC','cpuBoxIR','cpuBoxREG'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  const instr=cpuProgram[cpuPC];
+  if(cpuPhase===0){document.getElementById('cpuBoxPC').classList.add('active');document.getElementById('cpuPCVal').textContent=instr.addr;document.getElementById('cpuIRVal').textContent='...';}
+  else if(cpuPhase===1){document.getElementById('cpuBoxIR').classList.add('active');document.getElementById('cpuIRVal').textContent=`${instr.op} ${instr.arg}`;}
+  else{document.getElementById('cpuBoxREG').classList.add('active');if(instr.op==='LOAD'){const[reg,val]=instr.arg.split(', ');cpuRegs[reg]=parseInt(val);}else if(instr.op==='ADD'){const parts=instr.arg.split(', ');cpuRegs[parts[0]]=cpuRegs[parts[1]]+(cpuRegs[parts[2]]||0);}cpuRenderRegs();}
+  document.getElementById('cpuDesc').textContent=instr.desc;
+  cpuRenderProgram();
+  cpuPhase++;
+  if(cpuPhase>2){cpuPhase=0;cpuPC++;if(cpuPC>=cpuProgram.length){document.getElementById('cpuDesc').textContent='✅ 프로그램 종료! R3 = 8 (5+3) 이 메모리에 저장되었습니다.';['cpuFetch','cpuDecode','cpuExecute'].forEach(id=>document.getElementById(id).classList.remove('active'));}}
+}
+function cpuReset(){cpuPC=0;cpuPhase=0;cpuRegs={R1:0,R2:0,R3:0};['cpuFetch','cpuDecode','cpuExecute'].forEach(id=>document.getElementById(id).classList.remove('active'));['cpuBoxPC','cpuBoxIR','cpuBoxREG'].forEach(id=>document.getElementById(id).classList.remove('active'));document.getElementById('cpuPCVal').textContent='0x00';document.getElementById('cpuIRVal').textContent='—';cpuRenderRegs();cpuRenderProgram();document.getElementById('cpuDesc').textContent='▶ "다음 단계" 버튼을 눌러 CPU의 동작을 관찰하세요.';}
+
+// ===== CACHE =====
+let cacheSlots=[],cacheHitCnt=0,cacheMissCnt=0;
+const CACHE_SIZE=4;
+function cacheReset(){cacheSlots=[];cacheHitCnt=0;cacheMissCnt=0;renderCache();['cacheL1','cacheL2','cacheL3','cacheRAM','cacheSSD'].forEach(id=>document.getElementById(id).classList.remove('hit-anim'));}
+function renderCache(){document.getElementById('cacheSlots').innerHTML=Array(CACHE_SIZE).fill(null).map((_,i)=>cacheSlots[i]!==undefined?`<div class="cache-slot filled">M[${cacheSlots[i]}]</div>`:`<div class="cache-slot">— empty</div>`).join('');document.getElementById('cacheHitCount').textContent=cacheHitCnt;document.getElementById('cacheMissCount').textContent=cacheMissCnt;}
+function cacheAccess(){const addr=Math.floor(Math.random()*16);doCacheAccess(addr);}
+function cacheAccessSequential(){let i=0;const seq=Array.from({length:5},(_,j)=>(cacheHitCnt+cacheMissCnt+j)%8);seq.forEach((addr,idx)=>setTimeout(()=>doCacheAccess(addr),idx*400));}
+function doCacheAccess(addr){
+  const hit=cacheSlots.includes(addr);
+  const levels=['cacheL1','cacheL2','cacheL3','cacheRAM','cacheSSD'];
+  levels.forEach(id=>document.getElementById(id).classList.remove('hit-anim'));
+  if(hit){cacheHitCnt++;document.getElementById('cacheL1').classList.add('hit-anim');setTimeout(()=>document.getElementById('cacheL1').classList.remove('hit-anim'),600);}
+  else{cacheMissCnt++;const hitLevel=Math.random()<0.4?'cacheL2':Math.random()<0.5?'cacheL3':'cacheRAM';document.getElementById(hitLevel).classList.add('hit-anim');setTimeout(()=>document.getElementById(hitLevel).classList.remove('hit-anim'),600);if(cacheSlots.length>=CACHE_SIZE)cacheSlots.shift();cacheSlots.push(addr);}
+  renderCache();
 }
 
-function drawDL(){
-  const w=DLC.width,h=DLC.height,cx=w/2,cy=h/2,R=Math.min(w,h)*0.32;
-  ctx.clearRect(0,0,w,h);
+// ===== OSI =====
+const osiLayers=[
+  {num:7,name:'응용 계층',en:'Application',color:'#ff6b9d',unit:'메시지',desc:'사용자가 직접 상호작용하는 계층. HTTP, FTP, SMTP 등 애플리케이션 프로토콜이 동작합니다.',examples:'HTTP, HTTPS, FTP, SMTP, DNS, SSH, WebSocket'},
+  {num:6,name:'표현 계층',en:'Presentation',color:'#ff8c42',unit:'데이터',desc:'데이터 형식 변환, 압축, 암호화/복호화를 담당합니다. 서로 다른 형식의 데이터를 통일된 형태로 변환합니다.',examples:'SSL/TLS, JPEG, MPEG, ASCII, Unicode'},
+  {num:5,name:'세션 계층',en:'Session',color:'#ffaa00',unit:'데이터',desc:'연결 설정, 유지, 종료를 관리합니다. 로그인 세션, 파일 전송 세션 등을 관리합니다.',examples:'NetBIOS, RPC, SQL 세션, 소켓'},
+  {num:4,name:'전송 계층',en:'Transport',color:'#00cc88',unit:'세그먼트',desc:'프로세스 간 통신. TCP(신뢰성, 순서 보장)와 UDP(빠른 전송, 비연결)를 제공합니다. 포트 번호로 프로세스를 구분합니다.',examples:'TCP (포트 80, 443), UDP (포트 53, 67)'},
+  {num:3,name:'네트워크 계층',en:'Network',color:'#6b8aff',unit:'패킷',desc:'IP 주소 기반 라우팅. 서로 다른 네트워크 간 최적 경로를 결정합니다.',examples:'IP, ICMP(ping), 라우터, IPv4, IPv6'},
+  {num:2,name:'데이터 링크 계층',en:'Data Link',color:'#a855f7',unit:'프레임',desc:'MAC 주소 기반 같은 네트워크 내 통신. 오류 검출/수정을 담당합니다.',examples:'Ethernet, Wi-Fi(802.11), MAC 주소, 스위치'},
+  {num:1,name:'물리 계층',en:'Physical',color:'#8888aa',unit:'비트',desc:'실제 전기 신호, 광신호로 비트를 전송합니다. 케이블, 허브 등 물리적 매체입니다.',examples:'Cable, 광섬유, 허브, 전압/전류, 블루투스'},
+];
+let osiExpanded=null;
+function renderOSI(){document.getElementById('osiStack').innerHTML=osiLayers.map(l=>`<div class="osi-layer${osiExpanded===l.num?' expanded':''}" onclick="toggleOSI(${l.num})" style="border-color:${l.color}40"><div class="osi-layer-header"><span class="osi-num" style="color:${l.color}">L${l.num}</span><span class="osi-name">${l.name}</span><span class="osi-en">${l.en}</span><span class="osi-unit" style="color:${l.color}">${l.unit}</span></div>${osiExpanded===l.num?`<div class="osi-detail"><p>${l.desc}</p><div class="osi-examples" style="color:${l.color}">예시: ${l.examples}</div></div>`:''}</div>`).join('');}
+function toggleOSI(num){osiExpanded=osiExpanded===num?null:num;renderOSI();}
 
-  // Table
-  ctx.beginPath();ctx.arc(cx,cy,R*0.55,0,Math.PI*2);
-  ctx.fillStyle='rgba(255,255,255,0.03)';ctx.fill();
-  ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.stroke();
-  ctx.fillStyle='rgba(255,255,255,0.06)';ctx.font='11px JetBrains Mono';ctx.textAlign='center';
-  ctx.fillText('🍽️ 식탁',cx,cy);
+// ===== TCP =====
+const tcpSteps=[
+  {dir:'c2s',msg:'SYN (seq=100)',clientState:'SYN-SENT',serverState:'LISTEN',desc:'클라이언트가 연결 요청을 보냅니다. "나 연결하고 싶어!" — SYN(Synchronize) 플래그와 초기 시퀀스 번호를 전송합니다.'},
+  {dir:'s2c',msg:'SYN-ACK (seq=200, ack=101)',clientState:'SYN-SENT',serverState:'SYN-RECEIVED',desc:'서버가 요청을 수락합니다. "좋아, 나도 준비됐어!" — SYN+ACK 플래그로 클라이언트의 seq를 확인(ack=seq+1)하고, 서버의 seq를 보냅니다.'},
+  {dir:'c2s',msg:'ACK (ack=201)',clientState:'ESTABLISHED',serverState:'ESTABLISHED',desc:'클라이언트가 최종 확인합니다. "연결 완료!" — ACK(Acknowledgment) 플래그로 서버의 seq를 확인합니다. 이제 양방향 연결이 확립됩니다.'},
+  {dir:'c2s',msg:'DATA: GET /index.html HTTP/1.1',clientState:'ESTABLISHED',serverState:'ESTABLISHED',desc:'연결이 수립되었으니 실제 데이터를 주고받을 수 있습니다. HTTP 요청을 전송합니다.'},
+  {dir:'s2c',msg:'DATA: 200 OK + <html>...',clientState:'ESTABLISHED',serverState:'ESTABLISHED',desc:'서버가 요청한 HTML 파일을 응답합니다. TCP는 데이터를 작은 세그먼트로 나눠 전송하며 각각 ACK를 확인합니다.'},
+  {dir:'c2s',msg:'FIN (연결 종료 요청)',clientState:'FIN-WAIT',serverState:'ESTABLISHED',desc:'클라이언트가 연결 종료를 요청합니다. 4-way Handshake로 연결을 끊습니다.'},
+];
+let tcpStep=0;
+function tcpNext(){
+  if(tcpStep>=tcpSteps.length){tcpReset();return;}
+  const s=tcpSteps[tcpStep];
+  document.getElementById('tcpClientState').textContent=s.clientState;
+  document.getElementById('tcpServerState').textContent=s.serverState;
+  const msgs=document.getElementById('tcpMessages');
+  const el=document.createElement('div');
+  el.className=`tcp-msg ${s.dir}`;
+  el.innerHTML=`<span class="tcp-msg-arrow">${s.dir==='c2s'?'→':'←'}</span><span class="tcp-msg-text">${s.msg}</span>`;
+  msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;
+  document.getElementById('tcpDesc').textContent=s.desc;
+  tcpStep++;
+}
+function tcpReset(){tcpStep=0;document.getElementById('tcpMessages').innerHTML='';document.getElementById('tcpClientState').textContent='CLOSED';document.getElementById('tcpServerState').textContent='LISTEN';document.getElementById('tcpDesc').textContent='▶ "다음 단계" 버튼을 눌러 TCP 연결 과정을 관찰하세요.';}
 
-  // Forks
-  for(let i=0;i<NP;i++){
-    const a=(i+0.5)/NP*Math.PI*2-Math.PI/2;
-    const fx=cx+Math.cos(a)*R*0.55,fy=cy+Math.sin(a)*R*0.55;
-    ctx.save();ctx.translate(fx,fy);ctx.rotate(a+Math.PI/2);
-    const held=fk[i].owner!==-1;
-    ctx.strokeStyle=held?PC[fk[i].owner]:'rgba(255,255,255,0.2)';
-    ctx.lineWidth=held?3:2;ctx.lineCap='round';
-    ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(0,14);ctx.moveTo(-5,-14);ctx.lineTo(-5,-4);ctx.moveTo(5,-14);ctx.lineTo(5,-4);ctx.stroke();
-    if(held){ctx.shadowColor=PC[fk[i].owner];ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;}
-    ctx.restore();
-    const fl=cx+Math.cos(a)*R*0.38,ft=cy+Math.sin(a)*R*0.38;
-    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='9px JetBrains Mono';ctx.textAlign='center';
-    ctx.fillText(`F${i}`,fl,ft+4);
-  }
-
-  // Philosophers
-  const fills={[ST.THINK]:'rgba(255,255,255,0.04)',[ST.HUNGRY]:'rgba(255,170,0,0.1)',[ST.EAT]:'placeholder',[ST.WAIT_L]:'rgba(255,170,0,0.12)',[ST.WAIT_R]:'rgba(255,170,0,0.15)',[ST.BLOCKED]:'rgba(255,68,102,0.15)'};
-  const strokes={[ST.THINK]:'rgba(255,255,255,0.12)',[ST.HUNGRY]:'#ffaa00',[ST.EAT]:'placeholder',[ST.WAIT_L]:'#ffaa00',[ST.WAIT_R]:'#ffaa00',[ST.BLOCKED]:'#ff4466'};
-  const emojis={[ST.THINK]:'🤔',[ST.HUNGRY]:'😤',[ST.EAT]:'🍝',[ST.WAIT_L]:'👈',[ST.WAIT_R]:'👉',[ST.BLOCKED]:'🔒'};
-  const stateNames={[ST.THINK]:'THINK',[ST.HUNGRY]:'HUNGRY',[ST.EAT]:'EAT',[ST.WAIT_L]:'WAIT',[ST.WAIT_R]:'WAIT',[ST.BLOCKED]:'BLOCKED'};
-
-  for(let i=0;i<NP;i++){
-    const p=phil[i],px=cx+Math.cos(p.angle)*R,py=cy+Math.sin(p.angle)*R,rad=30;
-
-    if(p.state===ST.EAT){ctx.beginPath();ctx.arc(px,py,rad+10,0,Math.PI*2);ctx.fillStyle=`rgba(${hexRgb(PC[i])},0.12)`;ctx.fill();}
-    if(p.state===ST.BLOCKED){const ps=Math.sin(dlT*4)*3;ctx.beginPath();ctx.arc(px,py,rad+8+ps,0,Math.PI*2);ctx.fillStyle='rgba(255,68,102,0.12)';ctx.fill();}
-
-    ctx.beginPath();ctx.arc(px,py,rad,0,Math.PI*2);
-    ctx.fillStyle=p.state===ST.EAT?`rgba(${hexRgb(PC[i])},0.2)`:fills[p.state]||'rgba(255,255,255,0.04)';ctx.fill();
-    ctx.strokeStyle=p.state===ST.EAT?PC[i]:strokes[p.state]||'rgba(255,255,255,0.12)';ctx.lineWidth=2;ctx.stroke();
-
-    ctx.fillStyle=PC[i];ctx.font='bold 11px JetBrains Mono';ctx.textAlign='center';
-    ctx.fillText(`P${i}`,px,py-10);
-    ctx.font='14px sans-serif';ctx.fillText(emojis[p.state]||'',px,py+8);
-    ctx.font='8px JetBrains Mono';ctx.fillStyle='rgba(255,255,255,0.3)';
-    ctx.fillText(stateNames[p.state]||'',px,py+22);
-  }
-
-  // Circular wait arrows
-  if(phil.every(p=>p.state===ST.BLOCKED)){
-    ctx.setLineDash([6,4]);ctx.lineWidth=1.5;
-    for(let i=0;i<NP;i++){
-      const n=(i+1)%NP;
-      const px=cx+Math.cos(phil[i].angle)*R,py=cy+Math.sin(phil[i].angle)*R;
-      const nx=cx+Math.cos(phil[n].angle)*R,ny=cy+Math.sin(phil[n].angle)*R;
-      ctx.beginPath();ctx.strokeStyle=`rgba(255,68,102,${0.4+Math.sin(dlT*3)*0.2})`;
-      ctx.moveTo(px,py);ctx.lineTo(nx,ny);ctx.stroke();
-      const ag=Math.atan2(ny-py,nx-px);
-      ctx.beginPath();
-      const ax=nx-Math.cos(ag)*30,ay=ny-Math.sin(ag)*30;
-      ctx.moveTo(ax,ay);ctx.lineTo(ax-10*Math.cos(ag-0.4),ay-10*Math.sin(ag-0.4));
-      ctx.moveTo(ax,ay);ctx.lineTo(ax-10*Math.cos(ag+0.4),ay-10*Math.sin(ag+0.4));
-      ctx.stroke();
-    }
-    ctx.setLineDash([]);
-    ctx.fillStyle=`rgba(255,68,102,${0.5+Math.sin(dlT*2)*0.3})`;
-    ctx.font='bold 14px JetBrains Mono';ctx.textAlign='center';
-    ctx.fillText('⚠️ CIRCULAR WAIT',cx,cy+22);
-  }
+// ===== HTTP =====
+const httpMethods={GET:{body:false,desc:'리소스를 요청합니다. Body 없음. 멱등성 있음.'},POST:{body:true,desc:'새 리소스를 생성합니다. Body에 데이터 포함.'},PUT:{body:true,desc:'리소스를 완전히 교체합니다.'},DELETE:{body:false,desc:'리소스를 삭제합니다.'}};
+const httpStatuses={200:{text:'OK',desc:'요청 성공'},201:{text:'Created',desc:'리소스 생성 성공'},301:{text:'Moved Permanently',desc:'영구 리다이렉션'},400:{text:'Bad Request',desc:'잘못된 요청 형식'},401:{text:'Unauthorized',desc:'인증 필요'},403:{text:'Forbidden',desc:'권한 없음'},404:{text:'Not Found',desc:'리소스 없음'},500:{text:'Internal Server Error',desc:'서버 내부 오류'}};
+function updateHTTP(){
+  const method=document.getElementById('httpMethod').value;
+  const status=parseInt(document.getElementById('httpStatus').value);
+  const st=httpStatuses[status];const statusClass=status<300?'http-status-2':status<400?'http-status-3':status<500?'http-status-4':'http-status-5';
+  document.getElementById('httpRequest').innerHTML=`<div class="http-line"><span class="http-method">${method}</span> <span class="http-url">/api/users</span> <span style="color:var(--text-dim)">HTTP/1.1</span></div><div class="http-line"><span class="http-header-k">Host:</span> <span class="http-header-v">example.com</span></div><div class="http-line"><span class="http-header-k">Accept:</span> <span class="http-header-v">application/json</span></div><div class="http-line"><span class="http-header-k">Authorization:</span> <span class="http-header-v">Bearer eyJ...</span></div>${httpMethods[method].body?'<div class="http-line" style="margin-top:8px;"><span class="http-body-line">{"name": "Alice", "age": 30}</span></div>':''}`;
+  document.getElementById('httpResponse').innerHTML=`<div class="http-line"><span style="color:var(--text-dim)">HTTP/1.1</span> <span class="${statusClass}">${status} ${st.text}</span></div><div class="http-line"><span class="http-header-k">Content-Type:</span> <span class="http-header-v">application/json</span></div><div class="http-line"><span class="http-header-k">Date:</span> <span class="http-header-v">Thu, 01 Jan 2025 00:00:00 GMT</span></div><div class="http-line" style="margin-top:8px;"><span class="http-body-line">${status<400?'{"id": 1, "name": "Alice"}':'{"error": "'+st.desc+'"}'}</span></div>`;
 }
 
-// Animated sleep
-function dlSleep(ms){
-  return new Promise(resolve=>{
-    let last=performance.now();
-    function tick(now){
-      dlT+=(now-last)/1000; last=now;
-      drawDL();
-      if(now-last+ms<=0||!dlRun){resolve();return;}
-      ms-=(now-(last-((now-last)/1000*1000)));
-    }
-    const start=performance.now();
-    function frame(now){
-      dlT+=(now-(frame.last||now))/1000;frame.last=now;
-      drawDL();
-      if(now-start>=ms||!dlRun)resolve();
-      else requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-  });
+// ===== DNS =====
+const dnsSteps=[
+  {icon:'🌐',name:'브라우저',desc:'주소창에 "google.com" 입력. 브라우저 캐시 확인.',packet:'google.com → ?',active:true},
+  {icon:'💻',name:'OS DNS 캐시',desc:'운영체제의 /etc/hosts 및 DNS 캐시 확인.',packet:'캐시 미스 → ISP로 전달'},
+  {icon:'🔄',name:'재귀 리졸버',desc:'ISP(인터넷 서비스 제공자)의 DNS 서버. 대신 조회해줍니다.',packet:'"google.com" 전체 조회 요청'},
+  {icon:'🌍',name:'루트 네임서버',desc:'전 세계 13개. ".com"이 어느 서버 담당인지 알고 있습니다.',packet:'".com TLD 서버" 주소 응답'},
+  {icon:'🔤',name:'.com TLD 서버',desc:'"google.com"의 권한 서버 주소를 알고 있습니다.',packet:'"ns1.google.com" 주소 응답'},
+  {icon:'🏢',name:'google.com 권한서버',desc:'구글이 직접 운영. google.com의 실제 IP를 알고 있습니다.',packet:'"google.com = 142.250.196.46" 응답'},
+  {icon:'✅',name:'브라우저',desc:'IP 주소 획득! 이 IP로 TCP 연결 후 HTTP 요청 시작.',packet:'142.250.196.46으로 접속!'},
+];
+let dnsStep=0;
+function renderDNS(){document.getElementById('dnsNodes').innerHTML=dnsSteps.map((s,i)=>`<div class="dns-node${i<dnsStep?' done':i===dnsStep-1?' active':''}"><span class="dns-node-icon">${s.icon}</span><span class="dns-node-name">${s.name}</span><span class="dns-node-desc">${s.desc}</span><span class="dns-packet">${i<dnsStep?s.packet:''}</span></div>`).join('');}
+function dnsNext(){if(dnsStep>=dnsSteps.length){dnsReset();return;}dnsStep++;renderDNS();}
+function dnsReset(){dnsStep=0;renderDNS();}
+
+// ===== CAESAR CIPHER =====
+function updateCipher(){
+  const text=document.getElementById('cipherInput').value;
+  const shift=parseInt(document.getElementById('cipherShift').value)||3;
+  document.getElementById('cipherShiftVal').textContent=shift;
+  const enc=text.split('').map(ch=>{if(/[a-zA-Z]/.test(ch)){const b=ch>='a'?97:65;return String.fromCharCode(((ch.charCodeAt(0)-b+shift)%26+26)%26+b);}return ch;}).join('');
+  document.getElementById('cipherPlain').textContent=text||'—';
+  document.getElementById('cipherEncrypted').textContent=enc||'—';
+  const alpha='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  document.getElementById('cipherAlphabet').innerHTML=alpha.split('').map(c=>{const enc_c=String.fromCharCode(((c.charCodeAt(0)-65+shift)%26)+65);return`<div class="cipher-char-col"><div class="cipher-plain-c">${c}</div><div class="cipher-enc-c">${enc_c}</div></div>`;}).join('');
 }
 
-async function dlStart(){
-  if(dlRun)return;
-  dlRun=true;
-  document.getElementById('dlStartBtn').disabled=true;
-  initDL(); dlRun=true;
-  document.getElementById('narrationLog').innerHTML='';
-  await dlSleep(400);
-
-  // ===== PHASE 1: Normal =====
-  actPhase(0,'normal'); setStatus('safe','✓ 정상 동작');
-  narrate('normal','🍽️ <b>시나리오 시작!</b> 5명의 철학자가 원형 식탁에 앉아있습니다. 포크는 5개뿐이고, 식사하려면 <b>양쪽 포크 2개</b>가 모두 필요합니다.');
-  await dlSleep(2500);
-
-  narrate('normal','🤔 모두 조용히 생각 중입니다... (THINKING 상태)');
-  await dlSleep(2000);
-
-  narrate('normal',`✅ <b style="color:${PC[0]}">P0</b>이 배가 고파졌습니다! 왼쪽 포크(F0)와 오른쪽 포크(F1)를 <b>순서대로</b> 집습니다.`);
-  phil[0].state=ST.HUNGRY; drawDL(); await dlSleep(1000);
-  fk[0].owner=0; phil[0].lf=true; phil[0].state=ST.WAIT_R; drawDL(); await dlSleep(800);
-  fk[1].owner=0; phil[0].rf=true; phil[0].state=ST.EAT; drawDL();
-  narrate('normal',`🍝 <b style="color:${PC[0]}">P0</b> 양쪽 포크 확보! 맛있게 식사 중...`);
-  setProg(15,'');
-  await dlSleep(2500);
-
-  narrate('normal',`✅ <b style="color:${PC[0]}">P0</b> 식사 완료! 포크를 내려놓습니다. → 다른 철학자가 사용할 수 있게 됩니다.`);
-  fk[0].owner=-1;fk[1].owner=-1;phil[0].lf=false;phil[0].rf=false;phil[0].state=ST.THINK;drawDL();
-  await dlSleep(1500);
-
-  narrate('normal',`✅ <b style="color:${PC[2]}">P2</b>도 양쪽 포크(F2,F3)를 확보해 정상적으로 식사합니다.`);
-  phil[2].state=ST.EAT;fk[2].owner=2;fk[3].owner=2;phil[2].lf=true;phil[2].rf=true;drawDL();
-  setProg(30,'');
-  await dlSleep(2000);
-  fk[2].owner=-1;fk[3].owner=-1;phil[2].lf=false;phil[2].rf=false;phil[2].state=ST.THINK;drawDL();
-  narrate('normal','👍 이렇게 <b>한 명씩 순서대로</b> 포크를 잡으면 아무 문제 없습니다!');
-  await dlSleep(2000);
-
-  // ===== PHASE 2: Danger =====
-  actPhase(1,'warning'); setStatus('warning','⚡ 위험 징후');
-  setProg(40,'danger');
-
-  narrate('warning','⚡ <b>그런데 만약...</b> 모든 철학자가 <b>동시에</b> 배가 고파지면 어떻게 될까요?');
-  await dlSleep(2000);
-
-  narrate('warning','😤 모든 철학자가 동시에 배가 고파졌습니다!');
-  phil.forEach(p=>p.state=ST.HUNGRY); drawDL();
-  await dlSleep(1500);
-
-  narrate('warning','📌 규칙: 각 철학자는 항상 <b>왼쪽 포크부터</b> 집습니다. 이것이 문제의 핵심입니다...');
-  await dlSleep(2000);
-
-  for(let i=0;i<NP;i++){
-    fk[i].owner=i; phil[i].lf=true; phil[i].state=ST.WAIT_R;
-    narrate('warning',`👈 <b style="color:${PC[i]}">P${i}</b> → 왼쪽 포크(F${i})를 집었습니다. 오른쪽 포크(F${(i+1)%NP})를 기다리는 중...`);
-    drawDL(); setProg(45+i*8,'danger');
-    await dlSleep(1200);
-  }
-  await dlSleep(1000);
-
-  // ===== PHASE 3: DEADLOCK =====
-  actPhase(2,'danger'); setStatus('deadlocked','⚠ DEADLOCK!');
-  setProg(90,'danger');
-  phil.forEach(p=>p.state=ST.BLOCKED); drawDL();
-
-  narrate('danger','🔒 <b>DEADLOCK 발생!</b>');
-  await dlSleep(1000);
-  narrate('danger','모든 철학자가 왼쪽 포크를 쥔 채 오른쪽 포크를 기다리고 있습니다. <b>아무도 양쪽 포크를 모을 수 없어 영원히 대기합니다!</b>');
-  await dlSleep(1500);
-  narrate('danger','P0→F1(P1이 보유) 대기, P1→F2(P2가 보유) 대기, P2→F3(P3가 보유) 대기, P3→F4(P4가 보유) 대기, P4→F0(P0이 보유) 대기 — <b>순환 대기!</b>');
-
-  // Keep pulsing for a while
-  await dlSleep(4000);
-
-  // ===== PHASE 4: Analysis =====
-  actPhase(3,'warning');
-  narrate('info','🔍 <b>왜 이런 일이 생겼을까?</b> 데드락의 4가지 조건이 <b>모두</b> 충족되었기 때문입니다:');
-  await dlSleep(1500);
-  narrate('info','① <b>상호 배제 (Mutual Exclusion)</b> — 포크 하나를 두 명이 동시에 쓸 수 없습니다.');
-  await dlSleep(1200);
-  narrate('info','② <b>점유와 대기 (Hold & Wait)</b> — 왼쪽 포크를 잡은 채(점유) 오른쪽을 기다립니다(대기).');
-  await dlSleep(1200);
-  narrate('info','③ <b>비선점 (No Preemption)</b> — 옆 사람의 포크를 강제로 빼앗을 수 없습니다.');
-  await dlSleep(1200);
-  narrate('info','④ <b>순환 대기 (Circular Wait)</b> — P0→P1→P2→P3→P4→P0 ... 원형으로 서로를 기다립니다. (빨간 화살표 참고!)');
-  await dlSleep(3000);
-
-  narrate('info','💡 이 4가지 중 <b>단 하나만 깨뜨려도</b> 데드락은 해결됩니다!');
-  await dlSleep(2500);
-
-  // ===== PHASE 5: Resolution =====
-  actPhase(4,'resolve'); setStatus('resolving','🔧 해결 중...');
-  setProg(95,'resolve');
-
-  narrate('resolve','🔧 <b>해결 전략: 비선점 조건 깨기!</b>');
-  await dlSleep(1000);
-  narrate('resolve',`OS가 <b style="color:${PC[0]}">P0</b>에게 명령합니다: "포크를 내려놓으세요!" (강제 선점)`);
-  await dlSleep(1500);
-
-  fk[0].owner=-1; phil[0].lf=false; phil[0].state=ST.THINK; drawDL();
-  narrate('resolve',`<b style="color:${PC[0]}">P0</b>이 왼쪽 포크(F0)를 내려놓았습니다!`);
-  await dlSleep(1500);
-
-  narrate('resolve',`🎉 이제 <b style="color:${PC[4]}">P4</b>가 오른쪽 포크(F0)를 확보할 수 있습니다! → 양쪽 포크 완성!`);
-  fk[0].owner=4; phil[4].rf=true; phil[4].state=ST.EAT; drawDL();
-  await dlSleep(2000);
-
-  narrate('resolve',`✅ <b style="color:${PC[4]}">P4</b> 식사 완료! 포크 반납 → 연쇄적으로 다음 철학자도 식사 가능!`);
-  fk[4].owner=-1;fk[0].owner=-1;phil[4].lf=false;phil[4].rf=false;phil[4].state=ST.THINK;drawDL();
-  await dlSleep(1000);
-
-  // Chain resolution
-  for(let i=3;i>=0;i--){
-    const lf=i,rf=(i+1)%NP;
-    if(fk[rf].owner===-1||fk[rf].owner===i){
-      fk[rf].owner=i; phil[i].rf=true; phil[i].state=ST.EAT; drawDL();
-      await dlSleep(600);
-      narrate('resolve',`🍝 <b style="color:${PC[i]}">P${i}</b> 식사 완료!`);
-      fk[lf].owner=-1;fk[rf].owner=-1;phil[i].lf=false;phil[i].rf=false;phil[i].state=ST.THINK;drawDL();
-      await dlSleep(400);
-    }
-  }
-
-  setStatus('safe','✅ 해결 완료!'); setProg(100,'');
-  actPhase(4,'done');
-  narrate('resolve','🎉 <b>데드락 완전 해결!</b> 실제 OS에서도 유사한 방법을 사용합니다:');
-  await dlSleep(1000);
-  narrate('resolve','• <b>자원 순서 규칙</b> — 모든 철학자가 번호 순으로 포크를 잡게 하면 순환 대기 방지');
-  await dlSleep(800);
-  narrate('resolve','• <b>타임아웃</b> — 일정 시간 내 자원을 못 얻으면 포기하고 재시도');
-  await dlSleep(800);
-  narrate('resolve','• <b>데드락 감지</b> — 주기적으로 순환 대기를 탐지해 하나를 강제 종료');
-
-  dlRun=false;
-  document.getElementById('dlStartBtn').disabled=false;
-}
-
-function dlReset(){
-  dlRun=false;
-  document.getElementById('dlStartBtn').disabled=false;
-  initDL();
+// ===== HASH FUNCTION =====
+function djb2(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h+str.charCodeAt(i))&0xFFFFFFFF;return(h>>>0).toString(16).toUpperCase().padStart(8,'0');}
+function countBitDiff(a,b){let diff=0;for(let i=0;i<Math.max(a.length,b.length);i++){const ca=parseInt(a[i]||'0',16),cb=parseInt(b[i]||'0',16),xor=ca^cb;diff+=xor.toString(2).split('').filter(x=>x==='1').length;}return diff;}
+function updateHash(){
+  const text=document.getElementById('hashInput').value;
+  document.getElementById('hashInputDisplay').textContent=text||'—';
+  if(!text){document.getElementById('hashOutput').textContent='—';document.getElementById('avlInput1').textContent='—';document.getElementById('avlHash1').textContent='—';document.getElementById('avlInput2').textContent='—';document.getElementById('avlHash2').textContent='—';document.getElementById('avlDiff').textContent='';return;}
+  const h=djb2(text);
+  document.getElementById('hashOutput').textContent=h;
+  document.getElementById('avlInput1').textContent='"'+text+'"';
+  document.getElementById('avlHash1').textContent=h;
+  const mod=text.slice(0,-1)+String.fromCharCode(text.charCodeAt(text.length-1)+1);
+  const hmod=djb2(mod);
+  document.getElementById('avlInput2').textContent='"'+mod+'"';
+  document.getElementById('avlHash2').textContent=hmod;
+  const diff=countBitDiff(h,hmod);
+  document.getElementById('avlDiff').textContent=`비트 차이: ${diff}/${h.length*4}비트 (${Math.round(diff/(h.length*4)*100)}% 변화)`;
 }
 
 // ===== INIT =====
-window.addEventListener('load',()=>{initBinary();initGates();initSort();initMem();initDL();});
-window.addEventListener('resize',()=>{resizeDL();drawDL();});
+window.addEventListener('load',()=>{
+  initBinary();initGates();initSort();initMem();initDL();
+  convertNum();updateEncoding();llRender();renderHT();
+  initSearch();updateRecursion();drawBigO();
+  cpuReset();cpuRenderProgram();cacheReset();
+  renderOSI();tcpReset();updateHTTP();renderDNS();
+  updateCipher();updateHash();vmRender();
+});
+window.addEventListener('resize',()=>{resizeDL();drawDL();drawBST();drawBigO();});
 </script>
 </body>
 </html>
