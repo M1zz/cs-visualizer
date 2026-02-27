@@ -3,35 +3,232 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ch.7 컴퓨터구조 | CS Visualizer</title>
+<title>Ch.7 컴퓨터 구조 | CS Visualizer</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<style>
+/* ── Von Neumann ── */
+.vn-diagram{position:relative;background:var(--surface2);border-radius:12px;padding:20px;min-height:280px;}
+.vn-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
+.vn-box{background:var(--surface);border:2px solid var(--border);border-radius:10px;padding:14px;position:relative;transition:border-color 0.3s,box-shadow 0.3s;}
+.vn-box.vn-active{border-color:var(--accent);box-shadow:0 0 18px rgba(0,255,170,0.2);}
+.vn-box.vn-active-blue{border-color:var(--accent3);box-shadow:0 0 18px rgba(107,138,255,0.2);}
+.vn-box.vn-active-pink{border-color:var(--accent2);box-shadow:0 0 18px rgba(255,107,157,0.2);}
+.vn-box-title{font-family:'JetBrains Mono',monospace;font-size:0.7rem;letter-spacing:2px;margin-bottom:10px;color:var(--text-dim);}
+.vn-sub{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:0.68rem;margin-bottom:5px;text-align:center;color:var(--text-dim);transition:all 0.3s;}
+.vn-sub.lit{border-color:var(--accent);color:var(--accent);background:rgba(0,255,170,0.08);}
+.vn-sub.lit-blue{border-color:var(--accent3);color:var(--accent3);background:rgba(107,138,255,0.08);}
+.bus-wrap{position:relative;margin:4px 0 12px;}
+.bus-label{font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--text-dim);margin-bottom:3px;}
+.bus-line{height:7px;border-radius:4px;position:relative;overflow:hidden;margin-bottom:3px;}
+.bus-addr{background:linear-gradient(90deg,rgba(107,138,255,0.3),rgba(107,138,255,0.15));}
+.bus-data{background:linear-gradient(90deg,rgba(0,255,170,0.3),rgba(0,255,170,0.15));}
+.bus-ctrl{background:linear-gradient(90deg,rgba(255,170,0,0.3),rgba(255,170,0,0.15));}
+.bus-packet{position:absolute;top:0;bottom:0;width:22px;border-radius:4px;opacity:0;}
+.bus-packet.moving-right{animation:busR 0.7s ease-in-out forwards;}
+.bus-packet.moving-left{animation:busL 0.7s ease-in-out forwards;}
+@keyframes busR{0%{left:-22px;opacity:0.9}100%{left:100%;opacity:0.9}}
+@keyframes busL{0%{right:-22px;opacity:0.9}100%{right:100%;opacity:0.9}}
+.vn-bottleneck{background:rgba(255,68,102,0.07);border:1px solid rgba(255,68,102,0.25);border-radius:8px;padding:12px 16px;font-size:0.85rem;color:var(--text-dim);margin-top:8px;}
+.vn-bottleneck strong{color:var(--danger);}
+/* ── CPU Cycle ── */
+.cpu-phase-bar{display:flex;gap:0;margin-bottom:20px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+.cpu-phase-step{flex:1;padding:10px 6px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:600;letter-spacing:1px;background:var(--surface2);color:var(--text-dim);transition:all 0.3s;position:relative;}
+.cpu-phase-step::after{content:'';position:absolute;right:-1px;top:20%;bottom:20%;width:1px;background:var(--border);}
+.cpu-phase-step.active{color:#000;font-weight:700;}
+.fetch.active{background:var(--accent3);color:#fff;}
+.decode.active{background:var(--accent4);color:#000;}
+.execute.active{background:var(--accent);color:#000;}
+.cpu-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;}
+.cpu-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;transition:all 0.3s;}
+.cpu-box.active{border-color:var(--accent);box-shadow:0 0 14px rgba(0,255,170,0.15);}
+.cpu-box-title{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;}
+.cpu-box-val{font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--accent);font-weight:600;}
+.cpu-regs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px;}
+.cpu-reg{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 8px;text-align:center;}
+.cpu-reg-name{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);display:block;}
+.cpu-reg-val{font-family:'JetBrains Mono',monospace;font-size:0.95rem;color:var(--accent4);font-weight:600;display:block;transition:color 0.3s;}
+.cpu-reg-val.changed{color:var(--accent2);animation:flash 0.5s;}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:0.2}}
+.cpu-program{display:flex;flex-direction:column;gap:4px;}
+.cpu-instr{display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;background:var(--surface);border:1px solid transparent;transition:all 0.25s;}
+.cpu-instr.current{border-color:var(--accent);background:rgba(0,255,170,0.07);box-shadow:0 0 8px rgba(0,255,170,0.1);}
+.cpu-instr.done{opacity:0.35;}
+.cpu-addr{color:var(--text-dim);min-width:40px;font-size:0.68rem;}
+.cpu-op{color:var(--accent4);font-weight:600;min-width:42px;}
+.cpu-arg{color:var(--accent3);}
+.cpu-bin{color:var(--text-dim);font-size:0.65rem;margin-left:auto;}
+.cpu-desc-box{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);padding:12px 16px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--accent);line-height:1.8;min-height:52px;}
+.clock-info{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;}
+.clock-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;}
+.clock-card-val{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--accent);}
+.clock-card-label{font-size:0.75rem;color:var(--text-dim);margin-top:4px;}
+/* ── Pipeline ── */
+.pipeline-grid{display:grid;gap:3px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;}
+.pipe-row{display:flex;gap:3px;align-items:center;}
+.pipe-row-label{min-width:36px;color:var(--text-dim);font-size:0.68rem;text-align:right;padding-right:6px;}
+.pipe-cycle-header{display:flex;gap:3px;margin-left:42px;margin-bottom:3px;}
+.pipe-cycle-num{min-width:36px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);}
+.pipe-cell{min-width:36px;min-height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-size:0.65rem;font-weight:600;}
+.pipe-if{background:rgba(107,138,255,0.25);border:1px solid rgba(107,138,255,0.4);color:var(--accent3);}
+.pipe-id{background:rgba(255,170,0,0.2);border:1px solid rgba(255,170,0,0.35);color:var(--accent4);}
+.pipe-ex{background:rgba(0,255,170,0.2);border:1px solid rgba(0,255,170,0.35);color:var(--accent);}
+.pipe-mem{background:rgba(255,107,157,0.2);border:1px solid rgba(255,107,157,0.35);color:var(--accent2);}
+.pipe-wb{background:rgba(0,204,136,0.2);border:1px solid rgba(0,204,136,0.35);color:var(--success);}
+.pipe-stall{background:rgba(255,68,102,0.1);border:1px dashed rgba(255,68,102,0.35);color:var(--danger);font-size:0.6rem;}
+.pipe-empty{background:transparent;border:1px solid rgba(255,255,255,0.04);}
+.pipeline-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.pipe-leg{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:0.7rem;}
+.pipe-leg-dot{width:10px;height:10px;border-radius:2px;}
+.pipeline-tabs{display:flex;gap:8px;margin-bottom:16px;}
+.pipe-tab{font-family:'JetBrains Mono',monospace;font-size:0.78rem;padding:7px 16px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text-dim);cursor:pointer;transition:all 0.2s;}
+.pipe-tab.active{border-color:var(--accent3);color:var(--accent3);background:rgba(107,138,255,0.08);}
+.hazard-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:12px;}
+.hazard-title{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--accent2);margin-bottom:10px;font-weight:600;}
+/* ── Interrupt ── */
+.interrupt-timeline{height:72px;background:var(--surface2);border-radius:8px;position:relative;overflow:hidden;margin:16px 0;border:1px solid var(--border);}
+.int-block{position:absolute;top:8px;bottom:8px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.68rem;font-weight:700;transition:all 0.5s;white-space:nowrap;overflow:hidden;}
+.int-program{background:rgba(0,255,170,0.18);border:1px solid rgba(0,255,170,0.4);color:var(--accent);}
+.int-isr{background:rgba(107,138,255,0.22);border:1px solid rgba(107,138,255,0.5);color:var(--accent3);}
+.int-save{background:rgba(255,170,0,0.18);border:1px solid rgba(255,170,0,0.4);color:var(--accent4);font-size:0.6rem;}
+.int-flash{position:absolute;top:0;bottom:0;width:3px;background:var(--danger);box-shadow:0 0 10px var(--danger);}
+.int-timeline-label{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);margin-bottom:4px;}
+.ivt-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:0.75rem;}
+.ivt-table td,.ivt-table th{padding:7px 14px;border-bottom:1px solid var(--border);}
+.ivt-table th{color:var(--text-dim);font-weight:500;background:var(--surface2);}
+.ivt-row.active td{background:rgba(0,255,170,0.06);color:var(--accent);}
+.int-types{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+.int-type-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;}
+.int-type-title{font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:600;margin-bottom:8px;}
+/* ── Cache ── */
+.cache-pyramid{display:flex;flex-direction:column;align-items:center;gap:3px;margin:20px auto;max-width:500px;}
+.cache-level{display:flex;justify-content:space-between;align-items:center;border-radius:6px;padding:10px 18px;border:1px solid var(--border);background:var(--surface2);transition:all 0.3s;cursor:default;}
+.cache-level.hit-anim{animation:cacheHit 0.5s ease-out;}
+@keyframes cacheHit{0%{transform:scaleX(1.02);opacity:1}50%{transform:scaleX(1.04);opacity:0.8}100%{transform:scaleX(1);opacity:1}}
+.l1{width:35%;border-color:rgba(0,255,170,0.4);background:rgba(0,255,170,0.06);}
+.l2{width:52%;border-color:rgba(107,138,255,0.35);background:rgba(107,138,255,0.05);}
+.l3{width:68%;border-color:rgba(255,170,0,0.3);background:rgba(255,170,0,0.04);}
+.ram{width:84%;border-color:rgba(255,107,157,0.3);background:rgba(255,107,157,0.04);}
+.ssd{width:100%;border-color:rgba(136,136,170,0.3);}
+.cache-level-name{font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:600;}
+.cache-level-info{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);}
+.l1 .cache-level-name{color:var(--accent);}
+.l2 .cache-level-name{color:var(--accent3);}
+.l3 .cache-level-name{color:var(--accent4);}
+.ram .cache-level-name{color:var(--accent2);}
+.ssd .cache-level-name{color:var(--text-dim);}
+.cache-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0;}
+.cache-slot{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);transition:all 0.3s;}
+.cache-slot.filled{border-color:var(--accent3);color:var(--accent3);background:rgba(107,138,255,0.07);}
+.cache-slot.hit{border-color:var(--accent);background:rgba(0,255,170,0.15);color:var(--accent);animation:slotHit 0.4s ease-out;}
+@keyframes slotHit{0%{transform:scale(1.1)}100%{transform:scale(1)}}
+.cache-stats-row{display:flex;gap:16px;margin:12px 0;}
+.cache-stat{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);}
+.cache-stat-val{font-size:1.4rem;font-weight:700;display:block;margin-bottom:2px;}
+.hit-c .cache-stat-val{color:var(--accent);}
+.miss-c .cache-stat-val{color:var(--danger);}
+.locality-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
+.locality-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;}
+.locality-title{font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:600;margin-bottom:8px;}
+.locality-mem{display:flex;gap:2px;flex-wrap:wrap;margin-top:8px;}
+.loc-cell{width:28px;height:28px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.6rem;background:var(--surface);border:1px solid var(--border);transition:all 0.3s;}
+.loc-cell.hot{background:rgba(0,255,170,0.25);border-color:var(--accent);color:var(--accent);}
+.loc-cell.warm{background:rgba(107,138,255,0.18);border-color:rgba(107,138,255,0.4);color:var(--accent3);}
+/* page-nav */
+.page-nav{position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;padding:0 24px;height:52px;}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);text-decoration:none;transition:color 0.2s;flex-shrink:0;}
+.nav-back:hover{color:var(--accent);}
+.nav-chapter-title{font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:600;flex-shrink:0;}
+.nav-sections{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;}
+.nav-sec-link{font-family:'JetBrains Mono',monospace;font-size:0.72rem;padding:4px 10px;border-radius:5px;color:var(--text-dim);text-decoration:none;transition:all 0.2s;}
+.nav-sec-link:hover{color:var(--accent);background:rgba(0,255,170,0.06);}
+.section-divider{max-width:960px;margin:0 auto;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+</style>
 </head>
 <body class="page-body">
 <nav class="page-nav">
   <a href="index.html" class="nav-back">← 홈</a>
-  <div class="nav-chapter-title" style="color:#a855f7">Ch.7 — 컴퓨터구조</div>
+  <div class="nav-chapter-title" style="color:#a855f7">Ch.7 — 컴퓨터 구조</div>
   <div class="nav-sections">
-    <a href="#cpu" class="nav-sec-link">CPU동작원리</a>
+    <a href="#vonneumann" class="nav-sec-link">폰노이만 구조</a>
+    <a href="#cpu" class="nav-sec-link">CPU 사이클</a>
+    <a href="#pipeline" class="nav-sec-link">파이프라인</a>
+    <a href="#interrupt" class="nav-sec-link">인터럽트</a>
     <a href="#cache" class="nav-sec-link">캐시메모리</a>
   </div>
 </nav>
 
 <div class="chapter-banner cb7">
   <div class="ch-num">CHAPTER 07</div>
-  <h2>컴퓨터구조</h2>
-  <p class="ch-desc">CPU의 Fetch-Decode-Execute 사이클과 캐시 메모리 계층 구조를 인터랙티브하게 탐구합니다.</p>
+  <h2>컴퓨터 구조</h2>
+  <p class="ch-desc">폰노이만 구조부터 CPU 파이프라인, 인터럽트, 캐시메모리까지 — 컴퓨터 내부 동작을 인터랙티브하게 탐구합니다.</p>
   <div class="ch-pills">
-    <span>CPU동작원리</span><span>캐시메모리</span>
+    <span>폰노이만 구조</span><span>CPU 동작원리</span><span>파이프라인</span><span>인터럽트</span><span>캐시메모리</span>
   </div>
 </div>
 
-<!-- CPU 동작원리 -->
+<!-- ════════════════════════ SECTION 1: Von Neumann ════════════════════════ -->
+<section id="vonneumann">
+  <div class="section-header">
+    <div class="tag tag-ch7">ARCHITECTURE</div>
+    <h2>폰노이만 구조 (Von Neumann Architecture)</h2>
+    <p>오늘날 거의 모든 컴퓨터의 기반. CPU(처리), Memory(저장), I/O(입출력)가 버스(Bus)로 연결됩니다. 핵심은 <strong style="color:var(--accent)">프로그램과 데이터가 같은 메모리를 공유</strong>한다는 점 — 이것이 '범용 컴퓨터'를 가능하게 했습니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="vnAnimate('fetch')">명령어 Fetch (MEM→CPU)</button>
+      <button class="btn" onclick="vnAnimate('store')">결과 저장 (CPU→MEM)</button>
+      <button class="btn" onclick="vnAnimate('io')">I/O 요청 (CPU→I/O)</button>
+      <button class="btn active" onclick="vnAutoDemo()">자동 시연</button>
+    </div>
+    <div class="vn-diagram">
+      <div class="vn-grid">
+        <!-- CPU -->
+        <div class="vn-box" id="vnCPU">
+          <div class="vn-box-title">CPU</div>
+          <div class="vn-sub" id="vnALU">ALU (연산장치)</div>
+          <div class="vn-sub" id="vnREG">레지스터</div>
+          <div class="vn-sub" id="vnCU">CU (제어장치)</div>
+        </div>
+        <!-- Memory -->
+        <div class="vn-box" id="vnMEM">
+          <div class="vn-box-title">MEMORY</div>
+          <div class="vn-sub" id="vnPROG" style="color:var(--accent3)">프로그램 (코드)</div>
+          <div class="vn-sub" id="vnDATA" style="color:var(--accent4)">데이터 (변수)</div>
+          <div class="vn-sub" id="vnSTACK">스택 영역</div>
+        </div>
+        <!-- I/O -->
+        <div class="vn-box" id="vnIO">
+          <div class="vn-box-title">I/O 장치</div>
+          <div class="vn-sub" id="vnKB">[⌨] 키보드</div>
+          <div class="vn-sub" id="vnMON">[▣] 모니터</div>
+          <div class="vn-sub" id="vnDISK">[◎] 디스크</div>
+        </div>
+      </div>
+      <!-- Bus -->
+      <div class="bus-wrap">
+        <div class="bus-label" style="color:var(--accent3)">Address Bus (주소 버스)</div>
+        <div class="bus-line bus-addr" id="busAddr"><div class="bus-packet" id="pktAddr" style="background:var(--accent3)"></div></div>
+        <div class="bus-label" style="color:var(--accent)">Data Bus (데이터 버스)</div>
+        <div class="bus-line bus-data" id="busData"><div class="bus-packet" id="pktData" style="background:var(--accent)"></div></div>
+        <div class="bus-label" style="color:var(--accent4)">Control Bus (제어 버스)</div>
+        <div class="bus-line bus-ctrl" id="busCtrl"><div class="bus-packet" id="pktCtrl" style="background:var(--accent4)"></div></div>
+      </div>
+      <div class="vn-bottleneck">
+        <strong>폰노이만 병목 (Von Neumann Bottleneck)</strong> — CPU와 메모리가 하나의 버스를 공유하므로, CPU가 연산보다 메모리 대기에 더 많은 시간을 씁니다. 현대 컴퓨터의 캐시 메모리는 이 병목을 완화하기 위해 탄생했습니다.
+      </div>
+    </div>
+    <div class="cpu-desc-box" id="vnDesc" style="margin-top:12px;">버튼을 클릭해 데이터 흐름을 시뮬레이션하세요.</div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ════════════════════════ SECTION 2: CPU Cycle ════════════════════════ -->
 <section id="cpu">
   <div class="section-header">
     <div class="tag tag-ch7">CPU</div>
-    <h2>CPU 동작원리</h2>
-    <p>Fetch → Decode → Execute 사이클을 단계별로 시뮬레이션합니다.</p>
+    <h2>CPU 동작 원리 — Fetch · Decode · Execute</h2>
+    <p>CPU는 세 단계를 무한 반복합니다. <strong style="color:var(--accent3)">Fetch</strong>(메모리에서 명령어 읽기) → <strong style="color:var(--accent4)">Decode</strong>(명령어 해석) → <strong style="color:var(--accent)">Execute</strong>(실행). 이 사이클을 초당 수십억 번 반복하는 것이 GHz의 의미입니다.</p>
   </div>
   <div class="viz-box">
     <div class="controls">
@@ -46,19 +243,23 @@
     <div class="cpu-layout">
       <div>
         <div class="cpu-box" id="cpuBoxPC">
-          <div class="cpu-box-title">PC (Program Counter)</div>
+          <div class="cpu-box-title">PC — Program Counter</div>
           <div class="cpu-box-val" id="cpuPCVal">0x0000</div>
         </div>
-        <div class="cpu-box" style="margin-top:12px;" id="cpuBoxIR">
-          <div class="cpu-box-title">IR (Instruction Register)</div>
-          <div class="cpu-box-val" id="cpuIRVal">—</div>
+        <div class="cpu-box" style="margin-top:10px;" id="cpuBoxIR">
+          <div class="cpu-box-title">IR — Instruction Register</div>
+          <div class="cpu-box-val" id="cpuIRVal" style="font-size:0.88rem;">—</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--text-dim);margin-top:4px;" id="cpuBinVal"></div>
         </div>
-        <div class="cpu-box" style="margin-top:12px;" id="cpuBoxRegs">
-          <div class="cpu-box-title">레지스터</div>
-          <div class="cpu-regs" id="cpuRegs">
+        <div class="cpu-box" style="margin-top:10px;" id="cpuBoxRegs">
+          <div class="cpu-box-title">레지스터 파일</div>
+          <div class="cpu-regs">
             <div class="cpu-reg"><span class="cpu-reg-name">R1</span><span class="cpu-reg-val" id="regR1">0</span></div>
             <div class="cpu-reg"><span class="cpu-reg-name">R2</span><span class="cpu-reg-val" id="regR2">0</span></div>
             <div class="cpu-reg"><span class="cpu-reg-name">R3</span><span class="cpu-reg-val" id="regR3">0</span></div>
+            <div class="cpu-reg"><span class="cpu-reg-name">PC</span><span class="cpu-reg-val" id="regPC" style="color:var(--accent3)">0x00</span></div>
+            <div class="cpu-reg"><span class="cpu-reg-name">IR</span><span class="cpu-reg-val" id="regIR" style="font-size:0.7rem;color:var(--text-dim)">—</span></div>
+            <div class="cpu-reg"><span class="cpu-reg-name">MAR</span><span class="cpu-reg-val" id="regMAR" style="color:var(--accent2)">—</span></div>
           </div>
         </div>
       </div>
@@ -70,46 +271,121 @@
       </div>
     </div>
     <div class="cpu-desc-box" id="cpuDescBox">시작하려면 "다음 단계" 버튼을 누르세요.</div>
+    <!-- Clock speed infographic -->
+    <div class="clock-info">
+      <div class="clock-card">
+        <div class="clock-card-val">3 GHz</div>
+        <div class="clock-card-label">클럭 속도</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);margin-top:6px;">= 30억 사이클/초</div>
+      </div>
+      <div class="clock-card">
+        <div class="clock-card-val" style="color:var(--accent3)">IPC 4</div>
+        <div class="clock-card-label">사이클당 명령어 수</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);margin-top:6px;">파이프라인 + 슈퍼스칼라</div>
+      </div>
+      <div class="clock-card">
+        <div class="clock-card-val" style="color:var(--accent2)">120억</div>
+        <div class="clock-card-label">유효 명령어/초</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);margin-top:6px;">3GHz × IPC4 = 120억</div>
+      </div>
+    </div>
   </div>
 </section>
 <div class="section-divider"></div>
 
-<!-- 캐시메모리 -->
+<!-- ════════════════════════ SECTION 3: Pipeline ════════════════════════ -->
+<section id="pipeline">
+  <div class="section-header">
+    <div class="tag tag-ch7">PIPELINE</div>
+    <h2>CPU 파이프라인 (Pipeline)</h2>
+    <p>5단계 파이프라인: IF(명령어 인출) → ID(해독) → EX(실행) → MEM(메모리 접근) → WB(쓰기). 5개 명령어가 각 단계에서 <strong style="color:var(--accent)">동시에</strong> 처리됩니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="pipeline-tabs">
+      <button class="pipe-tab active" id="tabNormal" onclick="showPipeline('normal')">파이프라인 없음 (순차)</button>
+      <button class="pipe-tab" id="tabPipe" onclick="showPipeline('pipe')">파이프라인 있음</button>
+      <button class="pipe-tab" id="tabHazard" onclick="showPipeline('hazard')">데이터 해저드 + 포워딩</button>
+    </div>
+    <div id="pipelineView"></div>
+    <div class="pipeline-legend">
+      <div class="pipe-leg"><div class="pipe-leg-dot" style="background:rgba(107,138,255,0.6)"></div>IF</div>
+      <div class="pipe-leg"><div class="pipe-leg-dot" style="background:rgba(255,170,0,0.6)"></div>ID</div>
+      <div class="pipe-leg"><div class="pipe-leg-dot" style="background:rgba(0,255,170,0.6)"></div>EX</div>
+      <div class="pipe-leg"><div class="pipe-leg-dot" style="background:rgba(255,107,157,0.6)"></div>MEM</div>
+      <div class="pipe-leg"><div class="pipe-leg-dot" style="background:rgba(0,204,136,0.6)"></div>WB</div>
+      <div class="pipe-leg"><div class="pipe-leg-dot" style="background:rgba(255,68,102,0.3);border:1px dashed rgba(255,68,102,0.6)"></div>STALL</div>
+    </div>
+    <div class="hazard-box" id="hazardExplain" style="display:none;"></div>
+    <div class="cpu-desc-box" id="pipeDesc" style="margin-top:12px;"></div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ════════════════════════ SECTION 4: Interrupt ════════════════════════ -->
+<section id="interrupt">
+  <div class="section-header">
+    <div class="tag tag-ch7">INTERRUPT</div>
+    <h2>인터럽트 (Interrupt)</h2>
+    <p>CPU가 프로그램을 실행 중 외부 사건이 발생하면 CPU는 하던 일을 잠시 멈추고 그 사건을 처리합니다. 인터럽트 없이는 폴링(polling)으로 CPU를 낭비해야 합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="triggerInterrupt('keyboard')">⌨ 키보드 입력</button>
+      <button class="btn" onclick="triggerInterrupt('timer')">⏱ 타이머 인터럽트</button>
+      <button class="btn danger" onclick="triggerInterrupt('divzero')">⚠ 0으로 나누기</button>
+      <button class="btn danger" onclick="intReset()">초기화</button>
+    </div>
+    <div class="int-timeline-label">CPU 실행 타임라인</div>
+    <div class="interrupt-timeline" id="intTimeline"></div>
+    <div class="cpu-desc-box" id="intDesc" style="margin-top:0;">버튼을 클릭해 인터럽트를 발생시키세요.</div>
+    <!-- IVT -->
+    <div style="margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-bottom:8px;">인터럽트 벡터 테이블 (IVT — Interrupt Vector Table)</div>
+    <table class="ivt-table">
+      <thead><tr><th>번호</th><th>원인</th><th>종류</th><th>ISR 주소</th></tr></thead>
+      <tbody id="ivtBody">
+        <tr class="ivt-row" data-id="0"><td>0x00</td><td>0으로 나누기</td><td style="color:var(--danger)">예외(SW)</td><td>0x1000</td></tr>
+        <tr class="ivt-row" data-id="1"><td>0x01</td><td>디버그 트랩</td><td style="color:var(--danger)">예외(SW)</td><td>0x1100</td></tr>
+        <tr class="ivt-row" data-id="2"><td>0x02</td><td>NMI</td><td style="color:var(--accent4)">하드웨어(HW)</td><td>0x1200</td></tr>
+        <tr class="ivt-row" data-id="32"><td>0x20</td><td>타이머</td><td style="color:var(--accent4)">하드웨어(HW)</td><td>0x5100</td></tr>
+        <tr class="ivt-row" data-id="33"><td>0x21</td><td>키보드 입력</td><td style="color:var(--accent4)">하드웨어(HW)</td><td>0x5000</td></tr>
+        <tr class="ivt-row" data-id="36"><td>0x24</td><td>네트워크 패킷</td><td style="color:var(--accent4)">하드웨어(HW)</td><td>0x5400</td></tr>
+      </tbody>
+    </table>
+    <div class="int-types">
+      <div class="int-type-card">
+        <div class="int-type-title" style="color:var(--accent4)">하드웨어 인터럽트 (HW Interrupt)</div>
+        <div style="font-size:0.82rem;color:var(--text-dim);line-height:1.7;">외부 장치(키보드, 타이머, NIC 등)가 CPU에 신호를 보냅니다. 비동기적으로 발생하며, CPU는 현재 명령어 완료 후 처리합니다.</div>
+      </div>
+      <div class="int-type-card">
+        <div class="int-type-title" style="color:var(--danger)">소프트웨어 인터럽트 / 예외 (Exception)</div>
+        <div style="font-size:0.82rem;color:var(--text-dim);line-height:1.7;">프로그램 내부에서 발생 (0 나누기, 페이지 폴트, 시스템 콜 등). 동기적으로 발생하며 즉시 처리됩니다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ════════════════════════ SECTION 5: Cache ════════════════════════ -->
 <section id="cache">
   <div class="section-header">
     <div class="tag tag-ch7">CACHE</div>
-    <h2>캐시메모리</h2>
-    <p>메모리 계층 구조와 LRU 캐시 교체 알고리즘을 시뮬레이션합니다.</p>
+    <h2>캐시메모리 (Cache Memory)</h2>
+    <p>메모리 계층 구조와 LRU 캐시 교체 알고리즘을 시뮬레이션합니다. 캐시는 <strong style="color:var(--accent)">지역성 원리(Locality)</strong>를 이용해 CPU와 메모리 사이 속도 차이를 완화합니다.</p>
   </div>
   <div class="viz-box">
     <div class="controls">
       <button class="btn" onclick="cacheAccess()">랜덤 메모리 접근</button>
-      <button class="btn" onclick="cacheAccessSequential()">순차 접근 (×5)</button>
+      <button class="btn" onclick="cacheAccessSequential()">순차 접근 ×5</button>
       <button class="btn danger" onclick="cacheReset()">초기화</button>
     </div>
     <div class="cache-pyramid" id="cachePyramid">
-      <div class="cache-level l1" id="cacheL1">
-        <span class="cache-level-name">L1 Cache</span>
-        <span class="cache-level-info">4KB · 1ns</span>
-      </div>
-      <div class="cache-level l2" id="cacheL2">
-        <span class="cache-level-name">L2 Cache</span>
-        <span class="cache-level-info">256KB · 5ns</span>
-      </div>
-      <div class="cache-level l3" id="cacheL3">
-        <span class="cache-level-name">L3 Cache</span>
-        <span class="cache-level-info">8MB · 20ns</span>
-      </div>
-      <div class="cache-level ram" id="cacheRAM">
-        <span class="cache-level-name">RAM</span>
-        <span class="cache-level-info">16GB · 100ns</span>
-      </div>
-      <div class="cache-level ssd" id="cacheSSD">
-        <span class="cache-level-name">SSD</span>
-        <span class="cache-level-info">1TB · 100μs</span>
-      </div>
+      <div class="cache-level l1" id="cacheL1"><span class="cache-level-name">L1 Cache</span><span class="cache-level-info">4 KB · 1 ns</span></div>
+      <div class="cache-level l2" id="cacheL2"><span class="cache-level-name">L2 Cache</span><span class="cache-level-info">256 KB · 5 ns</span></div>
+      <div class="cache-level l3" id="cacheL3"><span class="cache-level-name">L3 Cache</span><span class="cache-level-info">8 MB · 20 ns</span></div>
+      <div class="cache-level ram" id="cacheRAM"><span class="cache-level-name">RAM</span><span class="cache-level-info">16 GB · 100 ns</span></div>
+      <div class="cache-level ssd" id="cacheSSD"><span class="cache-level-name">SSD / HDD</span><span class="cache-level-info">1 TB · 100 μs</span></div>
     </div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-bottom:8px;">L1 캐시 슬롯 (LRU 4-way)</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:6px;">L1 캐시 슬롯 (LRU 4-way)</div>
     <div class="cache-slots" id="cacheSlots">
       <div class="cache-slot" id="cacheSlot0">비어있음</div>
       <div class="cache-slot" id="cacheSlot1">비어있음</div>
@@ -117,277 +393,523 @@
       <div class="cache-slot" id="cacheSlot3">비어있음</div>
     </div>
     <div class="cache-stats-row">
-      <div class="cache-stat hit-c">
-        <div class="cache-stat-val" id="cacheHits">0</div>
-        <div>HIT</div>
-      </div>
-      <div class="cache-stat miss-c">
-        <div class="cache-stat-val" id="cacheMisses">0</div>
-        <div>MISS</div>
-      </div>
-      <div class="cache-stat" style="margin-left:auto;">
-        <div class="cache-stat-val" id="cacheRatio" style="color:#a855f7">—</div>
-        <div style="font-size:0.75rem;color:var(--text-dim)">HIT RATE</div>
-      </div>
+      <div class="cache-stat hit-c"><span class="cache-stat-val" id="cacheHits">0</span>HIT</div>
+      <div class="cache-stat miss-c"><span class="cache-stat-val" id="cacheMisses">0</span>MISS</div>
+      <div class="cache-stat" style="margin-left:auto;"><span class="cache-stat-val" id="cacheRatio" style="color:#a855f7">—</span>HIT RATE</div>
     </div>
     <div class="info-text" id="cacheInfo">메모리 접근 버튼을 눌러 캐시 동작을 확인하세요.</div>
+    <!-- Locality principle -->
+    <div style="margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:10px;">지역성 원리 (Locality Principle)</div>
+    <div class="locality-grid">
+      <div class="locality-card">
+        <div class="locality-title" style="color:var(--accent)">시간적 지역성 (Temporal)</div>
+        <div style="font-size:0.82rem;color:var(--text-dim);line-height:1.7;margin-bottom:8px;">최근에 사용한 데이터는 곧 다시 사용될 가능성이 높습니다. (예: 반복문의 카운터 변수)</div>
+        <div class="locality-mem" id="tempLocalMem"></div>
+      </div>
+      <div class="locality-card">
+        <div class="locality-title" style="color:var(--accent3)">공간적 지역성 (Spatial)</div>
+        <div style="font-size:0.82rem;color:var(--text-dim);line-height:1.7;margin-bottom:8px;">사용한 데이터 근처의 데이터도 곧 사용될 가능성이 높습니다. (예: 배열 순회)</div>
+        <div class="locality-mem" id="spatialLocalMem"></div>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);">
+      캐시 라인 (Cache Line): 캐시는 1바이트씩이 아닌 <strong style="color:var(--accent4)">64바이트 블록(캐시 라인)</strong> 단위로 메모리를 가져옵니다. 배열을 순서대로 접근하면 한 번의 캐시 미스로 인접 원소 여러 개가 캐시에 올라오므로 이후 접근이 모두 히트가 됩니다.
+    </div>
   </div>
 </section>
 
 <footer>CS Visualizer · <a href="index.html" style="color:var(--accent);text-decoration:none;">목차로 돌아가기</a></footer>
 
 <script>
-/* ===== CPU 동작원리 ===== */
-const CPU_PROGRAM = [
-  { addr: '0x00', op: 'LOAD',  args: 'R1, 5',      desc: 'R1 레지스터에 값 5를 로드합니다. (R1 ← 5)' },
-  { addr: '0x04', op: 'LOAD',  args: 'R2, 3',      desc: 'R2 레지스터에 값 3을 로드합니다. (R2 ← 3)' },
-  { addr: '0x08', op: 'ADD',   args: 'R3, R1, R2', desc: 'R1과 R2를 더해 R3에 저장합니다. (R3 ← R1 + R2 = 8)' },
-  { addr: '0x0C', op: 'STORE', args: 'R3, 0x10',   desc: 'R3의 값을 메모리 주소 0x10에 저장합니다. (MEM[0x10] ← 8)' },
-  { addr: '0x10', op: 'HALT',  args: '',            desc: '프로그램 실행을 종료합니다.' },
-];
+/* ════════════════════════════════════════════════
+   SECTION 1 — Von Neumann
+════════════════════════════════════════════════ */
+let vnAutoDemoTimer = null;
+const vnDescEl = document.getElementById('vnDesc');
 
-// Each instruction has 3 sub-steps: FETCH, DECODE, EXECUTE
-// cpuStep tracks: instrIdx (0-4), subStep (0=fetch,1=decode,2=execute)
-let cpuInstrIdx = 0;
-let cpuSubStep = 0;   // 0=fetch,1=decode,2=execute
-let cpuRegsState = { R1: 0, R2: 0, R3: 0 };
-let cpuMem = {};
-let cpuDone = false;
+function vnClearAll() {
+  ['vnCPU','vnMEM','vnIO'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('vn-active','vn-active-blue','vn-active-pink');
+  });
+  ['vnALU','vnREG','vnCU','vnPROG','vnDATA','vnSTACK','vnKB','vnMON','vnDISK'].forEach(id => {
+    document.getElementById(id).classList.remove('lit','lit-blue');
+  });
+}
+
+function vnFirePacket(pktId, dir, color) {
+  const pkt = document.getElementById(pktId);
+  pkt.style.background = color;
+  pkt.className = 'bus-packet ' + (dir === 'right' ? 'moving-right' : 'moving-left');
+  setTimeout(() => { pkt.className = 'bus-packet'; }, 800);
+}
+
+function vnAnimate(type, silent) {
+  vnClearAll();
+  if (vnAutoDemoTimer && !silent) { clearTimeout(vnAutoDemoTimer); vnAutoDemoTimer = null; }
+
+  if (type === 'fetch') {
+    document.getElementById('vnMEM').classList.add('vn-active');
+    document.getElementById('vnCPU').classList.add('vn-active-blue');
+    document.getElementById('vnPROG').classList.add('lit');
+    document.getElementById('vnIR') && document.getElementById('vnIR').classList.add('lit-blue');
+    document.getElementById('vnCU').classList.add('lit-blue');
+    document.getElementById('vnREG').classList.add('lit-blue');
+    setTimeout(() => vnFirePacket('pktAddr','right','var(--accent3)'), 0);
+    setTimeout(() => vnFirePacket('pktData','left','var(--accent)'), 200);
+    setTimeout(() => vnFirePacket('pktCtrl','right','var(--accent4)'), 100);
+    vnDescEl.textContent = '[Fetch] PC가 가리키는 주소를 Address Bus로 전달 → Memory가 Data Bus로 명령어를 CPU의 IR에 전달합니다.';
+  } else if (type === 'store') {
+    document.getElementById('vnCPU').classList.add('vn-active');
+    document.getElementById('vnMEM').classList.add('vn-active-blue');
+    document.getElementById('vnALU').classList.add('lit');
+    document.getElementById('vnREG').classList.add('lit');
+    document.getElementById('vnDATA').classList.add('lit-blue');
+    setTimeout(() => vnFirePacket('pktAddr','right','var(--accent3)'), 0);
+    setTimeout(() => vnFirePacket('pktData','right','var(--accent)'), 200);
+    setTimeout(() => vnFirePacket('pktCtrl','right','var(--accent4)'), 100);
+    vnDescEl.textContent = '[Store] ALU 연산 결과를 레지스터에서 Address+Data Bus를 통해 Memory의 데이터 영역에 기록합니다.';
+  } else if (type === 'io') {
+    document.getElementById('vnCPU').classList.add('vn-active');
+    document.getElementById('vnIO').classList.add('vn-active-pink');
+    document.getElementById('vnCU').classList.add('lit');
+    document.getElementById('vnKB').classList.add('lit');
+    document.getElementById('vnMON').classList.add('lit');
+    setTimeout(() => vnFirePacket('pktAddr','right','var(--accent3)'), 0);
+    setTimeout(() => vnFirePacket('pktData','right','var(--accent)'), 300);
+    setTimeout(() => vnFirePacket('pktCtrl','right','var(--accent4)'), 150);
+    vnDescEl.textContent = '[I/O 요청] CPU 제어장치가 I/O 컨트롤러에 신호를 보내 입출력을 요청합니다. DMA를 이용하면 CPU 없이 메모리↔I/O 전송이 가능합니다.';
+  }
+}
+
+const VN_DEMO_STEPS = ['fetch','store','io','fetch','store'];
+let vnDemoIdx = 0;
+function vnAutoDemo() {
+  if (vnAutoDemoTimer) { clearTimeout(vnAutoDemoTimer); vnAutoDemoTimer = null; }
+  vnDemoIdx = 0;
+  function next() {
+    vnAnimate(VN_DEMO_STEPS[vnDemoIdx], true);
+    vnDemoIdx++;
+    if (vnDemoIdx < VN_DEMO_STEPS.length) {
+      vnAutoDemoTimer = setTimeout(next, 1400);
+    }
+  }
+  next();
+}
+
+/* ════════════════════════════════════════════════
+   SECTION 2 — CPU Cycle
+════════════════════════════════════════════════ */
+const CPU_PROGRAM = [
+  { addr:'0x00', op:'LOAD',  args:'R1, #5',      bin:'10110001 00000101', desc:'R1 레지스터에 즉시값 5를 로드합니다. (R1 ← 5)' },
+  { addr:'0x04', op:'LOAD',  args:'R2, #3',      bin:'10110010 00000011', desc:'R2 레지스터에 즉시값 3을 로드합니다. (R2 ← 3)' },
+  { addr:'0x08', op:'ADD',   args:'R3, R1, R2',  bin:'00000011 00010010', desc:'R1과 R2를 더해 R3에 저장합니다. (R3 ← R1+R2 = 8)' },
+  { addr:'0x0C', op:'STORE', args:'R3, [0x10]',  bin:'10001011 00000011', desc:'R3의 값(8)을 메모리 주소 0x10에 기록합니다.' },
+  { addr:'0x10', op:'HALT',  args:'',            bin:'11111111 00000000', desc:'프로그램 실행 종료.' },
+];
+let cpuInstrIdx=0, cpuSubStep=0, cpuRegsState={R1:0,R2:0,R3:0}, cpuMem={}, cpuDone=false;
 
 function initCPU() {
   const prog = document.getElementById('cpuProgram');
-  prog.innerHTML = CPU_PROGRAM.map((instr, i) =>
+  prog.innerHTML = CPU_PROGRAM.map((instr,i) =>
     `<div class="cpu-instr" id="cpu-instr-${i}">
       <span class="cpu-addr">${instr.addr}</span>
       <span class="cpu-op">${instr.op}</span>
       <span class="cpu-arg">${instr.args}</span>
+      <span class="cpu-bin">${instr.bin}</span>
     </div>`
   ).join('');
 }
 
 function cpuReset() {
-  cpuInstrIdx = 0;
-  cpuSubStep = 0;
-  cpuRegsState = { R1: 0, R2: 0, R3: 0 };
-  cpuMem = {};
-  cpuDone = false;
-  document.getElementById('cpuStepBtn').disabled = false;
-  document.getElementById('cpuPCVal').textContent = '0x0000';
-  document.getElementById('cpuIRVal').textContent = '—';
-  ['R1','R2','R3'].forEach(r => document.getElementById('reg'+r).textContent = '0');
-  ['cpuFetch','cpuDecode','cpuExecute'].forEach(id => {
-    document.getElementById(id).className = 'cpu-phase-step ' + id.replace('cpu','').toLowerCase();
+  cpuInstrIdx=0; cpuSubStep=0; cpuRegsState={R1:0,R2:0,R3:0}; cpuMem={}; cpuDone=false;
+  document.getElementById('cpuStepBtn').disabled=false;
+  document.getElementById('cpuPCVal').textContent='0x0000';
+  document.getElementById('cpuIRVal').textContent='—';
+  document.getElementById('cpuBinVal').textContent='';
+  ['R1','R2','R3'].forEach(r=>document.getElementById('reg'+r).textContent='0');
+  document.getElementById('regPC').textContent='0x00';
+  document.getElementById('regIR').textContent='—';
+  document.getElementById('regMAR').textContent='—';
+  ['cpuFetch','cpuDecode','cpuExecute'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.className='cpu-phase-step '+id.replace('cpu','').toLowerCase();
   });
-  document.getElementById('cpuDescBox').textContent = '시작하려면 "다음 단계" 버튼을 누르세요.';
-  document.querySelectorAll('.cpu-instr').forEach(el => el.className = 'cpu-instr');
-  ['cpuBoxPC','cpuBoxIR','cpuBoxRegs','cpuBoxMem'].forEach(id => {
-    document.getElementById(id).classList.remove('active');
-  });
+  document.getElementById('cpuDescBox').textContent='시작하려면 "다음 단계" 버튼을 누르세요.';
+  document.querySelectorAll('.cpu-instr').forEach(el=>el.className='cpu-instr');
+  ['cpuBoxPC','cpuBoxIR','cpuBoxRegs','cpuBoxMem'].forEach(id=>document.getElementById(id).classList.remove('active'));
 }
 
 function cpuStep() {
   if (cpuDone) return;
-  const instr = CPU_PROGRAM[cpuInstrIdx];
-  const phases = ['fetch','decode','execute'];
-  const phase = phases[cpuSubStep];
-
-  // Highlight phase bar
-  ['cpuFetch','cpuDecode','cpuExecute'].forEach(id => {
-    document.getElementById(id).className = 'cpu-phase-step ' + id.replace('cpu','').toLowerCase();
+  const instr=CPU_PROGRAM[cpuInstrIdx];
+  const phases=['fetch','decode','execute'];
+  const phase=phases[cpuSubStep];
+  ['cpuFetch','cpuDecode','cpuExecute'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.className='cpu-phase-step '+id.replace('cpu','').toLowerCase();
   });
-  const phaseIds = ['cpuFetch','cpuDecode','cpuExecute'];
+  const phaseIds=['cpuFetch','cpuDecode','cpuExecute'];
   document.getElementById(phaseIds[cpuSubStep]).classList.add('active');
-
-  // Highlight instruction in program
-  document.querySelectorAll('.cpu-instr').forEach((el, i) => {
-    el.className = 'cpu-instr' + (i < cpuInstrIdx ? ' done' : i === cpuInstrIdx ? ' current' : '');
+  document.querySelectorAll('.cpu-instr').forEach((el,i)=>{
+    el.className='cpu-instr'+(i<cpuInstrIdx?' done':i===cpuInstrIdx?' current':'');
   });
+  ['cpuBoxPC','cpuBoxIR','cpuBoxRegs','cpuBoxMem'].forEach(id=>document.getElementById(id).classList.remove('active'));
 
-  // Deactivate all boxes
-  ['cpuBoxPC','cpuBoxIR','cpuBoxRegs','cpuBoxMem'].forEach(id => {
-    document.getElementById(id).classList.remove('active');
-  });
-
-  if (phase === 'fetch') {
+  if (phase==='fetch') {
     document.getElementById('cpuBoxPC').classList.add('active');
     document.getElementById('cpuBoxMem').classList.add('active');
-    document.getElementById('cpuPCVal').textContent = instr.addr;
-    document.getElementById('cpuIRVal').textContent = '불러오는 중...';
-    document.getElementById('cpuDescBox').textContent =
-      `[FETCH] PC=${instr.addr} → 메모리에서 명령어를 가져옵니다. (${instr.op} ${instr.args})`;
-
-  } else if (phase === 'decode') {
+    document.getElementById('cpuPCVal').textContent=instr.addr;
+    document.getElementById('cpuIRVal').textContent='읽는 중...';
+    document.getElementById('cpuBinVal').textContent='';
+    document.getElementById('regPC').textContent=instr.addr;
+    document.getElementById('regMAR').textContent=instr.addr;
+    document.getElementById('cpuDescBox').textContent=
+      `[FETCH] PC=${instr.addr} → MAR에 주소 저장 → 메모리에서 명령어 인출: ${instr.op} ${instr.args}`;
+  } else if (phase==='decode') {
     document.getElementById('cpuBoxIR').classList.add('active');
-    document.getElementById('cpuIRVal').textContent = `${instr.op} ${instr.args}`;
-    document.getElementById('cpuDescBox').textContent =
-      `[DECODE] 명령어 해석: 연산="${instr.op}", 피연산자="${instr.args}" — ${instr.desc}`;
-
-  } else if (phase === 'execute') {
+    document.getElementById('cpuIRVal').textContent=`${instr.op} ${instr.args}`;
+    document.getElementById('cpuBinVal').textContent=instr.bin;
+    document.getElementById('regIR').textContent=instr.op;
+    document.getElementById('cpuDescBox').textContent=
+      `[DECODE] IR에 저장된 명령어 해석 — 연산: "${instr.op}", 피연산자: "${instr.args}" | 이진: ${instr.bin}`;
+  } else if (phase==='execute') {
     document.getElementById('cpuBoxRegs').classList.add('active');
-    // Perform operation
-    if (instr.op === 'LOAD') {
-      const parts = instr.args.replace(/\s/g,'').split(',');
-      const reg = parts[0];
-      const val = parseInt(parts[1]);
-      cpuRegsState[reg] = val;
-      document.getElementById('reg' + reg).textContent = val;
-    } else if (instr.op === 'ADD') {
-      const parts = instr.args.replace(/\s/g,'').split(',');
-      const dst = parts[0], s1 = parts[1], s2 = parts[2];
-      cpuRegsState[dst] = cpuRegsState[s1] + cpuRegsState[s2];
-      document.getElementById('reg' + dst).textContent = cpuRegsState[dst];
-    } else if (instr.op === 'STORE') {
-      const parts = instr.args.replace(/\s/g,'').split(',');
-      const reg = parts[0], addr = parts[1];
-      cpuMem[addr] = cpuRegsState[reg];
-    } else if (instr.op === 'HALT') {
-      cpuDone = true;
-      document.getElementById('cpuStepBtn').disabled = true;
-      document.getElementById('cpuDescBox').textContent =
-        `[HALT] 프로그램 종료. 최종 결과: R1=${cpuRegsState.R1}, R2=${cpuRegsState.R2}, R3=${cpuRegsState.R3}, MEM[0x10]=${cpuMem['0x10'] || 0}`;
-      // Complete phase bar
-      ['cpuFetch','cpuDecode','cpuExecute'].forEach(id => {
-        document.getElementById(id).classList.add('active');
-      });
+    if (instr.op==='LOAD') {
+      const parts=instr.args.replace(/\s/g,'').split(',');
+      const reg=parts[0], val=parseInt(parts[1].replace('#',''));
+      cpuRegsState[reg]=val;
+      const el=document.getElementById('reg'+reg);
+      el.textContent=val; el.classList.add('changed');
+      setTimeout(()=>el.classList.remove('changed'),500);
+    } else if (instr.op==='ADD') {
+      const parts=instr.args.replace(/\s/g,'').split(',');
+      const dst=parts[0],s1=parts[1],s2=parts[2];
+      cpuRegsState[dst]=cpuRegsState[s1]+cpuRegsState[s2];
+      const el=document.getElementById('reg'+dst);
+      el.textContent=cpuRegsState[dst]; el.classList.add('changed');
+      setTimeout(()=>el.classList.remove('changed'),500);
+    } else if (instr.op==='STORE') {
+      const parts=instr.args.replace(/\s/g,'').split(',');
+      const reg=parts[0],addr=parts[1].replace(/[\[\]]/g,'');
+      cpuMem[addr]=cpuRegsState[reg];
+    } else if (instr.op==='HALT') {
+      cpuDone=true;
+      document.getElementById('cpuStepBtn').disabled=true;
+      document.getElementById('cpuDescBox').textContent=
+        `[HALT] 실행 완료. R1=${cpuRegsState.R1}, R2=${cpuRegsState.R2}, R3=${cpuRegsState.R3}, MEM[0x10]=${cpuMem['0x10']||0}`;
+      ['cpuFetch','cpuDecode','cpuExecute'].forEach(id=>document.getElementById(id).classList.add('active'));
     }
     if (!cpuDone) {
-      document.getElementById('cpuDescBox').textContent =
-        `[EXECUTE] ${instr.desc} ✓  레지스터 갱신됨.`;
+      document.getElementById('cpuDescBox').textContent=`[EXECUTE] ${instr.desc}`;
     }
-
-    // Advance PC
     cpuInstrIdx++;
-    if (cpuInstrIdx < CPU_PROGRAM.length) {
-      document.getElementById('cpuPCVal').textContent = CPU_PROGRAM[cpuInstrIdx].addr;
+    if (cpuInstrIdx<CPU_PROGRAM.length) {
+      document.getElementById('cpuPCVal').textContent=CPU_PROGRAM[cpuInstrIdx].addr;
+      document.getElementById('regPC').textContent=CPU_PROGRAM[cpuInstrIdx].addr;
     }
   }
-
-  cpuSubStep = (cpuSubStep + 1) % 3;
-  if (cpuSubStep === 0 && cpuDone) {
-    document.getElementById('cpuStepBtn').disabled = true;
-  }
+  cpuSubStep=(cpuSubStep+1)%3;
 }
-
 initCPU();
 
-/* ===== 캐시메모리 ===== */
-let cacheHits = 0, cacheMisses = 0;
-const CACHE_SIZE = 4;
-let cacheSlots = [];   // [{addr, lruTime}]
-let cacheTimer = 0;
-let seqIdx = 0;
-const SEQ_ADDRS = [0x10, 0x20, 0x30, 0x40, 0x50];
+/* ════════════════════════════════════════════════
+   SECTION 3 — Pipeline
+════════════════════════════════════════════════ */
+const STAGES=['IF','ID','EX','MEM','WB'];
+const STAGE_CLS=['pipe-if','pipe-id','pipe-ex','pipe-mem','pipe-wb'];
+const INSTRS=['I1: LOAD R1,#5','I2: LOAD R2,#3','I3: ADD R3,R1,R2','I4: STORE R3,0x10','I5: HALT'];
+const INSTRS_SHORT=['I1','I2','I3','I4','I5'];
 
-function cacheReset() {
-  cacheHits = 0; cacheMisses = 0;
-  cacheSlots = [];
-  cacheTimer = 0;
-  seqIdx = 0;
-  document.getElementById('cacheHits').textContent = '0';
-  document.getElementById('cacheMisses').textContent = '0';
-  document.getElementById('cacheRatio').textContent = '—';
-  for (let i = 0; i < CACHE_SIZE; i++) {
-    const el = document.getElementById(`cacheSlot${i}`);
-    el.className = 'cache-slot';
-    el.textContent = '비어있음';
+function pipeCell(label, cls) {
+  return `<div class="pipe-cell ${cls}">${label}</div>`;
+}
+
+function buildNormal() {
+  // sequential: each instruction takes 5 cycles back-to-back
+  const CYCLES=25;
+  let html='<div class="pipeline-grid">';
+  // header
+  html+='<div class="pipe-cycle-header" style="margin-left:52px;display:flex;gap:3px;">';
+  for(let c=1;c<=CYCLES;c++) html+=`<div class="pipe-cycle-num">${c}</div>`;
+  html+='</div>';
+  for(let i=0;i<5;i++){
+    html+=`<div class="pipe-row"><div class="pipe-row-label">${INSTRS_SHORT[i]}</div>`;
+    for(let c=0;c<CYCLES;c++){
+      const start=i*5, stageIdx=c-start;
+      if(stageIdx>=0 && stageIdx<5) html+=pipeCell(STAGES[stageIdx],STAGE_CLS[stageIdx]);
+      else html+=pipeCell('',i===Math.floor(c/5)?'':'pipe-empty')
+    }
+    html+='</div>';
   }
-  document.getElementById('cacheInfo').textContent = '메모리 접근 버튼을 눌러 캐시 동작을 확인하세요.';
-  ['cacheL1','cacheL2','cacheL3','cacheRAM','cacheSSD'].forEach(id => {
-    document.getElementById(id).classList.remove('hit-anim');
+  html+='</div>';
+  return html;
+}
+
+function buildPipelined() {
+  const CYCLES=9;
+  let html='<div class="pipeline-grid">';
+  html+='<div class="pipe-cycle-header" style="margin-left:52px;display:flex;gap:3px;">';
+  for(let c=1;c<=CYCLES;c++) html+=`<div class="pipe-cycle-num">${c}</div>`;
+  html+='</div>';
+  for(let i=0;i<5;i++){
+    html+=`<div class="pipe-row"><div class="pipe-row-label">${INSTRS_SHORT[i]}</div>`;
+    for(let c=0;c<CYCLES;c++){
+      const stageIdx=c-i;
+      if(stageIdx>=0 && stageIdx<5) html+=pipeCell(STAGES[stageIdx],STAGE_CLS[stageIdx]);
+      else html+=pipeCell('','pipe-empty');
+    }
+    html+='</div>';
+  }
+  html+='</div>';
+  return html;
+}
+
+function buildHazard() {
+  // I3 (ADD R3,R1,R2) depends on I1 and I2 → data hazard
+  // With forwarding: show stall then forward
+  // cycles: I1 IF ID EX MEM WB
+  //         I2    IF ID EX  MEM WB
+  //         I3       IF **  ID  EX  MEM WB  (stall 1 cycle without forwarding)
+  // With forwarding, no stall shown
+  const CYCLES=11;
+  // rows: I1-I5 with potential stall for I3
+  const schedule = [
+    // [startCycle(0-indexed), hasStall]
+    [0,false],[1,false],[2,true],[4,false],[5,false]
+  ];
+  let html='<div class="pipeline-grid">';
+  html+='<div class="pipe-cycle-header" style="margin-left:52px;display:flex;gap:3px;">';
+  for(let c=1;c<=CYCLES;c++) html+=`<div class="pipe-cycle-num">${c}</div>`;
+  html+='</div>';
+  const labels_detail=['I1: LOAD R1','I2: LOAD R2','I3: ADD R3 ⚠','I4: STORE','I5: HALT'];
+  for(let i=0;i<5;i++){
+    const [start,stall]=schedule[i];
+    html+=`<div class="pipe-row"><div class="pipe-row-label" style="font-size:0.62rem;max-width:42px;text-align:right;">${INSTRS_SHORT[i]}</div>`;
+    let stagePointer=0;
+    for(let c=0;c<CYCLES;c++){
+      if(c<start){html+=pipeCell('','pipe-empty');continue;}
+      if(stall && c===start+2){
+        html+=pipeCell('NOP','pipe-stall');
+        continue;
+      }
+      const offset=stall&&c>start+2?1:0;
+      const sIdx=c-start-offset;
+      if(sIdx>=0&&sIdx<5) html+=pipeCell(STAGES[sIdx],STAGE_CLS[sIdx]);
+      else html+=pipeCell('','pipe-empty');
+    }
+    html+='</div>';
+  }
+  html+='</div>';
+  return html;
+}
+
+const PIPE_DESCS = {
+  normal:'[순차 실행] 5개 명령어 × 5단계 = 25 사이클. 한 명령어가 끝나야 다음이 시작됩니다.',
+  pipe:'[파이프라인] 5 + (5-1) = 9 사이클. 각 단계에서 서로 다른 명령어를 동시에 처리합니다. 처리량(Throughput) 약 5배 향상!',
+  hazard:'[데이터 해저드] I3(ADD R3)는 I1, I2의 결과(R1, R2)가 필요합니다. I2의 WB가 끝나기 전에 I3의 ID가 읽으면 오류! → NOP(버블)을 삽입해 1사이클 대기. 포워딩(Forwarding)으로 EX→EX 경로를 직접 연결하면 스톨 없이 해결됩니다.'
+};
+
+function showPipeline(mode) {
+  ['tabNormal','tabPipe','tabHazard'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById({normal:'tabNormal',pipe:'tabPipe',hazard:'tabHazard'}[mode]).classList.add('active');
+  const view=document.getElementById('pipelineView');
+  const hz=document.getElementById('hazardExplain');
+  if(mode==='normal') view.innerHTML=buildNormal();
+  else if(mode==='pipe') view.innerHTML=buildPipelined();
+  else { view.innerHTML=buildHazard(); }
+  if(mode==='hazard'){
+    hz.style.display='block';
+    hz.innerHTML=`<div class="hazard-title">데이터 해저드 (Data Hazard) + 포워딩 해결책</div>
+    <div style="font-size:0.82rem;color:var(--text-dim);line-height:1.8;">
+    <strong style="color:var(--danger)">문제:</strong> I3(ADD R3, R1, R2)는 I1과 I2가 R1, R2에 값을 써야 읽을 수 있습니다.<br>
+    <strong style="color:var(--accent4)">스톨 해결:</strong> NOP(버블)을 삽입해 파이프라인을 잠시 멈춥니다. 사이클 낭비 발생.<br>
+    <strong style="color:var(--accent)">포워딩 해결:</strong> I1·I2의 EX 결과를 레지스터 파일에 쓰기 전에 I3의 EX 입력으로 직접 전달합니다. 추가 하드웨어 경로 필요, 스톨 없음.
+    </div>`;
+  } else {
+    hz.style.display='none';
+  }
+  document.getElementById('pipeDesc').textContent=PIPE_DESCS[mode];
+}
+showPipeline('normal');
+
+/* ════════════════════════════════════════════════
+   SECTION 4 — Interrupt
+════════════════════════════════════════════════ */
+let intBlocks=[]; // {left, width, type, label}
+const INT_TIMELINE_W=100; // percent
+let intPos=2; // current position %
+
+function intReset(){
+  intBlocks=[];
+  intPos=2;
+  renderIntTimeline();
+  document.getElementById('intDesc').textContent='버튼을 클릭해 인터럽트를 발생시키세요.';
+  document.querySelectorAll('.ivt-row').forEach(r=>r.classList.remove('active'));
+}
+
+function renderIntTimeline(){
+  const tl=document.getElementById('intTimeline');
+  tl.innerHTML='';
+  intBlocks.forEach(b=>{
+    const div=document.createElement('div');
+    div.className='int-block '+b.cls;
+    div.style.left=b.left+'%';
+    div.style.width=b.width+'%';
+    div.textContent=b.label;
+    tl.appendChild(div);
   });
 }
 
-function cacheAccess() {
-  const addr = Math.floor(Math.random() * 64) * 4;
-  doCacheAccess(addr);
+const INT_CONFIG={
+  keyboard:{ivtId:'33',label:'ISR: KB',desc:'[키보드 인터럽트] PC와 레지스터를 스택에 저장 → ISR 벡터 0x5000으로 점프 → 키 코드 읽기 → 상태 복원 → 프로그램 A 재개.'},
+  timer:{ivtId:'32',label:'ISR: TMR',desc:'[타이머 인터럽트] 주기적으로 발생 (예: 10ms마다). 운영체제가 이를 이용해 프로세스 스케줄링(컨텍스트 스위칭)을 수행합니다.'},
+  divzero:{ivtId:'0',label:'EXCEPTION',desc:'[예외: 0으로 나누기] 소프트웨어 인터럽트. CPU가 즉시 현재 명령어를 중단하고 예외 핸들러 0x1000으로 점프합니다. 프로그램은 보통 비정상 종료됩니다.'},
+};
+
+function triggerInterrupt(type){
+  if(intPos>85){intReset();}
+  const cfg=INT_CONFIG[type];
+  // Highlight IVT row
+  document.querySelectorAll('.ivt-row').forEach(r=>r.classList.remove('active'));
+  document.querySelectorAll('.ivt-row').forEach(r=>{
+    if(r.dataset.id===cfg.ivtId) r.classList.add('active');
+  });
+  // Add program block before interrupt
+  if(intBlocks.length===0){
+    intBlocks.push({left:intPos,width:18,cls:'int-program',label:'프로그램 A'});
+    intPos+=18;
+  }
+  // Save state
+  intBlocks.push({left:intPos,width:6,cls:'int-save',label:'저장'});
+  intPos+=6;
+  // ISR
+  const isrCls=type==='divzero'?'int-isr':type==='keyboard'?'int-program':'int-isr';
+  intBlocks.push({left:intPos,width:16,cls:'int-isr',label:cfg.label});
+  intPos+=16;
+  // Restore
+  intBlocks.push({left:intPos,width:5,cls:'int-save',label:'복원'});
+  intPos+=5;
+  // Resume program
+  intBlocks.push({left:intPos,width:12,cls:'int-program',label:'프로그램 A'});
+  intPos+=12;
+
+  renderIntTimeline();
+  document.getElementById('intDesc').textContent=cfg.desc;
 }
 
-function cacheAccessSequential() {
-  for (let i = 0; i < 5; i++) {
-    const addr = SEQ_ADDRS[seqIdx % SEQ_ADDRS.length];
-    setTimeout(() => doCacheAccess(addr), i * 350);
+intReset();
+
+/* ════════════════════════════════════════════════
+   SECTION 5 — Cache
+════════════════════════════════════════════════ */
+let cacheHits=0,cacheMisses=0;
+const CACHE_SIZE=4;
+let cacheSlots=[];
+let cacheTimer=0;
+let seqIdx=0;
+const SEQ_ADDRS=[0x10,0x20,0x30,0x40,0x50];
+
+function cacheReset(){
+  cacheHits=0;cacheMisses=0;cacheSlots=[];cacheTimer=0;seqIdx=0;
+  document.getElementById('cacheHits').textContent='0';
+  document.getElementById('cacheMisses').textContent='0';
+  document.getElementById('cacheRatio').textContent='—';
+  for(let i=0;i<CACHE_SIZE;i++){
+    const el=document.getElementById('cacheSlot'+i);
+    el.className='cache-slot';el.textContent='비어있음';
+  }
+  document.getElementById('cacheInfo').textContent='메모리 접근 버튼을 눌러 캐시 동작을 확인하세요.';
+  ['cacheL1','cacheL2','cacheL3','cacheRAM','cacheSSD'].forEach(id=>document.getElementById(id).classList.remove('hit-anim'));
+}
+
+function cacheAccess(){ doCacheAccess(Math.floor(Math.random()*64)*4); }
+
+function cacheAccessSequential(){
+  for(let i=0;i<5;i++){
+    const addr=SEQ_ADDRS[seqIdx%SEQ_ADDRS.length];
+    setTimeout(()=>doCacheAccess(addr),i*380);
     seqIdx++;
   }
 }
 
-function doCacheAccess(addr) {
+function doCacheAccess(addr){
   cacheTimer++;
-  const hexAddr = `0x${addr.toString(16).padStart(2,'0').toUpperCase()}`;
-  const slotIdx = cacheSlots.findIndex(s => s.addr === addr);
-  const levels = ['cacheL1','cacheL2','cacheL3','cacheRAM','cacheSSD'];
+  const hex=`0x${addr.toString(16).padStart(2,'0').toUpperCase()}`;
+  const slotIdx=cacheSlots.findIndex(s=>s.addr===addr);
+  const levels=['cacheL1','cacheL2','cacheL3','cacheRAM','cacheSSD'];
+  levels.forEach(id=>document.getElementById(id).classList.remove('hit-anim'));
 
-  // Clear previous animations
-  levels.forEach(id => document.getElementById(id).classList.remove('hit-anim'));
-
-  if (slotIdx >= 0) {
-    // HIT
+  if(slotIdx>=0){
     cacheHits++;
-    cacheSlots[slotIdx].lruTime = cacheTimer;
-    const el = document.getElementById(`cacheSlot${slotIdx}`);
+    cacheSlots[slotIdx].lruTime=cacheTimer;
+    const el=document.getElementById('cacheSlot'+slotIdx);
     el.classList.add('hit');
-    setTimeout(() => { el.classList.remove('hit'); if (el.classList.contains('filled')) {} renderCacheSlots(); }, 600);
+    setTimeout(()=>{ el.classList.remove('hit'); renderCacheSlots(); },600);
     document.getElementById('cacheL1').classList.add('hit-anim');
-    setTimeout(() => document.getElementById('cacheL1').classList.remove('hit-anim'), 600);
-    document.getElementById('cacheInfo').textContent =
-      `[HIT] 주소 ${hexAddr} → L1 캐시 슬롯 ${slotIdx}에서 찾음! (${cacheTimer}ns)`;
+    setTimeout(()=>document.getElementById('cacheL1').classList.remove('hit-anim'),600);
+    document.getElementById('cacheInfo').textContent=`[HIT] 주소 ${hex} → L1 캐시 슬롯 ${slotIdx}에서 적중! 접근 시간: ~1 ns`;
   } else {
-    // MISS
     cacheMisses++;
-    const hitLevel = Math.random();
-    let levelId, latency;
-    if (hitLevel < 0.3) { levelId = 'cacheL2'; latency = '5ns'; }
-    else if (hitLevel < 0.55) { levelId = 'cacheL3'; latency = '20ns'; }
-    else if (hitLevel < 0.85) { levelId = 'cacheRAM'; latency = '100ns'; }
-    else { levelId = 'cacheSSD'; latency = '100μs'; }
-
-    // Cascade animation
-    const cascade = ['cacheL1', 'cacheL2', 'cacheL3', 'cacheRAM', 'cacheSSD'];
-    const hitIdx = cascade.indexOf(levelId);
-    cascade.slice(0, hitIdx + 1).forEach((id, i) => {
-      setTimeout(() => {
-        document.getElementById(id).classList.add('hit-anim');
-        setTimeout(() => document.getElementById(id).classList.remove('hit-anim'), 500);
-      }, i * 200);
-    });
-
-    // LRU eviction
-    let evicted = null;
-    if (cacheSlots.length >= CACHE_SIZE) {
-      // Find LRU
-      let lruSlot = 0;
-      for (let i = 1; i < cacheSlots.length; i++) {
-        if (cacheSlots[i].lruTime < cacheSlots[lruSlot].lruTime) lruSlot = i;
-      }
-      evicted = cacheSlots[lruSlot].addr;
-      cacheSlots[lruSlot] = { addr, lruTime: cacheTimer };
+    const r=Math.random();
+    let levelId,latency;
+    if(r<0.3){levelId='cacheL2';latency='~5 ns';}
+    else if(r<0.55){levelId='cacheL3';latency='~20 ns';}
+    else if(r<0.85){levelId='cacheRAM';latency='~100 ns';}
+    else{levelId='cacheSSD';latency='~100 μs';}
+    const cascade=['cacheL1','cacheL2','cacheL3','cacheRAM','cacheSSD'];
+    const hitIdx=cascade.indexOf(levelId);
+    cascade.slice(0,hitIdx+1).forEach((id,i)=>setTimeout(()=>{
+      document.getElementById(id).classList.add('hit-anim');
+      setTimeout(()=>document.getElementById(id).classList.remove('hit-anim'),500);
+    },i*200));
+    let evicted=null;
+    if(cacheSlots.length>=CACHE_SIZE){
+      let lru=0;
+      for(let i=1;i<cacheSlots.length;i++) if(cacheSlots[i].lruTime<cacheSlots[lru].lruTime) lru=i;
+      evicted=cacheSlots[lru].addr;
+      cacheSlots[lru]={addr,lruTime:cacheTimer};
     } else {
-      cacheSlots.push({ addr, lruTime: cacheTimer });
+      cacheSlots.push({addr,lruTime:cacheTimer});
     }
     renderCacheSlots();
-    const evictMsg = evicted !== null ? ` (0x${evicted.toString(16).toUpperCase()} 퇴출)` : '';
-    document.getElementById('cacheInfo').textContent =
-      `[MISS] 주소 ${hexAddr} → ${levelId.replace('cache','')} 접근 (${latency})${evictMsg} → L1 캐시에 로드`;
+    const evictMsg=evicted!==null?` (0x${evicted.toString(16).toUpperCase()} LRU 퇴출)`:'';
+    document.getElementById('cacheInfo').textContent=
+      `[MISS] 주소 ${hex} → ${levelId.replace('cache','')} 접근 (${latency})${evictMsg} → 64B 캐시 라인을 L1에 로드`;
   }
-
-  document.getElementById('cacheHits').textContent = cacheHits;
-  document.getElementById('cacheMisses').textContent = cacheMisses;
-  const total = cacheHits + cacheMisses;
-  document.getElementById('cacheRatio').textContent = total > 0 ? Math.round(cacheHits / total * 100) + '%' : '—';
+  document.getElementById('cacheHits').textContent=cacheHits;
+  document.getElementById('cacheMisses').textContent=cacheMisses;
+  const total=cacheHits+cacheMisses;
+  document.getElementById('cacheRatio').textContent=total>0?Math.round(cacheHits/total*100)+'%':'—';
 }
 
-function renderCacheSlots() {
-  for (let i = 0; i < CACHE_SIZE; i++) {
-    const el = document.getElementById(`cacheSlot${i}`);
-    const slot = cacheSlots[i];
-    if (slot) {
-      el.className = 'cache-slot filled';
-      el.textContent = `0x${slot.addr.toString(16).toUpperCase().padStart(2,'0')}`;
-    } else {
-      el.className = 'cache-slot';
-      el.textContent = '비어있음';
-    }
+function renderCacheSlots(){
+  for(let i=0;i<CACHE_SIZE;i++){
+    const el=document.getElementById('cacheSlot'+i);
+    const slot=cacheSlots[i];
+    if(slot){ el.className='cache-slot filled'; el.textContent=`0x${slot.addr.toString(16).toUpperCase().padStart(2,'0')}`; }
+    else { el.className='cache-slot'; el.textContent='비어있음'; }
   }
 }
+
+// Locality visualization
+function buildLocalityViz(){
+  const tempEl=document.getElementById('tempLocalMem');
+  const spatEl=document.getElementById('spatialLocalMem');
+  // temporal: one hot cell that keeps getting reused
+  for(let i=0;i<16;i++){
+    const d=document.createElement('div'); d.className='loc-cell'; d.textContent=i;
+    if(i===5) d.classList.add('hot');
+    tempEl.appendChild(d);
+  }
+  // spatial: sequential warm cells
+  for(let i=0;i<16;i++){
+    const d=document.createElement('div'); d.className='loc-cell'; d.textContent=i;
+    if(i>=4&&i<=9) d.classList.add(i===6?'hot':'warm');
+    spatEl.appendChild(d);
+  }
+}
+buildLocalityViz();
 </script>
 </body>
 </html>

@@ -6,34 +6,335 @@
 <title>Ch.6 운영체제 | CS Visualizer</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<style>
+/* ── ch6-only styles ── */
+
+/* PROCESS STATE DIAGRAM */
+.state-diagram-wrap{position:relative;width:100%;background:var(--surface2);border-radius:8px;overflow:hidden;}
+.proc-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:0.82rem;margin-top:16px;}
+.proc-table th,.proc-table td{padding:8px 14px;border-bottom:1px solid var(--border);text-align:left;}
+.proc-table th{color:var(--text-dim);}
+.state-badge{display:inline-block;padding:2px 10px;border-radius:100px;font-size:0.72rem;font-family:'JetBrains Mono',monospace;}
+.state-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:20px;}
+.state-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;transition:all 0.3s;}
+.state-card .sc-name{font-size:0.88rem;font-weight:700;margin-bottom:5px;}
+.state-card .sc-desc{color:var(--text-dim);line-height:1.6;font-size:0.72rem;}
+.state-card.active-new{border-color:#8888aa;box-shadow:0 0 12px rgba(136,136,170,0.25);}
+.state-card.active-ready{border-color:var(--accent3);box-shadow:0 0 12px rgba(107,138,255,0.25);}
+.state-card.active-running{border-color:var(--accent);box-shadow:0 0 12px rgba(0,255,170,0.25);}
+.state-card.active-waiting{border-color:var(--accent4);box-shadow:0 0 12px rgba(255,170,0,0.25);}
+.state-card.active-terminated{border-color:var(--danger);box-shadow:0 0 12px rgba(255,68,102,0.25);}
+
+/* MEMORY LAYOUT */
+.mem-layout{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;}
+.mem-column{flex:1;min-width:200px;position:relative;}
+.mem-addr-col{display:flex;flex-direction:column;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);padding:4px 0;min-width:70px;align-self:stretch;}
+.mem-segment{font-family:'JetBrains Mono',monospace;font-size:0.8rem;padding:10px 16px;border:1px solid var(--border);text-align:center;transition:all 0.3s;position:relative;}
+.seg-code{background:rgba(0,255,170,0.08);border-color:rgba(0,255,170,0.3);color:var(--accent);}
+.seg-data{background:rgba(255,170,0,0.08);border-color:rgba(255,170,0,0.3);color:var(--accent4);}
+.seg-bss{background:rgba(255,170,0,0.04);border-color:rgba(255,170,0,0.2);color:var(--accent4);opacity:0.7;}
+.seg-heap{background:rgba(107,138,255,0.08);border-color:rgba(107,138,255,0.3);color:var(--accent3);}
+.seg-free{background:transparent;border:1px dashed var(--border);color:var(--text-dim);opacity:0.4;}
+.seg-stack{background:rgba(255,107,157,0.08);border-color:rgba(255,107,157,0.3);color:var(--accent2);}
+.stack-frame{background:rgba(255,107,157,0.15);border:1px solid rgba(255,107,157,0.4);border-radius:4px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent2);margin-bottom:3px;animation:fadeIn 0.3s;}
+.heap-block{background:rgba(107,138,255,0.15);border:1px solid rgba(107,138,255,0.4);border-radius:4px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent3);margin-top:3px;animation:fadeIn 0.3s;}
+.ptr-indicator{font-family:'JetBrains Mono',monospace;font-size:0.72rem;padding:4px 10px;border-radius:4px;margin:4px 0;display:flex;justify-content:space-between;}
+.ptr-sp{background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.3);color:var(--accent2);}
+.ptr-hp{background:rgba(107,138,255,0.1);border:1px solid rgba(107,138,255,0.3);color:var(--accent3);}
+.mem-warn{background:rgba(255,68,102,0.1);border:1px solid var(--danger);border-radius:6px;padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--danger);margin-top:10px;display:none;}
+.mem-info-panel{flex:1;min-width:200px;}
+
+/* CONTEXT SWITCH */
+.ctx-timeline{height:60px;background:var(--surface2);border-radius:8px;position:relative;overflow:hidden;margin:16px 0;}
+.ctx-block{position:absolute;top:6px;bottom:6px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:700;transition:all 0.3s;}
+.ctx-block-a{background:rgba(107,138,255,0.4);border:1px solid var(--accent3);color:var(--accent3);}
+.ctx-block-b{background:rgba(255,107,157,0.4);border:1px solid var(--accent2);color:var(--accent2);}
+.ctx-block-overhead{background:rgba(136,136,170,0.2);border:1px dashed var(--border);color:var(--text-dim);}
+.pcb-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;transition:all 0.3s;}
+.pcb-card.pcb-active{border-color:var(--accent);box-shadow:0 0 14px rgba(0,255,170,0.15);}
+.pcb-card.pcb-saving{border-color:var(--accent4);box-shadow:0 0 14px rgba(255,170,0,0.15);animation:savePulse 0.4s;}
+.pcb-card.pcb-loading{border-color:var(--success);box-shadow:0 0 14px rgba(0,204,136,0.15);animation:savePulse 0.4s;}
+@keyframes savePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+.pcb-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.pcb-key{color:var(--text-dim);}
+.pcb-val{color:var(--accent);}
+.ctx-counter-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;}
+.ctx-counter{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 18px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;text-align:center;}
+.ctx-counter-val{font-size:1.4rem;font-weight:700;color:var(--accent);}
+.ctx-counter-label{font-size:0.68rem;color:var(--text-dim);margin-top:2px;}
+.ctx-pcb-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+.ctx-timeline-label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:6px;}
+.ctx-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;}
+.ctx-legend-item{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);}
+.ctx-legend-dot{width:12px;height:12px;border-radius:3px;}
+
+/* READY QUEUE (scheduling) */
+.rq-wrap{margin-top:16px;margin-bottom:16px;}
+.rq-title{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-bottom:8px;}
+.rq-queue{display:flex;gap:6px;align-items:center;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;min-height:52px;flex-wrap:wrap;}
+.rq-proc{padding:6px 14px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:700;border:1px solid;animation:fadeIn 0.3s;transition:all 0.3s;}
+.rq-arrow{font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--text-dim);}
+.rq-cpu{display:flex;align-items:center;gap:8px;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;}
+.rq-cpu-box{background:rgba(0,255,170,0.08);border:2px solid var(--accent);border-radius:8px;padding:8px 20px;color:var(--accent);font-weight:700;min-width:80px;text-align:center;transition:all 0.3s;}
+
+/* DEADLOCK CONDITIONS */
+.dl-conditions{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px;}
+.dl-cond{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.3s;user-select:none;}
+.dl-cond:hover{border-color:var(--accent3);}
+.dl-cond.checked{border-color:var(--danger);background:rgba(255,68,102,0.06);}
+.dl-cond .cond-num{font-size:0.65rem;color:var(--text-dim);margin-bottom:5px;letter-spacing:1px;}
+.dl-cond .cond-name{font-size:0.85rem;font-weight:700;color:var(--text);margin-bottom:4px;}
+.dl-cond.checked .cond-name{color:var(--danger);}
+.dl-cond .cond-desc{font-size:0.72rem;color:var(--text-dim);line-height:1.6;}
+.dl-cond .cond-check{float:right;font-size:1rem;transition:all 0.2s;}
+.dl-cond.checked .cond-check{color:var(--danger);}
+.dl-deadlock-indicator{margin-top:14px;padding:12px 18px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;text-align:center;transition:all 0.3s;}
+.dl-deadlock-indicator.no{background:rgba(0,204,136,0.08);border:1px solid var(--success);color:var(--success);}
+.dl-deadlock-indicator.yes{background:rgba(255,68,102,0.1);border:1px solid var(--danger);color:var(--danger);animation:pulse 1.5s infinite;}
+
+/* GENERAL */
+@keyframes fadeIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,68,102,0.3)}50%{box-shadow:0 0 20px 4px rgba(255,68,102,0.2)}}
+@media(max-width:640px){
+  .state-cards{grid-template-columns:repeat(2,1fr);}
+  .ctx-pcb-row{grid-template-columns:1fr;}
+  .dl-conditions{grid-template-columns:1fr;}
+  .mem-layout{flex-direction:column;}
+}
+</style>
 </head>
 <body class="page-body">
 <nav class="page-nav">
   <a href="index.html" class="nav-back">← 홈</a>
   <div class="nav-chapter-title" style="color:var(--success)">Ch.6 — 운영체제</div>
   <div class="nav-sections">
-    <a href="#memory" class="nav-sec-link">메모리관리</a>
-    <a href="#virtualmem" class="nav-sec-link">가상메모리</a>
-    <a href="#scheduling" class="nav-sec-link">프로세스스케줄링</a>
-    <a href="#deadlock" class="nav-sec-link">데드락</a>
+    <a href="#procstate"   class="nav-sec-link">프로세스 상태</a>
+    <a href="#memlayout"   class="nav-sec-link">메모리 구조</a>
+    <a href="#context"     class="nav-sec-link">컨텍스트 스위칭</a>
+    <a href="#memory"      class="nav-sec-link">메모리 관리</a>
+    <a href="#virtualmem"  class="nav-sec-link">가상메모리</a>
+    <a href="#scheduling"  class="nav-sec-link">스케줄링</a>
+    <a href="#deadlock"    class="nav-sec-link">데드락</a>
   </div>
 </nav>
 
 <div class="chapter-banner cb6">
   <div class="ch-num">CHAPTER 06</div>
   <h2>운영체제</h2>
-  <p class="ch-desc">메모리 관리, 가상메모리, 프로세스 스케줄링, 데드락을 인터랙티브 시각화로 학습합니다.</p>
+  <p class="ch-desc">프로세스 상태, 메모리 구조, 컨텍스트 스위칭부터 가상메모리, 스케줄링, 데드락까지 — OS 핵심 개념을 인터랙티브 시각화로 완전히 이해합니다.</p>
   <div class="ch-pills">
-    <span>메모리관리</span><span>가상메모리</span><span>프로세스스케줄링</span><span>데드락</span>
+    <span>프로세스 상태</span><span>메모리 레이아웃</span><span>컨텍스트 스위칭</span>
+    <span>메모리 관리</span><span>가상메모리</span><span>스케줄링</span><span>데드락</span>
   </div>
 </div>
 
-<!-- 메모리 관리 -->
-<section id="memory">
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 1: 프로세스 상태 다이어그램 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="procstate">
+  <div class="section-header">
+    <div class="tag tag-ch6">PROC</div>
+    <h2>프로세스 상태 (Process State Diagram)</h2>
+    <p>프로그램을 실행하면 OS는 프로세스를 생성합니다. 프로세스는 생명 주기 동안 5가지 상태를 거칩니다. CPU가 하나뿐이라도 여러 프로세스가 동시에 실행되는 것처럼 보이는 건 이 상태 전환 덕분입니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="psSpawnProcess()">새 프로세스 생성</button>
+      <button class="btn" onclick="psTransition('ready_to_run')">CPU 획득</button>
+      <button class="btn" onclick="psTransition('io_request')">I/O 요청</button>
+      <button class="btn" onclick="psTransition('io_done')">I/O 완료</button>
+      <button class="btn" onclick="psTransition('timeslice')">타임슬라이스 만료</button>
+      <button class="btn danger" onclick="psTransition('terminate')">프로세스 종료</button>
+    </div>
+    <div class="state-diagram-wrap">
+      <canvas id="psCanvas" height="280"></canvas>
+    </div>
+    <div class="state-cards">
+      <div class="state-card" id="sc-new">
+        <div class="sc-name" style="color:#8888aa">NEW</div>
+        <div class="sc-desc">프로세스가 막 생성된 상태. OS가 PCB를 할당하고 초기화합니다.</div>
+      </div>
+      <div class="state-card" id="sc-ready">
+        <div class="sc-name" style="color:var(--accent3)">READY</div>
+        <div class="sc-desc">CPU를 받을 준비가 된 상태. 레디 큐에서 스케줄러를 기다립니다.</div>
+      </div>
+      <div class="state-card" id="sc-running">
+        <div class="sc-name" style="color:var(--accent)">RUNNING</div>
+        <div class="sc-desc">실제로 CPU에서 명령어가 실행 중인 상태. 단일 코어에서는 1개만 가능.</div>
+      </div>
+      <div class="state-card" id="sc-waiting">
+        <div class="sc-name" style="color:var(--accent4)">WAITING</div>
+        <div class="sc-desc">I/O 완료, 이벤트 등을 기다리는 상태. CPU를 소비하지 않습니다.</div>
+      </div>
+      <div class="state-card" id="sc-terminated">
+        <div class="sc-name" style="color:var(--danger)">TERMINATED</div>
+        <div class="sc-desc">실행이 끝났거나 강제 종료된 상태. OS가 PCB와 자원을 회수합니다.</div>
+      </div>
+    </div>
+    <table class="proc-table">
+      <thead><tr><th>PID</th><th>이름</th><th>현재 상태</th><th>우선순위</th><th>실행 시간</th></tr></thead>
+      <tbody id="psTableBody"></tbody>
+    </table>
+    <div class="info-text">버튼을 눌러 프로세스의 상태를 전환해 보세요. 선택된 프로세스(파란 테두리)에 상태 전환이 적용됩니다.<br>
+    💡 <strong>Tip:</strong> 실제 OS에서 NEW→READY는 fork()로, RUNNING→WAITING은 read()나 sleep() 같은 블로킹 시스템 콜로 발생합니다.</div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 2: 프로세스 메모리 구조 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="memlayout">
   <div class="section-header">
     <div class="tag tag-ch6">MEM</div>
-    <h2>메모리 관리</h2>
-    <p>128셀 메모리 그리드에서 프로세스 할당, 해제, 압축을 시각적으로 확인합니다.</p>
+    <h2>프로세스 메모리 구조 (Memory Layout)</h2>
+    <p>실행 중인 프로그램은 메모리에서 정해진 영역에 나눠 저장됩니다. 코드는 코드 세그먼트, 전역변수는 데이터 세그먼트, 동적 할당은 힙(위로), 함수 호출 스택은 스택(아래로). 힙과 스택이 만나면 메모리 오류가 납니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="mlPushStack()">함수 호출 (push)</button>
+      <button class="btn" onclick="mlPopStack()">함수 반환 (pop)</button>
+      <button class="btn" onclick="mlMalloc()">malloc() — 힙 할당</button>
+      <button class="btn" onclick="mlFree()">free() — 힙 해제</button>
+      <button class="btn danger" onclick="mlReset()">초기화</button>
+    </div>
+    <div class="mem-layout">
+      <!-- Memory column diagram -->
+      <div class="mem-column" style="max-width:260px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);text-align:right;margin-bottom:2px;">0xFFFF (High)</div>
+
+        <!-- Stack area: grows downward -->
+        <div id="ml-stack-area">
+          <div class="mem-segment seg-stack" style="min-height:30px;border-bottom:none;">
+            <span style="font-size:0.65rem;opacity:0.6;">↓ STACK (grows down)</span>
+          </div>
+          <div id="ml-stack-frames" style="padding:0 8px 4px;background:rgba(255,107,157,0.04);border:1px solid rgba(255,107,157,0.3);border-top:none;"></div>
+        </div>
+
+        <!-- Free space -->
+        <div class="mem-segment seg-free" id="ml-free-space" style="height:80px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;">
+          <span style="font-size:0.7rem;">빈 공간</span>
+          <span style="font-size:0.6rem;" id="ml-gap-pct">—</span>
+        </div>
+
+        <!-- Heap area: grows upward -->
+        <div id="ml-heap-area">
+          <div id="ml-heap-blocks" style="padding:4px 8px 0;background:rgba(107,138,255,0.04);border:1px solid rgba(107,138,255,0.3);border-bottom:none;"></div>
+          <div class="mem-segment seg-heap" style="min-height:30px;border-top:none;">
+            <span style="font-size:0.65rem;opacity:0.6;">↑ HEAP (grows up)</span>
+          </div>
+        </div>
+
+        <div class="mem-segment seg-bss">BSS<br><span style="font-size:0.65rem;opacity:0.6;">초기화 안 된 전역변수</span></div>
+        <div class="mem-segment seg-data">DATA<br><span style="font-size:0.65rem;opacity:0.6;">초기화된 전역/정적 변수</span></div>
+        <div class="mem-segment seg-code" style="border-radius:0 0 6px 6px;">CODE (TEXT)<br><span style="font-size:0.65rem;opacity:0.6;">읽기전용 실행 코드</span></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);text-align:right;margin-top:2px;">0x0000 (Low)</div>
+      </div>
+
+      <!-- Info panel -->
+      <div class="mem-info-panel">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-bottom:10px;">포인터 현황</div>
+        <div class="ptr-indicator ptr-sp">
+          <span>SP (스택 포인터)</span><span id="ml-sp-val">SP = 0xFFFF</span>
+        </div>
+        <div class="ptr-indicator ptr-hp">
+          <span>HP (힙 포인터)</span><span id="ml-hp-val">HP = 0x4000</span>
+        </div>
+        <div class="mem-warn" id="ml-warn">스택과 힙이 충돌 위험! Stack Overflow 또는 Heap Overflow 가능성이 있습니다.</div>
+
+        <div style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);">세그먼트 설명</div>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;">
+          <div style="display:flex;gap:8px;align-items:baseline;"><span style="color:var(--accent2);min-width:60px;">STACK</span><span style="color:var(--text-dim);">함수 호출 시 지역변수, 반환주소, 매개변수 저장</span></div>
+          <div style="display:flex;gap:8px;align-items:baseline;"><span style="color:var(--accent3);min-width:60px;">HEAP</span><span style="color:var(--text-dim);">malloc/new로 동적 할당. 프로그래머가 직접 관리</span></div>
+          <div style="display:flex;gap:8px;align-items:baseline;"><span style="color:var(--accent4);min-width:60px;">BSS</span><span style="color:var(--text-dim);">int g; 처럼 초기값 없는 전역변수 (0으로 자동초기화)</span></div>
+          <div style="display:flex;gap:8px;align-items:baseline;"><span style="color:var(--accent4);min-width:60px;">DATA</span><span style="color:var(--text-dim);">int g=5; 처럼 초기값 있는 전역/static 변수</span></div>
+          <div style="display:flex;gap:8px;align-items:baseline;"><span style="color:var(--accent);min-width:60px;">CODE</span><span style="color:var(--text-dim);">컴파일된 기계어 명령어. 읽기 전용(쓰면 segfault)</span></div>
+        </div>
+        <div class="info-text" style="margin-top:14px;">
+          💡 <strong>Tip:</strong> 재귀 함수를 무한히 호출하면 스택이 힙 방향으로 계속 자라다가 <code>stack overflow</code>가 발생합니다. C에서 free()를 잊으면 힙이 누수(memory leak)됩니다.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 3: 컨텍스트 스위칭 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="context">
+  <div class="section-header">
+    <div class="tag tag-ch6">CTX</div>
+    <h2>컨텍스트 스위칭 (Context Switch)</h2>
+    <p>CPU는 1초에 수백~수천 번 프로세스를 교체합니다. 교체할 때마다 현재 프로세스의 '상태'(레지스터, PC, 스택 포인터 등)를 PCB에 저장하고, 다음 프로세스의 상태를 복원합니다. 이 오버헤드 시간 동안 CPU는 유용한 작업을 하지 못합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" id="ctxAutoBtn" onclick="ctxAutoRun()">자동 실행</button>
+      <button class="btn" id="ctxStepBtn" onclick="ctxStep()">다음 전환 →</button>
+      <button class="btn danger" onclick="ctxReset()">초기화</button>
+    </div>
+
+    <div class="ctx-timeline-label">CPU 타임라인 (시간 →)</div>
+    <div class="ctx-timeline" id="ctxTimeline"></div>
+    <div class="ctx-legend">
+      <div class="ctx-legend-item"><div class="ctx-legend-dot" style="background:rgba(107,138,255,0.5);border:1px solid var(--accent3);"></div>Process A 실행</div>
+      <div class="ctx-legend-item"><div class="ctx-legend-dot" style="background:rgba(255,107,157,0.5);border:1px solid var(--accent2);"></div>Process B 실행</div>
+      <div class="ctx-legend-item"><div class="ctx-legend-dot" style="background:rgba(136,136,170,0.2);border:1px dashed var(--border);"></div>오버헤드 (비생산)</div>
+    </div>
+
+    <div class="ctx-pcb-row">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent3);margin-bottom:8px;">PCB — Process A</div>
+        <div class="pcb-card" id="pcbA">
+          <div class="pcb-row"><span class="pcb-key">PID</span><span class="pcb-val" id="pcbA-pid">1</span></div>
+          <div class="pcb-row"><span class="pcb-key">PC</span><span class="pcb-val" id="pcbA-pc">0x0040</span></div>
+          <div class="pcb-row"><span class="pcb-key">SP</span><span class="pcb-val" id="pcbA-sp">0xFF80</span></div>
+          <div class="pcb-row"><span class="pcb-key">AX</span><span class="pcb-val" id="pcbA-ax">0x0005</span></div>
+          <div class="pcb-row"><span class="pcb-key">State</span><span class="pcb-val" id="pcbA-state" style="color:var(--accent);">RUNNING</span></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent2);margin-bottom:8px;">PCB — Process B</div>
+        <div class="pcb-card" id="pcbB">
+          <div class="pcb-row"><span class="pcb-key">PID</span><span class="pcb-val">2</span></div>
+          <div class="pcb-row"><span class="pcb-key">PC</span><span class="pcb-val" id="pcbB-pc">0x00A0</span></div>
+          <div class="pcb-row"><span class="pcb-key">SP</span><span class="pcb-val" id="pcbB-sp">0xFE00</span></div>
+          <div class="pcb-row"><span class="pcb-key">AX</span><span class="pcb-val" id="pcbB-ax">0x001F</span></div>
+          <div class="pcb-row"><span class="pcb-key">State</span><span class="pcb-val" id="pcbB-state" style="color:var(--text-dim);">READY</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctx-counter-row">
+      <div class="ctx-counter">
+        <div class="ctx-counter-val" id="ctxCount">0</div>
+        <div class="ctx-counter-label">컨텍스트 전환 횟수</div>
+      </div>
+      <div class="ctx-counter">
+        <div class="ctx-counter-val" id="ctxOverhead" style="color:var(--danger);">0 ms</div>
+        <div class="ctx-counter-label">낭비된 오버헤드</div>
+      </div>
+      <div class="ctx-counter">
+        <div class="ctx-counter-val" id="ctxCurrent" style="color:var(--accent3);">A</div>
+        <div class="ctx-counter-label">현재 실행 중인 프로세스</div>
+      </div>
+    </div>
+    <div class="info-text">
+      💡 <strong>Tip:</strong> 컨텍스트 스위치는 CPU에 저장된 레지스터 전체(수십~수백 개)를 메모리에 쓰고 읽는 작업입니다. 이 오버헤드가 크기 때문에 OS는 타임슬라이스(quantum)를 너무 짧게 설정하지 않습니다.
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 4: 메모리 관리 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="memory">
+  <div class="section-header">
+    <div class="tag tag-ch6">ALLOC</div>
+    <h2>메모리 관리 (Memory Allocation)</h2>
+    <p>OS는 여러 프로세스에게 물리 메모리를 나눠줍니다. 프로세스들이 할당·해제를 반복하면 메모리 곳곳에 사용할 수 없는 작은 구멍들이 생기는 <em>외부 단편화(fragmentation)</em>가 발생합니다. 메모리 압축(compaction)으로 이를 해소할 수 있지만 비용이 큽니다.</p>
   </div>
   <div class="viz-box">
     <div class="controls">
@@ -43,21 +344,25 @@
       <button class="btn danger" onclick="memReset()">초기화</button>
     </div>
     <div id="memGrid" style="display:grid;grid-template-columns:repeat(16,1fr);gap:3px;"></div>
-    <div class="info-text" id="memInfo">메모리 상태: 비어있음 | 단편화: 0%</div>
+    <div class="info-text" id="memInfo">메모리 상태: 비어있음 | 단편화: 0%<br>
+    💡 <strong>Tip:</strong> 단편화 지수가 높을수록 비어있는 블록이 잘게 쪼개져 큰 프로세스를 할당하기 어렵습니다. 압축은 실행 중인 프로세스를 이동시켜야 하므로 비용이 큽니다.</div>
   </div>
 </section>
 <div class="section-divider"></div>
 
-<!-- 가상메모리 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 5: 가상메모리 -->
+<!-- ═══════════════════════════════════════════════════════ -->
 <section id="virtualmem">
   <div class="section-header">
     <div class="tag tag-ch6">VM</div>
-    <h2>가상메모리</h2>
-    <p>가상 페이지와 물리 프레임의 FIFO 페이지 교체 알고리즘을 시뮬레이션합니다.</p>
+    <h2>가상메모리 (Virtual Memory)</h2>
+    <p>프로세스는 실제 물리 메모리보다 훨씬 큰 메모리 공간을 사용할 수 있습니다. OS는 <em>페이지 테이블</em>을 통해 가상 주소를 물리 주소로 변환합니다. 필요한 페이지가 물리 메모리에 없으면 <em>페이지 폴트(Page Fault)</em>가 발생하고 디스크에서 로드합니다.</p>
   </div>
   <div class="viz-box">
     <div class="controls">
       <button class="btn" onclick="vmAccessRandom()">랜덤 페이지 접근</button>
+      <button class="btn" onclick="vmAccessSequential()">순차 접근 (0→7)</button>
       <button class="btn danger" onclick="vmReset()">초기화</button>
     </div>
     <div class="vm-layout">
@@ -83,18 +388,25 @@
         <div class="vm-stat-val" id="vmFaults">0</div>
         <div class="vm-stat-label">PAGE FAULT</div>
       </div>
+      <div class="vm-stat" style="text-align:center;">
+        <div class="vm-stat-val" id="vmHitRate" style="color:var(--accent4);">—</div>
+        <div class="vm-stat-label">HIT RATE</div>
+      </div>
     </div>
-    <div class="info-text" id="vmInfo">가상 페이지를 클릭하거나 버튼을 눌러 접근을 시뮬레이션하세요.</div>
+    <div class="info-text" id="vmInfo">가상 페이지를 클릭하거나 버튼을 눌러 접근을 시뮬레이션하세요.<br>
+    💡 <strong>Tip:</strong> 물리 프레임이 꽉 찼을 때 FIFO 알고리즘은 가장 먼저 들어온 페이지를 교체합니다. 실제 OS는 LRU(가장 오래 미사용)나 Clock 알고리즘을 사용합니다.</div>
   </div>
 </section>
 <div class="section-divider"></div>
 
-<!-- 프로세스 스케줄링 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 6: 프로세스 스케줄링 -->
+<!-- ═══════════════════════════════════════════════════════ -->
 <section id="scheduling">
   <div class="section-header">
     <div class="tag tag-ch6">SCHED</div>
-    <h2>프로세스 스케줄링</h2>
-    <p>FCFS, SJF, Round Robin 알고리즘으로 프로세스 실행 순서를 시각화합니다.</p>
+    <h2>프로세스 스케줄링 (Process Scheduling)</h2>
+    <p>여러 프로세스가 CPU를 원할 때 OS는 어떤 순서로 실행할지 결정합니다. FCFS는 단순하지만 짧은 작업이 오래 기다릴 수 있고, SJF는 평균 대기 시간을 최소화하며, Round Robin은 공정성을 보장합니다.</p>
   </div>
   <div class="viz-box">
     <div class="controls">
@@ -104,6 +416,20 @@
       <button class="btn" onclick="runScheduler()">실행</button>
       <button class="btn danger" onclick="resetScheduler()">초기화</button>
     </div>
+
+    <!-- Ready Queue visualization -->
+    <div class="rq-wrap">
+      <div class="rq-title">레디 큐 (Ready Queue) — 실행 대기 중인 프로세스</div>
+      <div class="rq-queue" id="rqQueue">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);">스케줄러를 실행하면 레디 큐가 표시됩니다</span>
+      </div>
+      <div class="rq-cpu" style="margin-top:10px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);">CPU:</span>
+        <div class="rq-cpu-box" id="rqCpuBox">유휴</div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);">← 디스패처</span>
+      </div>
+    </div>
+
     <div style="margin-bottom:16px;">
       <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:10px;">프로세스 정보</div>
       <div id="procTable" style="display:flex;flex-direction:column;gap:6px;"></div>
@@ -111,63 +437,577 @@
     <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:8px;">Gantt 차트</div>
     <div class="process-timeline" id="ganttChart"></div>
     <div class="process-info" id="procStats"></div>
+    <div class="info-text" style="margin-top:16px;">
+      💡 <strong>Tip:</strong> WT(대기시간) = 반환시간 - 버스트시간. TAT(반환시간) = 완료시간 - 도착시간. SJF는 starvation(기아) 문제가 있어 짧은 작업이 계속 오면 긴 작업은 영원히 기다릴 수 있습니다.
+    </div>
   </div>
 </section>
 <div class="section-divider"></div>
 
-<!-- 데드락 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 7: 데드락 -->
+<!-- ═══════════════════════════════════════════════════════ -->
 <section id="deadlock">
   <div class="section-header">
     <div class="tag tag-ch6">DEADLOCK</div>
-    <h2>데드락</h2>
-    <p>식사하는 철학자 문제로 데드락의 발생 과정과 해결책을 애니메이션으로 봅니다.</p>
+    <h2>데드락 (Deadlock)</h2>
+    <p>두 개 이상의 프로세스가 서로 상대방이 가진 자원을 기다리며 영원히 멈추는 상태입니다. 식사하는 철학자 문제로 데드락의 발생 과정과 해결책을 시뮬레이션합니다.</p>
   </div>
   <div class="viz-box">
-    <div class="dl-phase" id="dlPhaseBar"></div>
-    <div class="controls">
-      <button class="btn active" id="dlStartBtn" onclick="dlStart()">시뮬레이션 시작</button>
-      <button class="btn danger" onclick="dlReset()">초기화</button>
+
+    <!-- 4 Conditions Checklist -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:10px;">데드락 4가지 필요조건 — 클릭해서 체크/해제</div>
+    <div class="dl-conditions">
+      <div class="dl-cond" id="cond0" onclick="dlToggleCond(0)">
+        <span class="cond-check">☐</span>
+        <div class="cond-num">CONDITION 01</div>
+        <div class="cond-name">상호배제 (Mutual Exclusion)</div>
+        <div class="cond-desc">자원은 한 번에 한 프로세스만 사용 가능. 포크는 한 철학자만 쥘 수 있습니다.</div>
+      </div>
+      <div class="dl-cond" id="cond1" onclick="dlToggleCond(1)">
+        <span class="cond-check">☐</span>
+        <div class="cond-num">CONDITION 02</div>
+        <div class="cond-name">점유 및 대기 (Hold &amp; Wait)</div>
+        <div class="cond-desc">자원을 점유한 채로 다른 자원을 기다림. 왼쪽 포크를 쥔 채 오른쪽 포크를 기다립니다.</div>
+      </div>
+      <div class="dl-cond" id="cond2" onclick="dlToggleCond(2)">
+        <span class="cond-check">☐</span>
+        <div class="cond-num">CONDITION 03</div>
+        <div class="cond-name">비선점 (No Preemption)</div>
+        <div class="cond-desc">자원을 강제로 빼앗을 수 없음. 철학자가 포크를 자발적으로 내려놓을 때만 반납됩니다.</div>
+      </div>
+      <div class="dl-cond" id="cond3" onclick="dlToggleCond(3)">
+        <span class="cond-check">☐</span>
+        <div class="cond-num">CONDITION 04</div>
+        <div class="cond-name">순환 대기 (Circular Wait)</div>
+        <div class="cond-desc">P0→R1→P1→R2→...→Pn→R0 처럼 프로세스들이 원형으로 서로를 기다립니다.</div>
+      </div>
     </div>
-    <div class="deadlock-canvas-wrap">
-      <canvas id="dlCanvas" height="360"></canvas>
-      <div class="deadlock-status safe" id="dlStatus">정상</div>
+    <div class="dl-deadlock-indicator no" id="dlCondIndicator">
+      4가지 조건 중 0/4 충족 — 데드락 위험 없음
     </div>
-    <div class="dl-progress-wrap"><div class="dl-progress" id="dlProgress"></div></div>
-    <div class="narration-log" id="narrationLog"></div>
+
+    <div style="margin-top:24px;">
+      <div class="dl-phase" id="dlPhaseBar"></div>
+      <div class="controls">
+        <button class="btn active" id="dlStartBtn" onclick="dlStart()">시뮬레이션 시작</button>
+        <button class="btn danger" onclick="dlReset()">초기화</button>
+      </div>
+      <div class="deadlock-canvas-wrap">
+        <canvas id="dlCanvas" height="360"></canvas>
+        <div class="deadlock-status safe" id="dlStatus">정상</div>
+      </div>
+      <div class="dl-progress-wrap"><div class="dl-progress" id="dlProgress"></div></div>
+      <div class="narration-log" id="narrationLog"></div>
+    </div>
+    <div class="info-text" style="margin-top:16px;">
+      💡 <strong>해결책:</strong> (1) 순환 대기 제거 — 홀수 철학자는 오른쪽 먼저, 짝수는 왼쪽 먼저 집기. (2) 한 번에 두 포크 모두 집거나 아무것도 안 집기 (Hold &amp; Wait 제거). (3) 철학자 수를 N-1명으로 제한 (동시 착석 제한).
+    </div>
   </div>
 </section>
 
 <footer>CS Visualizer · <a href="index.html" style="color:var(--accent);text-decoration:none;">목차로 돌아가기</a></footer>
 
 <script>
-/* ===== 메모리 관리 ===== */
+/* ══════════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════════ */
+function sl(ms) { return new Promise(r => setTimeout(r, ms)); }
+function rnd(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+function hex(n) { return '0x' + n.toString(16).toUpperCase().padStart(4, '0'); }
+
+/* ══════════════════════════════════════════════════════════
+   SECTION 1: PROCESS STATE DIAGRAM
+══════════════════════════════════════════════════════════ */
+const PS_STATES = ['new','ready','running','waiting','terminated'];
+const PS_COLORS = {
+  new:        '#8888aa',
+  ready:      'var(--accent3)',
+  running:    'var(--accent)',
+  waiting:    'var(--accent4)',
+  terminated: 'var(--danger)'
+};
+const PS_BADGE_STYLES = {
+  new:        'background:rgba(136,136,170,0.15);color:#8888aa;',
+  ready:      'background:rgba(107,138,255,0.15);color:var(--accent3);',
+  running:    'background:rgba(0,255,170,0.15);color:var(--accent);',
+  waiting:    'background:rgba(255,170,0,0.15);color:var(--accent4);',
+  terminated: 'background:rgba(255,68,102,0.15);color:var(--danger);'
+};
+const PS_LABELS = {
+  new:'NEW', ready:'READY', running:'RUNNING', waiting:'WAITING', terminated:'TERMINATED'
+};
+
+let psProcs = [
+  { pid: 'P1', name: 'chrome', state: 'running',  priority: 'HIGH',   time: 0 },
+  { pid: 'P2', name: 'node',   state: 'ready',     priority: 'NORMAL', time: 0 },
+  { pid: 'P3', name: 'vim',    state: 'waiting',   priority: 'LOW',    time: 0 },
+];
+let psSelected = 0;
+
+const PS_NODE_POSITIONS = {
+  new:        { x: 0.08, y: 0.5 },
+  ready:      { x: 0.32, y: 0.25 },
+  running:    { x: 0.58, y: 0.25 },
+  waiting:    { x: 0.58, y: 0.72 },
+  terminated: { x: 0.82, y: 0.5 },
+};
+const PS_EDGES = [
+  { from:'new',     to:'ready',      label:'생성(fork)',        curve: 0 },
+  { from:'ready',   to:'running',    label:'dispatch',          curve: -0.15 },
+  { from:'running', to:'ready',      label:'타임슬라이스 만료', curve: -0.15 },
+  { from:'running', to:'waiting',    label:'I/O 요청',          curve: 0 },
+  { from:'waiting', to:'ready',      label:'I/O 완료',          curve: 0 },
+  { from:'running', to:'terminated', label:'exit()',            curve: 0 },
+];
+let psCanvas, psCtx;
+let psActiveEdge = null;
+
+function psInit() {
+  psCanvas = document.getElementById('psCanvas');
+  psCtx = psCanvas.getContext('2d');
+  psResize();
+  window.addEventListener('resize', psResize);
+  psRenderTable();
+}
+
+function psResize() {
+  const wrap = psCanvas.parentElement;
+  psCanvas.width = wrap.clientWidth;
+  psCanvas.height = 280;
+  psDrawDiagram();
+}
+
+function psDrawDiagram() {
+  if (!psCtx) return;
+  const w = psCanvas.width, h = psCanvas.height;
+  psCtx.clearRect(0, 0, w, h);
+  // draw edges
+  PS_EDGES.forEach(e => {
+    const fp = PS_NODE_POSITIONS[e.from];
+    const tp = PS_NODE_POSITIONS[e.to];
+    const fx = fp.x * w, fy = fp.y * h;
+    const tx = tp.x * w, ty = tp.y * h;
+    const isActive = psActiveEdge && psActiveEdge.from === e.from && psActiveEdge.to === e.to;
+    psDrawArrow(fx, fy, tx, ty, e.curve, e.label, isActive);
+  });
+  // draw nodes
+  PS_STATES.forEach(s => {
+    const p = PS_NODE_POSITIONS[s];
+    const x = p.x * w, y = p.y * h;
+    const isCurrentState = psProcs[psSelected] && psProcs[psSelected].state === s;
+    psDrawNode(x, y, PS_LABELS[s], s, isCurrentState);
+  });
+}
+
+function psDrawNode(x, y, label, state, highlight) {
+  const nw = 90, nh = 36;
+  const colors = {
+    new:'#8888aa', ready:'#6b8aff', running:'#00ffaa',
+    waiting:'#ffaa00', terminated:'#ff4466'
+  };
+  const col = colors[state];
+  psCtx.save();
+  // shadow glow for active
+  if (highlight) {
+    psCtx.shadowColor = col;
+    psCtx.shadowBlur = 18;
+  }
+  // box
+  psCtx.beginPath();
+  psCtx.roundRect(x - nw/2, y - nh/2, nw, nh, 6);
+  psCtx.fillStyle = highlight ? col + '33' : col + '18';
+  psCtx.strokeStyle = col;
+  psCtx.lineWidth = highlight ? 2.5 : 1.5;
+  psCtx.fill();
+  psCtx.stroke();
+  psCtx.shadowBlur = 0;
+  // label
+  psCtx.fillStyle = col;
+  psCtx.font = (highlight ? 'bold ' : '') + '11px JetBrains Mono';
+  psCtx.textAlign = 'center';
+  psCtx.textBaseline = 'middle';
+  psCtx.fillText(label, x, y);
+  psCtx.restore();
+}
+
+function psDrawArrow(fx, fy, tx, ty, curve, label, isActive) {
+  const mx = (fx + tx) / 2, my = (fy + ty) / 2;
+  const dx = tx - fx, dy = ty - fy;
+  const len = Math.sqrt(dx*dx + dy*dy);
+  const cx = mx - dy * curve * 0.5, cy = my + dx * curve * 0.5;
+  psCtx.save();
+  psCtx.beginPath();
+  psCtx.moveTo(fx, fy);
+  psCtx.quadraticCurveTo(cx, cy, tx, ty);
+  psCtx.strokeStyle = isActive ? '#00ffaa' : 'rgba(136,136,170,0.45)';
+  psCtx.lineWidth = isActive ? 2.5 : 1.2;
+  psCtx.setLineDash(isActive ? [] : [5, 3]);
+  psCtx.stroke();
+  psCtx.setLineDash([]);
+  // arrowhead
+  const angle = Math.atan2(ty - cy, tx - cx);
+  psCtx.beginPath();
+  psCtx.moveTo(tx, ty);
+  psCtx.lineTo(tx - 9 * Math.cos(angle - 0.4), ty - 9 * Math.sin(angle - 0.4));
+  psCtx.lineTo(tx - 9 * Math.cos(angle + 0.4), ty - 9 * Math.sin(angle + 0.4));
+  psCtx.closePath();
+  psCtx.fillStyle = isActive ? '#00ffaa' : 'rgba(136,136,170,0.5)';
+  psCtx.fill();
+  // label
+  const lx = cx + (mx - cx) * 0.4, ly = cy + (my - cy) * 0.4;
+  psCtx.font = '9px JetBrains Mono';
+  psCtx.textAlign = 'center';
+  psCtx.textBaseline = 'middle';
+  psCtx.fillStyle = isActive ? '#00ffaa' : '#8888aa';
+  psCtx.fillText(label, lx, ly - 8);
+  psCtx.restore();
+}
+
+function psUpdateStateCards() {
+  const state = psProcs[psSelected] ? psProcs[psSelected].state : null;
+  PS_STATES.forEach(s => {
+    const card = document.getElementById('sc-' + s);
+    card.className = 'state-card' + (s === state ? ' active-' + s : '');
+  });
+}
+
+function psRenderTable() {
+  const tbody = document.getElementById('psTableBody');
+  tbody.innerHTML = psProcs.map((p, i) => {
+    const style = PS_BADGE_STYLES[p.state] || '';
+    const rowStyle = i === psSelected
+      ? 'background:rgba(107,138,255,0.07);border-left:3px solid var(--accent3);'
+      : 'cursor:pointer;border-left:3px solid transparent;';
+    return `<tr style="${rowStyle}" onclick="psSelectProc(${i})">
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--accent3);">${p.pid}</td>
+      <td style="font-family:'JetBrains Mono',monospace;">${p.name}</td>
+      <td><span class="state-badge" style="${style}">${PS_LABELS[p.state]}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--text-dim);">${p.priority}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--text-dim);">${p.time}ms</td>
+    </tr>`;
+  }).join('');
+}
+
+function psSelectProc(i) {
+  psSelected = i;
+  psRenderTable();
+  psUpdateStateCards();
+  psDrawDiagram();
+}
+
+function psSpawnProcess() {
+  const names = ['bash','python','nginx','mysql','redis','java','go-bin','rust-app'];
+  const priorities = ['HIGH','NORMAL','LOW'];
+  const pid = 'P' + (psProcs.length + 1);
+  psProcs.push({ pid, name: names[rnd(0,names.length-1)], state:'new', priority: priorities[rnd(0,2)], time: 0 });
+  psSelected = psProcs.length - 1;
+  psRenderTable();
+  psUpdateStateCards();
+  psDrawDiagram();
+}
+
+async function psTransition(type) {
+  if (!psProcs[psSelected]) return;
+  const p = psProcs[psSelected];
+  const transitions = {
+    ready_to_run:  { from:'ready',   to:'running' },
+    io_request:    { from:'running', to:'waiting' },
+    io_done:       { from:'waiting', to:'ready'   },
+    timeslice:     { from:'running', to:'ready'   },
+    terminate:     { from:'running', to:'terminated' },
+  };
+  const t = transitions[type];
+  if (!t) return;
+  if (p.state !== t.from) {
+    // auto-fix state if possible
+    if (type === 'ready_to_run' && p.state === 'new') {
+      p.state = 'ready';
+    } else {
+      return;
+    }
+  }
+  psActiveEdge = { from: t.from, to: t.to };
+  psDrawDiagram();
+  await sl(600);
+  p.state = t.to;
+  p.time += rnd(10, 150);
+  psActiveEdge = null;
+  psDrawDiagram();
+  psRenderTable();
+  psUpdateStateCards();
+}
+
+/* ══════════════════════════════════════════════════════════
+   SECTION 2: MEMORY LAYOUT
+══════════════════════════════════════════════════════════ */
+let mlStackFrames = [];
+let mlHeapBlocks  = [];
+const ML_MAX_STACK = 6;
+const ML_MAX_HEAP  = 5;
+
+function mlUpdatePointers() {
+  const sp = 0xFFFF - mlStackFrames.length * 0x180;
+  const hp = 0x4000 + mlHeapBlocks.length * 0x200;
+  document.getElementById('ml-sp-val').textContent = 'SP = ' + hex(sp);
+  document.getElementById('ml-hp-val').textContent = 'HP = ' + hex(hp);
+  const gap = sp - hp;
+  const gapPct = Math.max(0, Math.round(gap / (0xFFFF - 0x4000) * 100));
+  document.getElementById('ml-gap-pct').textContent = '여유: ' + gapPct + '%';
+  const warn = document.getElementById('ml-warn');
+  if (gapPct < 20) {
+    warn.style.display = 'block';
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+function mlRenderStack() {
+  const el = document.getElementById('ml-stack-frames');
+  el.innerHTML = mlStackFrames.slice().reverse().map(f =>
+    `<div class="stack-frame">${f.name}() <span style="opacity:0.5;font-size:0.65rem;">ret=${hex(f.ret)} | local=${f.local}B</span></div>`
+  ).join('');
+}
+
+function mlRenderHeap() {
+  const el = document.getElementById('ml-heap-blocks');
+  el.innerHTML = mlHeapBlocks.map(b =>
+    `<div class="heap-block">${hex(b.addr)}: malloc(${b.size}B)</div>`
+  ).join('');
+}
+
+function mlPushStack() {
+  if (mlStackFrames.length >= ML_MAX_STACK) return;
+  const fns = ['main','renderPage','processInput','fetchData','parseJSON','calcHash','sortItems'];
+  const fn = fns[mlStackFrames.length % fns.length];
+  mlStackFrames.push({ name: fn, ret: rnd(0x1000, 0x9FFF), local: rnd(8, 64) });
+  mlRenderStack();
+  mlUpdatePointers();
+}
+
+function mlPopStack() {
+  if (mlStackFrames.length === 0) return;
+  mlStackFrames.pop();
+  mlRenderStack();
+  mlUpdatePointers();
+}
+
+function mlMalloc() {
+  if (mlHeapBlocks.length >= ML_MAX_HEAP) return;
+  const sizes = [16, 32, 64, 128, 256, 512];
+  const size = sizes[rnd(0, sizes.length-1)];
+  const addr = 0x4000 + mlHeapBlocks.length * 0x200;
+  mlHeapBlocks.push({ addr, size });
+  mlRenderHeap();
+  mlUpdatePointers();
+}
+
+function mlFree() {
+  if (mlHeapBlocks.length === 0) return;
+  mlHeapBlocks.pop();
+  mlRenderHeap();
+  mlUpdatePointers();
+}
+
+function mlReset() {
+  mlStackFrames = [];
+  mlHeapBlocks = [];
+  mlRenderStack();
+  mlRenderHeap();
+  mlUpdatePointers();
+}
+
+mlUpdatePointers();
+
+/* ══════════════════════════════════════════════════════════
+   SECTION 3: CONTEXT SWITCH
+══════════════════════════════════════════════════════════ */
+let ctxTimeline = [];
+let ctxCurrentProc = 'A';
+let ctxSwitchCount = 0;
+let ctxOverheadMs = 0;
+let ctxAutoInterval = null;
+let ctxTimePos = 0;  // current time position 0..100%
+const CTX_SLICE_W = 15;  // % of timeline per slice
+const CTX_OH_W    = 4;   // % for overhead block
+
+const ctxPCBData = {
+  A: { pc: [0x0040,0x0048,0x0050,0x0058,0x0060], sp: 0xFF80, ax: 5  },
+  B: { pc: [0x00A0,0x00A8,0x00B0,0x00B8,0x00C0], sp: 0xFE00, ax: 31 },
+};
+let ctxPCBStep = { A: 0, B: 0 };
+
+function ctxRenderTimeline() {
+  const el = document.getElementById('ctxTimeline');
+  el.innerHTML = '';
+  ctxTimeline.forEach(block => {
+    const div = document.createElement('div');
+    div.className = 'ctx-block ' + block.cls;
+    div.style.left  = block.left + '%';
+    div.style.width = block.width + '%';
+    div.textContent = block.label;
+    el.appendChild(div);
+  });
+}
+
+function ctxUpdatePCB(proc, phase) {
+  // phase: 'active'|'saving'|'loading'|'idle'
+  const card = document.getElementById('pcb' + proc);
+  const stateEl = document.getElementById('pcb' + proc + '-state');
+  card.className = 'pcb-card';
+  if (phase === 'active') {
+    card.classList.add('pcb-active');
+    stateEl.textContent = 'RUNNING';
+    stateEl.style.color = 'var(--accent)';
+  } else if (phase === 'saving') {
+    card.classList.add('pcb-saving');
+    stateEl.textContent = 'SAVING...';
+    stateEl.style.color = 'var(--accent4)';
+  } else if (phase === 'loading') {
+    card.classList.add('pcb-loading');
+    stateEl.textContent = 'LOADING...';
+    stateEl.style.color = 'var(--success)';
+  } else {
+    stateEl.textContent = 'READY';
+    stateEl.style.color = 'var(--text-dim)';
+  }
+}
+
+function ctxUpdatePCBVals(proc) {
+  const d = ctxPCBData[proc];
+  const step = ctxPCBStep[proc];
+  document.getElementById('pcb' + proc + '-pc').textContent = hex(d.pc[step % d.pc.length]);
+  document.getElementById('pcb' + proc + '-sp').textContent = hex(d.sp - step * 0x08);
+  document.getElementById('pcb' + proc + '-ax').textContent = hex(d.ax + step * 3);
+}
+
+async function ctxStep() {
+  const btnStep = document.getElementById('ctxStepBtn');
+  btnStep.disabled = true;
+
+  const fromProc = ctxCurrentProc;
+  const toProc = fromProc === 'A' ? 'B' : 'A';
+
+  if (ctxTimePos >= 96) {
+    ctxTimeline = [];
+    ctxTimePos = 0;
+  }
+
+  // Add running block for current
+  ctxTimeline.push({
+    cls: fromProc === 'A' ? 'ctx-block-a' : 'ctx-block-b',
+    left: ctxTimePos,
+    width: CTX_SLICE_W,
+    label: 'Proc ' + fromProc
+  });
+  ctxTimePos += CTX_SLICE_W;
+  ctxRenderTimeline();
+  ctxUpdatePCB(fromProc, 'active');
+  ctxUpdatePCB(toProc, 'idle');
+  await sl(400);
+
+  // Saving phase
+  ctxUpdatePCB(fromProc, 'saving');
+  ctxTimeline.push({
+    cls: 'ctx-block-overhead',
+    left: ctxTimePos,
+    width: CTX_OH_W,
+    label: 'CTX'
+  });
+  ctxTimePos += CTX_OH_W;
+  ctxRenderTimeline();
+  await sl(350);
+
+  // Loading phase
+  ctxPCBStep[fromProc]++;
+  ctxUpdatePCBVals(fromProc);
+  ctxUpdatePCB(toProc, 'loading');
+  await sl(350);
+
+  // Switch complete
+  ctxCurrentProc = toProc;
+  ctxSwitchCount++;
+  ctxOverheadMs += 2;
+  ctxPCBStep[toProc]++;
+  ctxUpdatePCBVals(toProc);
+
+  document.getElementById('ctxCount').textContent = ctxSwitchCount;
+  document.getElementById('ctxOverhead').textContent = ctxOverheadMs + ' ms';
+  document.getElementById('ctxCurrent').textContent = ctxCurrentProc;
+  document.getElementById('ctxCurrent').style.color = ctxCurrentProc === 'A' ? 'var(--accent3)' : 'var(--accent2)';
+
+  ctxUpdatePCB(toProc, 'active');
+  ctxUpdatePCB(fromProc, 'idle');
+
+  btnStep.disabled = false;
+}
+
+function ctxAutoRun() {
+  const btn = document.getElementById('ctxAutoBtn');
+  if (ctxAutoInterval) {
+    clearInterval(ctxAutoInterval);
+    ctxAutoInterval = null;
+    btn.textContent = '자동 실행';
+    btn.classList.remove('active');
+    document.getElementById('ctxStepBtn').disabled = false;
+  } else {
+    btn.textContent = '자동 중지';
+    btn.classList.add('active');
+    document.getElementById('ctxStepBtn').disabled = true;
+    ctxAutoInterval = setInterval(ctxStep, 1200);
+  }
+}
+
+function ctxReset() {
+  if (ctxAutoInterval) { clearInterval(ctxAutoInterval); ctxAutoInterval = null; }
+  ctxTimeline = [];
+  ctxCurrentProc = 'A';
+  ctxSwitchCount = 0;
+  ctxOverheadMs = 0;
+  ctxTimePos = 0;
+  ctxPCBStep = { A: 0, B: 0 };
+  ctxRenderTimeline();
+  ctxUpdatePCB('A', 'active');
+  ctxUpdatePCB('B', 'idle');
+  ctxUpdatePCBVals('A');
+  ctxUpdatePCBVals('B');
+  document.getElementById('ctxCount').textContent = '0';
+  document.getElementById('ctxOverhead').textContent = '0 ms';
+  document.getElementById('ctxCurrent').textContent = 'A';
+  document.getElementById('ctxCurrent').style.color = 'var(--accent3)';
+  const btn = document.getElementById('ctxAutoBtn');
+  btn.textContent = '자동 실행';
+  btn.classList.remove('active');
+  document.getElementById('ctxStepBtn').disabled = false;
+}
+
+ctxReset();
+
+/* ══════════════════════════════════════════════════════════
+   SECTION 4: MEMORY MANAGEMENT
+══════════════════════════════════════════════════════════ */
 const MEM_SIZE = 128;
 let memCells = new Array(MEM_SIZE).fill(null);
 let procIdCounter = 1;
 const procColors = {};
 
-function rMem(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-
 function getProcColor(id) {
-  if (!procColors[id]) {
-    procColors[id] = `hsl(${(id * 67) % 360},70%,55%)`;
-  }
+  if (!procColors[id]) procColors[id] = `hsl(${(id * 67) % 360},70%,55%)`;
   return procColors[id];
 }
 
 function memAlloc() {
-  const size = rMem(4, 16);
-  const freeBlocks = [];
+  const size = rnd(4, 16);
   let start = -1, len = 0;
+  let chosen = null;
   for (let i = 0; i < MEM_SIZE; i++) {
     if (memCells[i] === null) {
       if (start === -1) start = i;
       len++;
-      if (len >= size) { freeBlocks.push({start, len}); start = -1; len = 0; }
+      if (len >= size) { chosen = { start, len }; break; }
     } else { start = -1; len = 0; }
   }
-  if (freeBlocks.length === 0) { memUpdateInfo(); return; }
-  const chosen = freeBlocks[0];
+  if (!chosen) { memUpdateInfo(); return; }
   const pid = procIdCounter++;
   for (let i = chosen.start; i < chosen.start + size; i++) memCells[i] = pid;
   memRender();
@@ -175,8 +1015,8 @@ function memAlloc() {
 
 function memFree() {
   const pids = [...new Set(memCells.filter(x => x !== null))];
-  if (pids.length === 0) return;
-  const pid = pids[rMem(0, pids.length - 1)];
+  if (!pids.length) return;
+  const pid = pids[rnd(0, pids.length-1)];
   for (let i = 0; i < MEM_SIZE; i++) if (memCells[i] === pid) memCells[i] = null;
   memRender();
 }
@@ -197,14 +1037,15 @@ function memReset() {
 function memUpdateInfo() {
   const used = memCells.filter(x => x !== null).length;
   const free = MEM_SIZE - used;
-  let freeBlocks = 0, inFree = false;
+  let blocks = 0, inFree = false;
   for (let i = 0; i < MEM_SIZE; i++) {
-    if (memCells[i] === null && !inFree) { freeBlocks++; inFree = true; }
+    if (memCells[i] === null && !inFree) { blocks++; inFree = true; }
     else if (memCells[i] !== null) inFree = false;
   }
-  const frag = free > 0 ? Math.round(((freeBlocks - 1) / freeBlocks) * 100) : 0;
-  document.getElementById('memInfo').textContent =
-    `사용: ${used}셀 (${Math.round(used/MEM_SIZE*100)}%) | 여유: ${free}셀 | 단편화 지수: ${isNaN(frag)?0:frag}% | 자유 블록: ${freeBlocks}개`;
+  const frag = free > 0 && blocks > 1 ? Math.round(((blocks - 1) / blocks) * 100) : 0;
+  document.getElementById('memInfo').innerHTML =
+    `사용: ${used}셀 (${Math.round(used/MEM_SIZE*100)}%) | 여유: ${free}셀 | 단편화 지수: ${frag}% | 자유 블록: ${blocks}개<br>
+    💡 <strong>Tip:</strong> 단편화 지수가 높을수록 비어있는 블록이 잘게 쪼개져 큰 프로세스를 할당하기 어렵습니다.`;
 }
 
 function memRender() {
@@ -222,64 +1063,70 @@ function memRender() {
 }
 memRender();
 
-/* ===== 가상메모리 ===== */
+/* ══════════════════════════════════════════════════════════
+   SECTION 5: VIRTUAL MEMORY
+══════════════════════════════════════════════════════════ */
 let vmHits = 0, vmFaults = 0;
 const VM_PAGES = 8, VM_FRAMES = 4;
-let vmFrameArr = [];   // array of page nums in physical frames (FIFO order)
-let vmFifoQueue = [];  // FIFO order of pages in frames
+let vmFrameArr = [];
+let vmFifoQueue = [];
+let vmSeqIdx = 0;
 
 function vmAccess(p) {
   const inFrame = vmFrameArr.includes(p);
-  // animate page
   const pageEl = document.getElementById(`vm-page-${p}`);
   if (pageEl) { pageEl.classList.add('accessing'); setTimeout(() => pageEl.classList.remove('accessing'), 400); }
 
   if (inFrame) {
     vmHits++;
-    const frameIdx = vmFrameArr.indexOf(p);
-    const frameEl = document.getElementById(`vm-frame-${frameIdx}`);
-    if (frameEl) { frameEl.classList.add('hit'); setTimeout(() => { frameEl.classList.remove('hit'); vmRender(); }, 500); }
-    document.getElementById('vmInfo').textContent = `페이지 ${p} → PAGE HIT! 프레임 ${frameIdx}에서 찾음`;
+    const fi = vmFrameArr.indexOf(p);
+    const fEl = document.getElementById(`vm-frame-${fi}`);
+    if (fEl) { fEl.classList.add('hit'); setTimeout(() => { fEl.classList.remove('hit'); vmRender(); }, 500); }
+    document.getElementById('vmInfo').innerHTML = `페이지 ${p} → <span style="color:var(--accent)">PAGE HIT!</span> 프레임 ${fi}에서 찾음<br>
+    💡 <strong>Tip:</strong> 물리 프레임이 꽉 찼을 때 FIFO 알고리즘은 가장 먼저 들어온 페이지를 교체합니다.`;
   } else {
     vmFaults++;
     if (vmFrameArr.length < VM_FRAMES) {
       const slot = vmFrameArr.length;
       vmFrameArr.push(p);
       vmFifoQueue.push(p);
-      const frameEl = document.getElementById(`vm-frame-${slot}`);
-      if (frameEl) { frameEl.classList.add('fault'); setTimeout(() => { frameEl.classList.remove('fault'); vmRender(); }, 500); }
-      document.getElementById('vmInfo').textContent = `페이지 ${p} → PAGE FAULT! 프레임 ${slot}에 적재`;
+      const fEl = document.getElementById(`vm-frame-${slot}`);
+      if (fEl) { fEl.classList.add('fault'); setTimeout(() => { fEl.classList.remove('fault'); vmRender(); }, 500); }
+      document.getElementById('vmInfo').innerHTML = `페이지 ${p} → <span style="color:var(--danger)">PAGE FAULT!</span> 프레임 ${slot}에 적재 (빈 슬롯)`;
     } else {
-      // FIFO evict
       const evicted = vmFifoQueue.shift();
-      const evictIdx = vmFrameArr.indexOf(evicted);
-      vmFrameArr[evictIdx] = p;
+      const ei = vmFrameArr.indexOf(evicted);
+      vmFrameArr[ei] = p;
       vmFifoQueue.push(p);
-      const frameEl = document.getElementById(`vm-frame-${evictIdx}`);
-      if (frameEl) { frameEl.classList.add('fault'); setTimeout(() => { frameEl.classList.remove('fault'); vmRender(); }, 500); }
-      document.getElementById('vmInfo').textContent = `페이지 ${p} → PAGE FAULT! 페이지 ${evicted} 교체 (FIFO)`;
+      const fEl = document.getElementById(`vm-frame-${ei}`);
+      if (fEl) { fEl.classList.add('fault'); setTimeout(() => { fEl.classList.remove('fault'); vmRender(); }, 500); }
+      document.getElementById('vmInfo').innerHTML = `페이지 ${p} → <span style="color:var(--danger)">PAGE FAULT!</span> 페이지 ${evicted} 교체 (FIFO 알고리즘)`;
     }
   }
-  document.getElementById('vmHits').textContent = vmHits;
+  document.getElementById('vmHits').textContent   = vmHits;
   document.getElementById('vmFaults').textContent = vmFaults;
+  const total = vmHits + vmFaults;
+  document.getElementById('vmHitRate').textContent = total > 0 ? Math.round(vmHits/total*100) + '%' : '—';
   vmRender();
 }
 
-function vmAccessRandom() { vmAccess(Math.floor(Math.random() * VM_PAGES)); }
+function vmAccessRandom()     { vmAccess(Math.floor(Math.random() * VM_PAGES)); }
+function vmAccessSequential() { vmAccess(vmSeqIdx % VM_PAGES); vmSeqIdx++; }
 
 function vmReset() {
-  vmHits = 0; vmFaults = 0;
+  vmHits = 0; vmFaults = 0; vmSeqIdx = 0;
   vmFrameArr = []; vmFifoQueue = [];
-  document.getElementById('vmHits').textContent = '0';
+  document.getElementById('vmHits').textContent   = '0';
   document.getElementById('vmFaults').textContent = '0';
-  document.getElementById('vmInfo').textContent = '가상 페이지를 클릭하거나 버튼을 눌러 접근을 시뮬레이션하세요.';
+  document.getElementById('vmHitRate').textContent = '—';
+  document.getElementById('vmInfo').innerHTML = '가상 페이지를 클릭하거나 버튼을 눌러 접근을 시뮬레이션하세요.';
   vmRender();
 }
 
 function vmRender() {
   const pagesEl = document.getElementById('vmPages');
-  const ptEl = document.getElementById('vmPageTable');
-  const framesEl = document.getElementById('vmFrames');
+  const ptEl    = document.getElementById('vmPageTable');
+  const framesEl= document.getElementById('vmFrames');
 
   pagesEl.innerHTML = '';
   for (let i = 0; i < VM_PAGES; i++) {
@@ -294,10 +1141,10 @@ function vmRender() {
 
   ptEl.innerHTML = '<div class="vm-pt-title">VP → PF</div>';
   for (let i = 0; i < VM_PAGES; i++) {
-    const frameIdx = vmFrameArr.indexOf(i);
+    const fi = vmFrameArr.indexOf(i);
     const row = document.createElement('div');
-    row.className = 'vm-pt-row' + (frameIdx >= 0 ? ' mapped' : ' unmapped');
-    row.textContent = frameIdx >= 0 ? `VP${i} → PF${frameIdx}` : `VP${i} → —`;
+    row.className = 'vm-pt-row' + (fi >= 0 ? ' mapped' : ' unmapped');
+    row.textContent = fi >= 0 ? `VP${i} → PF${fi}` : `VP${i} → —`;
     ptEl.appendChild(row);
   }
 
@@ -313,13 +1160,15 @@ function vmRender() {
 }
 vmRender();
 
-/* ===== 프로세스 스케줄링 ===== */
+/* ══════════════════════════════════════════════════════════
+   SECTION 6: SCHEDULING
+══════════════════════════════════════════════════════════ */
 let schedType = 'fcfs';
 const processes = [
-  { id: 'P1', arrival: 0, burst: 6, color: '#00ffaa' },
-  { id: 'P2', arrival: 1, burst: 3, color: '#6b8aff' },
-  { id: 'P3', arrival: 2, burst: 8, color: '#ffaa00' },
-  { id: 'P4', arrival: 3, burst: 2, color: '#ff6b9d' },
+  { id:'P1', arrival:0, burst:6, color:'#00ffaa' },
+  { id:'P2', arrival:1, burst:3, color:'#6b8aff' },
+  { id:'P3', arrival:2, burst:8, color:'#ffaa00' },
+  { id:'P4', arrival:3, burst:2, color:'#ff6b9d' },
 ];
 
 function setScheduler(type, el) {
@@ -332,6 +1181,11 @@ function setScheduler(type, el) {
 function resetScheduler() {
   document.getElementById('ganttChart').innerHTML = '';
   document.getElementById('procStats').innerHTML = '';
+  document.getElementById('rqQueue').innerHTML =
+    '<span style="font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:var(--text-dim);">스케줄러를 실행하면 레디 큐가 표시됩니다</span>';
+  document.getElementById('rqCpuBox').textContent = '유휴';
+  document.getElementById('rqCpuBox').style.borderColor = 'var(--accent)';
+  document.getElementById('rqCpuBox').style.color = 'var(--accent)';
   renderProcTable();
 }
 
@@ -348,9 +1202,10 @@ function renderProcTable() {
 
 function runScheduler() {
   let schedule = [];
-  if (schedType === 'fcfs') schedule = runFCFS();
-  else if (schedType === 'sjf') schedule = runSJF();
-  else schedule = runRR(2);
+  if (schedType === 'fcfs')      schedule = runFCFS();
+  else if (schedType === 'sjf')  schedule = runSJF();
+  else                           schedule = runRR(2);
+  renderReadyQueue(schedule);
   renderGantt(schedule);
 }
 
@@ -360,7 +1215,7 @@ function runFCFS() {
   let time = 0;
   procs.forEach(p => {
     if (time < p.arrival) time = p.arrival;
-    result.push({ id: p.id, color: p.color, start: time, end: time + p.burst });
+    result.push({ id:p.id, color:p.color, start:time, end:time+p.burst });
     time += p.burst;
   });
   return result;
@@ -371,11 +1226,11 @@ function runSJF() {
   const result = [];
   let time = 0, done = 0;
   while (done < procs.length) {
-    const available = procs.filter(p => p.arrival <= time && !p.done);
-    if (available.length === 0) { time++; continue; }
-    available.sort((a,b) => a.burst - b.burst);
-    const p = available[0];
-    result.push({ id: p.id, color: p.color, start: time, end: time + p.burst });
+    const avail = procs.filter(p => p.arrival <= time && !p.done);
+    if (!avail.length) { time++; continue; }
+    avail.sort((a,b) => a.burst - b.burst);
+    const p = avail[0];
+    result.push({ id:p.id, color:p.color, start:time, end:time+p.burst });
     time += p.burst;
     p.done = true;
     done++;
@@ -384,31 +1239,46 @@ function runSJF() {
 }
 
 function runRR(quantum) {
-  const procs = processes.map(p => ({...p, remaining: p.burst}));
+  const procs = processes.map(p => ({...p, remaining:p.burst}));
   const result = [];
   let time = 0;
   const queue = [];
   let idx = 0;
   const sorted = [...procs].sort((a,b) => a.arrival - b.arrival);
   while (true) {
-    while (idx < sorted.length && sorted[idx].arrival <= time) {
-      queue.push(sorted[idx]); idx++;
-    }
-    if (queue.length === 0) {
+    while (idx < sorted.length && sorted[idx].arrival <= time) { queue.push(sorted[idx]); idx++; }
+    if (!queue.length) {
       if (idx < sorted.length) { time = sorted[idx].arrival; continue; }
       break;
     }
     const p = queue.shift();
     const slice = Math.min(quantum, p.remaining);
-    result.push({ id: p.id, color: p.color, start: time, end: time + slice });
+    result.push({ id:p.id, color:p.color, start:time, end:time+slice });
     time += slice;
     p.remaining -= slice;
-    while (idx < sorted.length && sorted[idx].arrival <= time) {
-      queue.push(sorted[idx]); idx++;
-    }
+    while (idx < sorted.length && sorted[idx].arrival <= time) { queue.push(sorted[idx]); idx++; }
     if (p.remaining > 0) queue.push(p);
   }
   return result;
+}
+
+function renderReadyQueue(schedule) {
+  const qEl = document.getElementById('rqQueue');
+  const cpuEl = document.getElementById('rqCpuBox');
+  // Show processes ordered by first appearance
+  const seen = [];
+  const order = [];
+  schedule.forEach(s => {
+    if (!seen.includes(s.id)) { seen.push(s.id); order.push({ id: s.id, color: s.color }); }
+  });
+  qEl.innerHTML = order.map((p, i) => {
+    const next = order[i+1];
+    return `<div class="rq-proc" style="color:${p.color};border-color:${p.color};background:${p.color}22;">${p.id}</div>` +
+      (next ? '<div class="rq-arrow">→</div>' : '');
+  }).join('');
+  cpuEl.textContent = order[0] ? order[0].id : '유휴';
+  cpuEl.style.color = order[0] ? order[0].color : 'var(--accent)';
+  cpuEl.style.borderColor = order[0] ? order[0].color : 'var(--accent)';
 }
 
 function renderGantt(schedule) {
@@ -417,39 +1287,34 @@ function renderGantt(schedule) {
   const totalTime = Math.max(...schedule.map(s => s.end));
   const pids = [...new Set(schedule.map(s => s.id))];
   const stats = {};
-  processes.forEach(p => { stats[p.id] = { finish: 0, turnaround: 0, waiting: 0, color: p.color }; });
+  processes.forEach(p => { stats[p.id] = { finish:0, turnaround:0, waiting:0, color:p.color }; });
   schedule.forEach(s => { if (s.end > stats[s.id].finish) stats[s.id].finish = s.end; });
   processes.forEach(p => {
     stats[p.id].turnaround = stats[p.id].finish - p.arrival;
-    stats[p.id].waiting = stats[p.id].turnaround - p.burst;
+    stats[p.id].waiting    = stats[p.id].turnaround - p.burst;
   });
 
   pids.forEach(pid => {
-    const row = document.createElement('div');
-    row.className = 'process-row';
-    const label = document.createElement('div');
-    label.className = 'process-label';
-    label.style.color = stats[pid].color;
-    label.textContent = pid;
-    const track = document.createElement('div');
-    track.className = 'process-track';
+    const row   = document.createElement('div'); row.className = 'process-row';
+    const label = document.createElement('div'); label.className = 'process-label';
+    label.style.color = stats[pid].color; label.textContent = pid;
+    const track = document.createElement('div'); track.className = 'process-track';
     schedule.filter(s => s.id === pid).forEach(s => {
       const block = document.createElement('div');
       block.className = 'process-block';
-      block.style.left = `${(s.start / totalTime) * 100}%`;
-      block.style.width = `${((s.end - s.start) / totalTime) * 100}%`;
+      block.style.left  = `${(s.start/totalTime)*100}%`;
+      block.style.width = `${((s.end-s.start)/totalTime)*100}%`;
       block.style.backgroundColor = s.color;
       block.title = `${s.id}: ${s.start}→${s.end}`;
       block.textContent = `${s.start}-${s.end}`;
       track.appendChild(block);
     });
-    row.appendChild(label);
-    row.appendChild(track);
+    row.appendChild(label); row.appendChild(track);
     chart.appendChild(row);
   });
 
   const statsEl = document.getElementById('procStats');
-  statsEl.innerHTML = Object.entries(stats).map(([pid, s]) =>
+  statsEl.innerHTML = Object.entries(stats).map(([pid,s]) =>
     `<div class="process-stat">
       <div class="process-dot" style="background:${s.color}"></div>
       <span style="color:var(--text-dim)">${pid}: WT=<span style="color:var(--text)">${s.waiting}</span> TAT=<span style="color:var(--text)">${s.turnaround}</span></span>
@@ -459,20 +1324,49 @@ function renderGantt(schedule) {
 
 renderProcTable();
 
-/* ===== 데드락 (식사하는 철학자) ===== */
+/* ══════════════════════════════════════════════════════════
+   SECTION 7: DEADLOCK
+══════════════════════════════════════════════════════════ */
+
+// ── Condition checklist ──
+let dlCondChecked = [false, false, false, false];
+
+function dlToggleCond(i) {
+  dlCondChecked[i] = !dlCondChecked[i];
+  const el = document.getElementById('cond' + i);
+  const checkEl = el.querySelector('.cond-check');
+  if (dlCondChecked[i]) {
+    el.classList.add('checked');
+    checkEl.textContent = '☑';
+  } else {
+    el.classList.remove('checked');
+    checkEl.textContent = '☐';
+  }
+  const count = dlCondChecked.filter(Boolean).length;
+  const ind = document.getElementById('dlCondIndicator');
+  if (count === 4) {
+    ind.className = 'dl-deadlock-indicator yes';
+    ind.textContent = '4/4 조건 충족 — 데드락 발생 가능! (필요조건이 모두 충족됨)';
+  } else {
+    ind.className = 'dl-deadlock-indicator no';
+    ind.textContent = `4가지 조건 중 ${count}/4 충족 — 데드락 위험 없음`;
+  }
+}
+
+// ── Philosopher simulation ──
 const DL_PHASES = [
-  { label: '① 정상식사', cls: 'active-normal' },
-  { label: '② 위험징후', cls: 'active-warning' },
-  { label: '③ 데드락!', cls: 'active-danger' },
-  { label: '④ 원인분석', cls: 'active-resolve' },
-  { label: '⑤ 해결', cls: 'active-done' },
+  { label:'① 정상식사', cls:'active-normal'  },
+  { label:'② 위험징후', cls:'active-warning' },
+  { label:'③ 데드락!',  cls:'active-danger'  },
+  { label:'④ 원인분석', cls:'active-resolve' },
+  { label:'⑤ 해결',    cls:'active-done'    },
 ];
 let dlPhase = -1;
 let dlAnimId = null;
 let dlTime = 0;
 const N = 5;
-let philState = Array(N).fill('thinking');  // thinking | hungry | eating | waiting | deadlocked
-let forkState = Array(N).fill(null);        // null | philosopherIdx
+let philState = Array(N).fill('thinking');
+let forkState = Array(N).fill(null);
 let dlCanvas, dlCtx;
 
 function initDL() {
@@ -504,24 +1398,22 @@ function setDLPhase(idx) {
     if (i < idx) el.classList.add('done');
     else if (i === idx) el.classList.add(DL_PHASES[i].cls);
   });
-  const pct = ((idx + 1) / DL_PHASES.length * 100);
   const prog = document.getElementById('dlProgress');
-  prog.style.width = pct + '%';
+  prog.style.width = ((idx + 1) / DL_PHASES.length * 100) + '%';
   prog.className = 'dl-progress' + (idx === 2 ? ' danger' : idx >= 3 ? ' resolve' : '');
-
   const status = document.getElementById('dlStatus');
-  if (idx === 0) { status.className = 'deadlock-status safe'; status.textContent = '정상'; }
-  else if (idx === 1) { status.className = 'deadlock-status warning'; status.textContent = '위험'; }
-  else if (idx === 2) { status.className = 'deadlock-status deadlocked'; status.textContent = '데드락!'; }
-  else if (idx === 3) { status.className = 'deadlock-status resolving'; status.textContent = '분석중'; }
-  else { status.className = 'deadlock-status safe'; status.textContent = '해결됨'; }
+  if      (idx === 0) { status.className='deadlock-status safe';       status.textContent='정상';   }
+  else if (idx === 1) { status.className='deadlock-status warning';    status.textContent='위험';   }
+  else if (idx === 2) { status.className='deadlock-status deadlocked'; status.textContent='데드락!'; }
+  else if (idx === 3) { status.className='deadlock-status resolving';  status.textContent='분석중'; }
+  else                { status.className='deadlock-status safe';       status.textContent='해결됨'; }
 }
 
-function addLog(text, type = 'normal') {
+function addLog(text, type='normal') {
   const log = document.getElementById('narrationLog');
   const entry = document.createElement('div');
   entry.className = `narration-entry ${type}`;
-  const t = String(dlTime).padStart(2, '0') + 's';
+  const t = String(dlTime).padStart(2,'0') + 's';
   entry.innerHTML = `<span class="narration-time">${t}</span><span class="narration-text">${text}</span>`;
   log.appendChild(entry);
   log.scrollTop = log.scrollHeight;
@@ -531,88 +1423,56 @@ function addLog(text, type = 'normal') {
 function drawDL() {
   if (!dlCtx) return;
   const w = dlCanvas.width, h = dlCanvas.height;
-  const cx = w / 2, cy = h / 2;
-  const R = Math.min(w, h) * 0.32;
+  const cx = w/2, cy = h/2;
+  const R = Math.min(w,h) * 0.32;
   const fR = R * 0.55;
-
   dlCtx.clearRect(0, 0, w, h);
 
-  // Draw forks
+  // Forks
   for (let i = 0; i < N; i++) {
-    const angle = (i + 0.5) * (2 * Math.PI / N) - Math.PI / 2;
+    const angle = (i + 0.5) * (2*Math.PI/N) - Math.PI/2;
     const fx = cx + fR * Math.cos(angle);
     const fy = cy + fR * Math.sin(angle);
     const owned = forkState[i] !== null;
     dlCtx.beginPath();
-    dlCtx.arc(fx, fy, 10, 0, Math.PI * 2);
-    dlCtx.fillStyle = owned ? '#ff4466' : '#2a2a3a';
+    dlCtx.arc(fx, fy, 10, 0, Math.PI*2);
+    dlCtx.fillStyle = owned ? '#ff446622' : '#2a2a3a';
     dlCtx.strokeStyle = owned ? '#ff4466' : '#8888aa';
     dlCtx.lineWidth = 2;
-    dlCtx.fill();
-    dlCtx.stroke();
+    dlCtx.fill(); dlCtx.stroke();
     dlCtx.fillStyle = '#e0e0f0';
     dlCtx.font = '10px JetBrains Mono';
-    dlCtx.textAlign = 'center';
-    dlCtx.textBaseline = 'middle';
+    dlCtx.textAlign = 'center'; dlCtx.textBaseline = 'middle';
     dlCtx.fillText(`F${i}`, fx, fy);
   }
 
-  // Draw philosophers
-  const stateColors = {
-    thinking: '#8888aa',
-    hungry: '#ffaa00',
-    eating: '#00ffaa',
-    waiting: '#ff6b9d',
-    deadlocked: '#ff4466',
-    freed: '#6b8aff',
-  };
-  const stateLabels = {
-    thinking: '생각중',
-    hungry: '배고픔',
-    eating: '식사중',
-    waiting: '대기중',
-    deadlocked: '데드락',
-    freed: '해방됨',
-  };
+  const stateColors = { thinking:'#8888aa', hungry:'#ffaa00', eating:'#00ffaa', waiting:'#ff6b9d', deadlocked:'#ff4466', freed:'#6b8aff' };
+  const stateLabels = { thinking:'생각중', hungry:'배고픔', eating:'식사중', waiting:'대기중', deadlocked:'데드락', freed:'해방됨' };
 
   for (let i = 0; i < N; i++) {
-    const angle = i * (2 * Math.PI / N) - Math.PI / 2;
+    const angle = i * (2*Math.PI/N) - Math.PI/2;
     const px = cx + R * Math.cos(angle);
     const py = cy + R * Math.sin(angle);
     const col = stateColors[philState[i]] || '#8888aa';
-
     dlCtx.beginPath();
-    dlCtx.arc(px, py, 24, 0, Math.PI * 2);
-    dlCtx.fillStyle = col + '22';
-    dlCtx.strokeStyle = col;
-    dlCtx.lineWidth = 2.5;
-    dlCtx.fill();
-    dlCtx.stroke();
-
-    // glow for deadlock
+    dlCtx.arc(px, py, 24, 0, Math.PI*2);
+    dlCtx.fillStyle = col + '22'; dlCtx.strokeStyle = col; dlCtx.lineWidth = 2.5;
+    dlCtx.fill(); dlCtx.stroke();
     if (philState[i] === 'deadlocked') {
-      dlCtx.beginPath();
-      dlCtx.arc(px, py, 28, 0, Math.PI * 2);
-      dlCtx.strokeStyle = 'rgba(255,68,102,0.3)';
-      dlCtx.lineWidth = 4;
-      dlCtx.stroke();
+      dlCtx.beginPath(); dlCtx.arc(px, py, 30, 0, Math.PI*2);
+      dlCtx.strokeStyle = 'rgba(255,68,102,0.3)'; dlCtx.lineWidth = 5; dlCtx.stroke();
     }
-
     dlCtx.fillStyle = '#e0e0f0';
     dlCtx.font = 'bold 11px JetBrains Mono';
-    dlCtx.textAlign = 'center';
-    dlCtx.textBaseline = 'middle';
-    dlCtx.fillText(`P${i}`, px, py - 5);
-    dlCtx.font = '9px JetBrains Mono';
-    dlCtx.fillStyle = col;
+    dlCtx.textAlign = 'center'; dlCtx.textBaseline = 'middle';
+    dlCtx.fillText(`P${i}`, px, py - 6);
+    dlCtx.font = '9px JetBrains Mono'; dlCtx.fillStyle = col;
     dlCtx.fillText(stateLabels[philState[i]], px, py + 8);
   }
 
-  // Center label
-  dlCtx.fillStyle = 'var(--text-dim)';
-  dlCtx.font = '12px JetBrains Mono';
-  dlCtx.textAlign = 'center';
   dlCtx.fillStyle = '#8888aa';
+  dlCtx.font = '12px JetBrains Mono';
+  dlCtx.textAlign = 'center'; dlCtx.textBaseline = 'middle';
   dlCtx.fillText('식사하는 철학자', cx, cy);
 }
 
@@ -625,8 +1485,7 @@ function dlStart() {
 
 function dlReset() {
   if (dlAnimId) { clearTimeout(dlAnimId); dlAnimId = null; }
-  dlPhase = -1;
-  dlTime = 0;
+  dlPhase = -1; dlTime = 0;
   philState = Array(N).fill('thinking');
   forkState = Array(N).fill(null);
   document.getElementById('narrationLog').innerHTML = '';
@@ -645,31 +1504,19 @@ async function runDLPhase(phase) {
   setDLPhase(phase);
 
   if (phase === 0) {
-    // Phase 0: 정상 식사
     addLog('5명의 철학자가 원탁에 앉아 생각하고 있습니다.', 'normal');
     await delay(600);
-    // Some eating normally
-    for (let cycle = 0; cycle < 3; cycle++) {
+    for (let cycle = 0; cycle < 2; cycle++) {
       for (let i = 0; i < N; i++) {
-        philState[i] = 'hungry';
-        drawDL();
-        await delay(200);
-        const leftFork = i, rightFork = (i + 1) % N;
-        if (forkState[leftFork] === null && forkState[rightFork] === null) {
-          forkState[leftFork] = i;
-          forkState[rightFork] = i;
-          philState[i] = 'eating';
-          drawDL();
-          await delay(300);
-          forkState[leftFork] = null;
-          forkState[rightFork] = null;
-          philState[i] = 'thinking';
-          drawDL();
-          addLog(`철학자 P${i}이 포크 F${leftFork}, F${rightFork}를 들고 식사 후 내려놓았습니다.`, 'normal');
-        } else {
-          philState[i] = 'thinking';
-          drawDL();
-        }
+        philState[i] = 'hungry'; drawDL(); await delay(180);
+        const lf = i, rf = (i+1)%N;
+        if (forkState[lf] === null && forkState[rf] === null) {
+          forkState[lf] = i; forkState[rf] = i;
+          philState[i] = 'eating'; drawDL(); await delay(280);
+          forkState[lf] = null; forkState[rf] = null;
+          philState[i] = 'thinking'; drawDL();
+          addLog(`철학자 P${i}이 포크 F${lf}, F${rf}를 들고 식사 후 내려놓았습니다.`, 'normal');
+        } else { philState[i] = 'thinking'; drawDL(); }
         await delay(100);
       }
     }
@@ -678,15 +1525,10 @@ async function runDLPhase(phase) {
     runDLPhase(1);
 
   } else if (phase === 1) {
-    // Phase 1: 위험징후 - 모두 왼쪽 포크를 집음
-    addLog('⚠ 모든 철학자가 동시에 왼쪽 포크를 집으려 합니다!', 'warning');
-    for (let i = 0; i < N; i++) { philState[i] = 'hungry'; }
-    drawDL();
-    await delay(400);
+    addLog('모든 철학자가 동시에 왼쪽 포크를 집으려 합니다!', 'warning');
+    for (let i = 0; i < N; i++) { philState[i] = 'hungry'; } drawDL(); await delay(400);
     for (let i = 0; i < N; i++) {
-      forkState[i] = i;  // 각자 왼쪽 포크(자기 번호) 선점
-      philState[i] = 'waiting';
-      drawDL();
+      forkState[i] = i; philState[i] = 'waiting'; drawDL();
       addLog(`철학자 P${i}이 왼쪽 포크 F${i}를 집었습니다.`, 'warning');
       await delay(300);
     }
@@ -694,66 +1536,50 @@ async function runDLPhase(phase) {
     runDLPhase(2);
 
   } else if (phase === 2) {
-    // Phase 2: 데드락 발생
-    addLog('🔴 데드락 발생! 모든 철학자가 오른쪽 포크를 기다리고 있습니다.', 'danger');
+    addLog('데드락 발생! 모든 철학자가 오른쪽 포크를 기다리고 있습니다.', 'danger');
     await delay(300);
     for (let i = 0; i < N; i++) {
       philState[i] = 'deadlocked';
       addLog(`철학자 P${i}: 오른쪽 포크 F${(i+1)%N}를 기다리는 중... (보유: F${i})`, 'danger');
     }
-    drawDL();
-    await delay(400);
+    drawDL(); await delay(400);
     addLog('모든 프로세스가 서로의 자원을 기다리며 영원히 멈췄습니다!', 'danger');
     await delay(600);
     runDLPhase(3);
 
   } else if (phase === 3) {
-    // Phase 3: 원인 분석
-    addLog('📊 원인 분석: 데드락의 4가지 필요 조건이 모두 충족되었습니다.', 'info');
+    addLog('원인 분석: 데드락의 4가지 필요 조건이 모두 충족되었습니다.', 'info');
     await delay(400);
-    addLog('① 상호배제(Mutual Exclusion): 포크는 한 번에 한 철학자만 사용 가능', 'info');
-    await delay(400);
-    addLog('② 점유 및 대기(Hold & Wait): 포크를 쥔 채 다른 포크를 기다림', 'info');
-    await delay(400);
-    addLog('③ 비선점(No Preemption): 포크를 강제로 빼앗을 수 없음', 'info');
-    await delay(400);
-    addLog('④ 순환 대기(Circular Wait): P0→F1→P1→F2→...→P4→F0→P0 순환', 'info');
-    await delay(600);
+    addLog('① 상호배제: 포크는 한 번에 한 철학자만 사용 가능', 'info'); await delay(400);
+    addLog('② 점유 및 대기: 포크를 쥔 채 다른 포크를 기다림', 'info');  await delay(400);
+    addLog('③ 비선점: 포크를 강제로 빼앗을 수 없음', 'info');              await delay(400);
+    addLog('④ 순환 대기: P0→F1→P1→F2→...→P4→F0→P0 순환', 'info');      await delay(600);
     runDLPhase(4);
 
   } else if (phase === 4) {
-    // Phase 4: 해결
-    addLog('✅ 해결책 적용: 홀수 번호 철학자는 오른쪽 포크를 먼저 집도록 순서 변경!', 'resolve');
+    addLog('해결책 적용: 홀수 번호 철학자는 오른쪽 포크를 먼저 집도록 변경!', 'resolve');
     await delay(400);
-    // Reset all forks
     forkState = Array(N).fill(null);
-    for (let i = 0; i < N; i++) { philState[i] = 'thinking'; }
-    drawDL();
-    await delay(300);
-    // Now some can eat
+    for (let i = 0; i < N; i++) { philState[i] = 'thinking'; } drawDL(); await delay(300);
     for (let i = 0; i < N; i++) {
-      const leftFork = i, rightFork = (i + 1) % N;
-      if (forkState[leftFork] === null && forkState[rightFork] === null) {
-        forkState[leftFork] = i;
-        forkState[rightFork] = i;
-        philState[i] = 'eating';
-        drawDL();
-        addLog(`철학자 P${i}이 식사를 시작합니다! (F${leftFork}, F${rightFork})`, 'resolve');
+      const lf = i, rf = (i+1)%N;
+      if (forkState[lf] === null && forkState[rf] === null) {
+        forkState[lf] = i; forkState[rf] = i; philState[i] = 'eating'; drawDL();
+        addLog(`철학자 P${i}이 식사를 시작합니다! (F${lf}, F${rf})`, 'resolve');
         await delay(400);
-        forkState[leftFork] = null;
-        forkState[rightFork] = null;
-        philState[i] = 'freed';
-        drawDL();
+        forkState[lf] = null; forkState[rf] = null; philState[i] = 'freed'; drawDL();
         await delay(300);
       }
     }
     for (let i = 0; i < N; i++) philState[i] = 'thinking';
     drawDL();
-    addLog('🎉 데드락이 해결되었습니다! 모든 철학자가 식사를 마쳤습니다.', 'resolve');
+    addLog('데드락이 해결되었습니다! 모든 철학자가 식사를 마쳤습니다.', 'resolve');
     document.getElementById('dlStartBtn').disabled = false;
   }
 }
 
+/* ── INIT ── */
+psInit();
 initDL();
 </script>
 </body>

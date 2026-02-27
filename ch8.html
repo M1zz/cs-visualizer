@@ -6,76 +6,318 @@
 <title>Ch.8 네트워크 | CS Visualizer</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<style>
+/* ===== PACKET JOURNEY ===== */
+.packet-canvas-wrap{background:var(--surface2);border-radius:8px;overflow:hidden;position:relative;}
+.traceroute{font-family:'JetBrains Mono',monospace;font-size:0.78rem;background:var(--surface2);border-radius:8px;padding:16px;margin-top:16px;}
+.traceroute-row{display:flex;gap:16px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.tr-hop{color:var(--text-dim);min-width:20px;}
+.tr-ip{color:var(--accent3);flex:1;}
+.tr-desc{color:var(--text-dim);font-size:0.72rem;min-width:90px;}
+.tr-ms{color:var(--accent);}
+.traceroute-row.tr-active{background:rgba(0,255,170,0.05);border-radius:4px;}
+.node-info-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);min-height:50px;transition:all 0.3s;}
+.node-info-box.active{border-color:var(--accent3);background:rgba(107,138,255,0.06);}
+/* ===== IP ADDRESS ===== */
+.ip-bit-row{display:flex;gap:2px;margin:8px 0;flex-wrap:nowrap;overflow-x:auto;}
+.ip-bit{width:22px;height:28px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.72rem;border-radius:3px;border:1px solid var(--border);background:var(--surface2);flex-shrink:0;}
+.ip-bit.net{background:rgba(107,138,255,0.2);border-color:var(--accent3);color:var(--accent3);}
+.ip-bit.host{background:rgba(255,170,0,0.15);border-color:var(--accent4);color:var(--accent4);}
+.ip-bit-sep{width:8px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:0.8rem;flex-shrink:0;}
+.ip-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:1rem;padding:8px 14px;width:180px;outline:none;}
+.ip-input:focus{border-color:#22d3ee;}
+.ip-result-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-family:'JetBrains Mono',monospace;font-size:0.82rem;}
+.ip-result-label{color:var(--text-dim);}
+.ip-result-val{color:var(--text);}
+.cidr-label{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--accent2);margin-left:8px;min-width:40px;}
+.nat-box{display:flex;gap:0;align-items:stretch;margin-top:20px;flex-wrap:wrap;gap:12px;}
+.nat-side{flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;}
+.nat-side-title{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:10px;letter-spacing:1px;}
+.nat-ip-item{font-family:'JetBrains Mono',monospace;font-size:0.8rem;padding:5px 8px;border-radius:4px;margin-bottom:4px;}
+.nat-ip-private{color:var(--accent4);background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.2);}
+.nat-ip-public{color:var(--accent);background:rgba(0,255,170,0.08);border:1px solid rgba(0,255,170,0.2);}
+.nat-arrow{display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--text-dim);padding:8px;}
+/* ===== OSI ENHANCED ===== */
+.osi-encap-wrap{margin-top:20px;}
+.encap-label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;}
+.encap-row{display:flex;align-items:center;gap:0;margin-bottom:4px;min-height:34px;}
+.encap-block{display:flex;align-items:center;justify-content:center;height:34px;font-family:'JetBrains Mono',monospace;font-size:0.65rem;font-weight:600;border-radius:4px;white-space:nowrap;padding:0 6px;transition:all 0.3s;cursor:pointer;border:1px solid transparent;}
+.encap-l7{background:rgba(0,255,170,0.12);border-color:rgba(0,255,170,0.3);color:var(--accent);}
+.encap-l4{background:rgba(255,107,157,0.12);border-color:rgba(255,107,157,0.3);color:var(--accent2);}
+.encap-l3{background:rgba(0,204,136,0.12);border-color:rgba(0,204,136,0.3);color:var(--success);}
+.encap-l2{background:rgba(255,68,102,0.12);border-color:rgba(255,68,102,0.3);color:var(--danger);}
+.encap-l1{background:rgba(136,136,170,0.12);border-color:rgba(136,136,170,0.3);color:var(--text-dim);}
+.encap-block:hover{transform:scale(1.04);}
+.header-detail{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;animation:fadeSlideIn 0.3s;display:none;}
+.header-detail.show{display:block;}
+.header-fields{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+.hf{padding:4px 8px;border-radius:4px;font-size:0.68rem;border:1px solid;}
+.hf-tcp{color:var(--accent2);border-color:rgba(255,107,157,0.3);background:rgba(255,107,157,0.06);}
+.hf-ip{color:var(--success);border-color:rgba(0,204,136,0.3);background:rgba(0,204,136,0.06);}
+.hf-eth{color:var(--danger);border-color:rgba(255,68,102,0.3);background:rgba(255,68,102,0.06);}
+/* ===== TCP SEQUENCE DIAGRAM ===== */
+.tcp-seq-diagram{display:grid;grid-template-columns:120px 1fr 120px;gap:0;margin-top:16px;font-family:'JetBrains Mono',monospace;}
+.tcp-seq-col{display:flex;flex-direction:column;align-items:center;gap:0;}
+.tcp-seq-node{background:var(--surface2);border:2px solid var(--border);border-radius:8px;padding:8px 12px;text-align:center;font-size:0.78rem;font-weight:700;width:100%;}
+.tcp-seq-timeline{width:2px;background:var(--border);flex:1;margin-top:0;}
+.tcp-seq-arrows{position:relative;padding-top:10px;}
+.tcp-seq-msg{display:flex;align-items:center;padding:6px 0;position:relative;font-size:0.75rem;}
+.tcp-seq-msg .arrow-line{flex:1;height:2px;position:relative;}
+.tcp-seq-msg .arrow-line::after{content:'';position:absolute;top:-4px;width:8px;height:8px;border-top:2px solid;border-right:2px solid;}
+.tcp-seq-msg.c2s .arrow-line{background:var(--accent);}
+.tcp-seq-msg.c2s .arrow-line::after{right:-1px;border-color:var(--accent);transform:rotate(45deg);}
+.tcp-seq-msg.s2c .arrow-line{background:var(--accent2);}
+.tcp-seq-msg.s2c .arrow-line::after{left:-1px;border-color:var(--accent2);transform:rotate(-135deg);}
+.tcp-seq-msg .msg-label{font-family:'JetBrains Mono',monospace;font-size:0.68rem;padding:2px 6px;border-radius:4px;white-space:nowrap;}
+.tcp-seq-msg.c2s .msg-label{color:var(--accent);background:rgba(0,255,170,0.1);}
+.tcp-seq-msg.s2c .msg-label{color:var(--accent2);background:rgba(255,107,157,0.1);}
+.tcp-seq-msg.info-msg{justify-content:center;}
+.tcp-seq-msg.info-msg .msg-label{color:var(--accent);background:rgba(0,255,170,0.08);border:1px solid rgba(0,255,170,0.2);width:100%;text-align:center;}
+.tcp-state-label{font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--text-dim);margin-top:2px;}
+/* ===== TLS ===== */
+.tls-step{display:flex;align-items:flex-start;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.tls-step-num{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);min-width:28px;padding-top:2px;}
+.tls-step-content{flex:1;}
+.tls-step-title{font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;margin-bottom:4px;color:var(--text-dim);}
+.tls-step.tls-active .tls-step-title{color:var(--accent);}
+.tls-step.tls-done .tls-step-title{color:var(--success);opacity:0.65;}
+.tls-step-desc{font-size:0.82rem;color:var(--text-dim);line-height:1.6;}
+.tls-packet{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:0.72rem;padding:2px 8px;border-radius:4px;margin-top:4px;}
+.tls-packet.client{background:rgba(0,255,170,0.1);border:1px solid rgba(0,255,170,0.25);color:var(--accent);}
+.tls-packet.server{background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.25);color:var(--accent2);}
+.tls-locked{font-size:1.5rem;text-align:center;margin:20px 0;}
+.http-vs-https{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;}
+.hvh-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;}
+.hvh-title{font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;margin-bottom:10px;}
+.hvh-packet{font-family:'JetBrains Mono',monospace;font-size:0.72rem;padding:8px 12px;border-radius:4px;word-break:break-all;line-height:1.8;}
+/* ===== DNS TREE ===== */
+.dns-tree{display:flex;flex-direction:column;align-items:center;gap:0;margin:20px 0;position:relative;}
+.dns-tree-level{display:flex;gap:12px;justify-content:center;position:relative;padding:4px 0;}
+.dns-tree-node{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;text-align:center;position:relative;transition:all 0.3s;}
+.dns-tree-node.root{border-color:var(--accent);color:var(--accent);background:rgba(0,255,170,0.06);}
+.dns-tree-node.tld{border-color:var(--accent3);color:var(--accent3);background:rgba(107,138,255,0.06);}
+.dns-tree-node.sld{border-color:var(--accent4);color:var(--accent4);background:rgba(255,170,0,0.06);}
+.dns-tree-node.host{border-color:var(--accent2);color:var(--accent2);background:rgba(255,107,157,0.06);}
+.dns-tree-connector{width:1px;height:20px;background:var(--border);margin:0 auto;}
+.dns-tree-branch{display:flex;gap:0;justify-content:center;}
+.dns-tree-branch-line{height:1px;background:var(--border);flex:1;margin-top:10px;}
+.dns-rec-vs-iter{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;}
+.rvi-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;}
+.rvi-title{font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:700;margin-bottom:8px;}
+.rvi-step{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.rvi-step span{color:var(--text);}
+/* ===== HTTP/2 ===== */
+.http2-compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+.h2-panel{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;}
+.h2-title{font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:700;margin-bottom:10px;}
+.h2-stream{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;}
+.h2-stream-id{color:var(--text-dim);min-width:60px;}
+.h2-stream-bar{height:16px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:rgba(0,0,0,0.7);font-weight:700;}
+/* ===== MISC ===== */
+.sec-desc{color:var(--text-dim);font-size:0.95rem;line-height:1.8;margin-bottom:8px;max-width:760px;}
+@media(max-width:640px){
+  .ip-bit{width:16px;height:24px;font-size:0.6rem;}
+  .http-vs-https{grid-template-columns:1fr;}
+  .dns-rec-vs-iter{grid-template-columns:1fr;}
+  .http2-compare{grid-template-columns:1fr;}
+  .tcp-seq-diagram{grid-template-columns:80px 1fr 80px;}
+  .nat-box{flex-direction:column;}
+}
+</style>
 </head>
 <body class="page-body">
 <nav class="page-nav">
   <a href="index.html" class="nav-back">← 홈</a>
   <div class="nav-chapter-title" style="color:#22d3ee">Ch.8 — 네트워크</div>
   <div class="nav-sections">
-    <a href="#osi" class="nav-sec-link">OSI7계층</a>
-    <a href="#tcp" class="nav-sec-link">TCP핸드셰이크</a>
-    <a href="#http" class="nav-sec-link">HTTP요청응답</a>
-    <a href="#dns" class="nav-sec-link">DNS조회</a>
+    <a href="#packet" class="nav-sec-link">패킷 여정</a>
+    <a href="#ip" class="nav-sec-link">IP 주소</a>
+    <a href="#osi" class="nav-sec-link">OSI 7계층</a>
+    <a href="#tcp" class="nav-sec-link">TCP 핸드셰이크</a>
+    <a href="#tls" class="nav-sec-link">HTTPS/TLS</a>
+    <a href="#http" class="nav-sec-link">HTTP</a>
+    <a href="#dns" class="nav-sec-link">DNS</a>
   </div>
 </nav>
 
 <div class="chapter-banner cb8" style="--cb8-color:#22d3ee;">
   <div class="ch-num">CHAPTER 08</div>
   <h2 style="color:#22d3ee">네트워크</h2>
-  <p class="ch-desc">OSI 7계층, TCP 핸드셰이크, HTTP 요청/응답, DNS 조회 과정을 시각화합니다.</p>
+  <p class="ch-desc">패킷 여정, IP 주소/서브넷, OSI 7계층 캡슐화, TCP 핸드셰이크, HTTPS/TLS, HTTP, DNS를 시각적으로 탐험합니다.</p>
   <div class="ch-pills">
-    <span>OSI7계층</span><span>TCP핸드셰이크</span><span>HTTP요청응답</span><span>DNS조회</span>
+    <span>패킷 여정</span><span>IP/서브넷</span><span>OSI 캡슐화</span><span>TCP</span><span>TLS</span><span>HTTP/2</span><span>DNS</span>
   </div>
 </div>
 
-<!-- OSI 7계층 -->
-<section id="osi">
+<!-- ===== SECTION 1: 패킷 여정 ===== -->
+<section id="packet">
   <div class="section-header">
-    <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">OSI</div>
-    <h2>OSI 7계층 모델</h2>
-    <p>각 계층을 클릭하여 역할과 프로토콜 예시를 확인하세요.</p>
-  </div>
-  <div class="viz-box">
-    <div class="osi-stack" id="osiStack"></div>
-    <div class="info-text" style="margin-top:16px;">계층을 클릭하면 상세 정보를 확인할 수 있습니다.</div>
-  </div>
-</section>
-<div class="section-divider"></div>
-
-<!-- TCP 3-way Handshake -->
-<section id="tcp">
-  <div class="section-header">
-    <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">TCP</div>
-    <h2>TCP 3-way 핸드셰이크</h2>
-    <p>연결 수립과 종료 과정을 단계별로 시뮬레이션합니다.</p>
+    <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">PACKET</div>
+    <h2>패킷의 여행 (How Packets Travel)</h2>
+    <p class="sec-desc">여러분이 google.com을 열면, 데이터는 '패킷'으로 쪼개져 여러 라우터를 거쳐 목적지에 도달합니다. 각 라우터는 '다음에 어디로 보낼지'만 결정합니다 — 마치 우편물이 중간 우체국을 경유하듯. TTL(Time to Live)은 매 홉마다 1씩 감소합니다.</p>
   </div>
   <div class="viz-box">
     <div class="controls">
-      <button class="btn active" onclick="tcpNext()" id="tcpNextBtn">다음 단계 →</button>
-      <button class="btn danger" onclick="tcpReset()">초기화</button>
+      <button class="btn active" onclick="packetSend()">패킷 전송 시작 ▶</button>
+      <button class="btn" onclick="packetLoss()">패킷 손실 시뮬레이션</button>
+      <button class="btn danger" onclick="packetReset()">초기화</button>
     </div>
-    <div class="tcp-diagram">
-      <div class="tcp-node" id="tcpClient">
-        <div class="tcp-node-title">CLIENT</div>
-        <div class="tcp-node-state" id="tcpClientState">CLOSED</div>
-      </div>
-      <div class="tcp-node" id="tcpServer">
-        <div class="tcp-node-title" style="color:var(--accent2)">SERVER</div>
-        <div class="tcp-node-state" id="tcpServerState">LISTEN</div>
-      </div>
+    <div class="packet-canvas-wrap">
+      <canvas id="packetCanvas" height="200"></canvas>
     </div>
-    <div class="tcp-messages" id="tcpMessages"></div>
-    <div class="tcp-step-desc" id="tcpStepDesc">다음 단계 버튼을 눌러 TCP 핸드셰이크를 시작하세요.</div>
+    <div class="node-info-box" id="nodeInfoBox">노드를 클릭하거나 패킷 전송을 시작하세요.</div>
+    <div class="traceroute" id="tracerouteBox">
+      <div style="color:var(--text-dim);font-size:0.72rem;margin-bottom:8px;letter-spacing:1px;">TRACEROUTE 시뮬레이션</div>
+      <div class="traceroute-row" id="tr0" style="opacity:0.3"><span class="tr-hop">1</span><span class="tr-ip">192.168.1.1</span><span class="tr-desc">(공유기)</span><span class="tr-ms">— ms</span></div>
+      <div class="traceroute-row" id="tr1" style="opacity:0.3"><span class="tr-hop">2</span><span class="tr-ip">210.100.45.1</span><span class="tr-desc">(ISP)</span><span class="tr-ms">— ms</span></div>
+      <div class="traceroute-row" id="tr2" style="opacity:0.3"><span class="tr-hop">3</span><span class="tr-ip">72.14.197.2</span><span class="tr-desc">(백본 A)</span><span class="tr-ms">— ms</span></div>
+      <div class="traceroute-row" id="tr3" style="opacity:0.3"><span class="tr-hop">4</span><span class="tr-ip">108.170.246.3</span><span class="tr-desc">(백본 B)</span><span class="tr-ms">— ms</span></div>
+      <div class="traceroute-row" id="tr4" style="opacity:0.3"><span class="tr-hop">5</span><span class="tr-ip">142.250.80.46</span><span class="tr-desc">(Google)</span><span class="tr-ms">— ms</span></div>
+    </div>
   </div>
 </section>
 <div class="section-divider"></div>
 
-<!-- HTTP 요청/응답 -->
+<!-- ===== SECTION 2: IP 주소와 서브넷 ===== -->
+<section id="ip">
+  <div class="section-header">
+    <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">IP</div>
+    <h2>IP 주소와 서브넷 (IP Addressing)</h2>
+    <p class="sec-desc">IP 주소는 인터넷의 '집 주소'입니다. IPv4는 32비트 = 4개의 숫자(0-255). 서브넷 마스크는 '어디까지가 네트워크 주소인가'를 정의합니다. /24(255.255.255.0)는 마지막 8비트만 호스트 주소로 씁니다 = 254개의 주소.</p>
+  </div>
+  <div class="viz-box">
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:6px;">IP 주소</div>
+        <input class="ip-input" id="ipInput" value="192.168.1.100" oninput="updateIP()">
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:6px;">서브넷 CIDR</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="range" id="cidrSlider" min="8" max="30" value="24" oninput="updateIP()" style="-webkit-appearance:none;width:140px;height:4px;background:var(--border);border-radius:2px;outline:none;">
+          <span class="cidr-label" id="cidrLabel">/24</span>
+        </div>
+      </div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:4px;">32비트 이진수 표현 (파란색=네트워크, 주황색=호스트)</div>
+    <div class="ip-bit-row" id="ipBitRow"></div>
+    <div style="margin-top:16px;background:var(--surface2);border-radius:8px;padding:14px;border:1px solid var(--border);">
+      <div class="ip-result-row"><span class="ip-result-label">네트워크 주소</span><span class="ip-result-val" id="ipNetwork" style="color:var(--accent3);">—</span></div>
+      <div class="ip-result-row"><span class="ip-result-label">브로드캐스트</span><span class="ip-result-val" id="ipBroadcast" style="color:var(--accent4);">—</span></div>
+      <div class="ip-result-row"><span class="ip-result-label">서브넷 마스크</span><span class="ip-result-val" id="ipMask">—</span></div>
+      <div class="ip-result-row" style="border-bottom:none;"><span class="ip-result-label">사용 가능한 호스트 수</span><span class="ip-result-val" id="ipHostCount" style="color:var(--accent);">—</span></div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;margin:20px 0 8px;color:var(--text-dim);">공인 IP vs 사설 IP — NAT 변환</div>
+    <div class="nat-box">
+      <div class="nat-side">
+        <div class="nat-side-title">사설 IP 대역 (인트라넷)</div>
+        <div class="nat-ip-item nat-ip-private">10.0.0.0 /8</div>
+        <div class="nat-ip-item nat-ip-private">172.16.0.0 /12</div>
+        <div class="nat-ip-item nat-ip-private">192.168.0.0 /16</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);margin-top:8px;">인터넷에서 라우팅 불가. 내부 네트워크 전용.</div>
+      </div>
+      <div class="nat-arrow">NAT →</div>
+      <div class="nat-side" style="flex:0.6;min-width:140px;background:rgba(0,204,136,0.04);border-color:rgba(0,204,136,0.2);">
+        <div class="nat-side-title">NAT 공유기</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);line-height:1.7;">사설 IP + 포트 ↔ 공인 IP + 포트 매핑 테이블 유지</div>
+      </div>
+      <div class="nat-arrow">→</div>
+      <div class="nat-side" style="background:rgba(0,255,170,0.04);border-color:rgba(0,255,170,0.2);">
+        <div class="nat-side-title">공인 IP (인터넷)</div>
+        <div class="nat-ip-item nat-ip-public">203.0.113.45</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);margin-top:8px;">ISP가 할당. 인터넷에서 라우팅 가능.</div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ===== SECTION 3: OSI 7계층 ===== -->
+<section id="osi">
+  <div class="section-header">
+    <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">OSI</div>
+    <h2>OSI 7계층 모델 + 캡슐화</h2>
+    <p class="sec-desc">각 계층을 클릭하면 실제 헤더 필드를 확인할 수 있습니다. 데이터는 송신 측에서 7→1계층으로 내려가며 헤더가 추가(캡슐화)되고, 수신 측에서 1→7계층으로 올라가며 헤더가 제거됩니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn active" onclick="runEncapAnim()">캡슐화 애니메이션 ▶</button>
+      <button class="btn danger" onclick="resetEncap()">초기화</button>
+    </div>
+    <div class="osi-stack" id="osiStack"></div>
+    <div class="osi-encap-wrap">
+      <div class="encap-label">캡슐화 구조 (클릭하면 헤더 필드 표시)</div>
+      <div id="encapRows"></div>
+      <div class="header-detail" id="headerDetail"></div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ===== SECTION 4: TCP 핸드셰이크 ===== -->
+<section id="tcp">
+  <div class="section-header">
+    <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">TCP</div>
+    <h2>TCP 3-way 핸드셰이크 + 4-way 종료</h2>
+    <p class="sec-desc">TCP는 신뢰성 있는 연결을 위해 통신 전 3단계 핸드셰이크를 수행합니다. 시퀀스 번호(SEQ)와 확인 번호(ACK)로 패킷 순서와 손실을 추적합니다. 연결 종료는 4단계로 이뤄집니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn active" onclick="tcpSeqNext()" id="tcpSeqNextBtn">다음 단계 →</button>
+      <button class="btn danger" onclick="tcpSeqReset()">초기화</button>
+    </div>
+    <div class="tcp-seq-diagram">
+      <div class="tcp-seq-col">
+        <div class="tcp-seq-node" style="border-color:var(--accent);color:var(--accent);">CLIENT</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--text-dim);margin-top:4px;text-align:center;" id="tcpClientState">CLOSED</div>
+        <div class="tcp-seq-timeline" id="clientTimeline"></div>
+      </div>
+      <div style="padding-top:50px;" id="tcpSeqArrows"></div>
+      <div class="tcp-seq-col">
+        <div class="tcp-seq-node" style="border-color:var(--accent2);color:var(--accent2);">SERVER</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--text-dim);margin-top:4px;text-align:center;" id="tcpServerState">LISTEN</div>
+        <div class="tcp-seq-timeline" id="serverTimeline"></div>
+      </div>
+    </div>
+    <div class="tcp-step-desc" id="tcpSeqDesc" style="margin-top:12px;">다음 단계 버튼을 눌러 TCP 핸드셰이크를 시작하세요.</div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ===== SECTION 5: HTTPS / TLS ===== -->
+<section id="tls">
+  <div class="section-header">
+    <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">TLS</div>
+    <h2>HTTPS와 TLS 핸드셰이크</h2>
+    <p class="sec-desc">HTTP는 평문(암호화 없음)이라 중간에서 도청 가능합니다. HTTPS는 TLS(Transport Layer Security)로 암호화합니다. TLS 1.3 핸드셰이크는 안전한 채널을 만드는 과정입니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn active" onclick="tlsNext()" id="tlsNextBtn">다음 단계 →</button>
+      <button class="btn danger" onclick="tlsReset()">초기화</button>
+    </div>
+    <div id="tlsSteps"></div>
+    <div class="tls-locked" id="tlsLocked">🔓 핸드셰이크 대기 중...</div>
+    <div class="http-vs-https">
+      <div class="hvh-box" style="border-color:rgba(255,68,102,0.3);">
+        <div class="hvh-title" style="color:var(--danger);">HTTP (평문)</div>
+        <div class="hvh-packet" style="background:rgba(255,68,102,0.06);color:var(--danger);">GET /login HTTP/1.1<br>Host: bank.com<br>Authorization: password=1234<br><span style="color:var(--text-dim)">← 스니핑 시 그대로 노출!</span></div>
+      </div>
+      <div class="hvh-box" style="border-color:rgba(0,255,170,0.3);">
+        <div class="hvh-title" style="color:var(--accent);">HTTPS (TLS 암호화)</div>
+        <div class="hvh-packet" style="background:rgba(0,255,170,0.06);color:var(--accent);">17 03 03 00 28 8f a3 2c<br>e1 b4 7d 91 0a 55 cf 2b<br>3e 84 ...<br><span style="color:var(--text-dim)">← 스니핑해도 암호문만!</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ===== SECTION 6: HTTP ===== -->
 <section id="http">
   <div class="section-header">
     <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">HTTP</div>
     <h2>HTTP 요청 / 응답</h2>
-    <p>메서드와 상태코드를 선택하여 HTTP 메시지 구조를 확인하세요.</p>
+    <p class="sec-desc">메서드와 상태코드를 선택하여 HTTP 메시지 구조를 확인하세요. HTTP/1.1은 요청당 하나의 응답(HOL 블로킹), HTTP/2는 스트림 멀티플렉싱으로 여러 요청을 동시 처리합니다.</p>
   </div>
   <div class="viz-box">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
@@ -116,6 +358,23 @@
         <div id="httpResPanel"></div>
       </div>
     </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;margin:24px 0 8px;color:var(--text-dim);">HTTP/1.1 vs HTTP/2 — 멀티플렉싱</div>
+    <div class="http2-compare">
+      <div class="h2-panel" style="border-color:rgba(255,170,0,0.3);">
+        <div class="h2-title" style="color:var(--accent4);">HTTP/1.1 (순차 처리)</div>
+        <div class="h2-stream"><span class="h2-stream-id" style="color:var(--accent4);">req1</span><div class="h2-stream-bar" style="width:100%;background:var(--accent4);">HTML</div></div>
+        <div class="h2-stream"><span class="h2-stream-id" style="color:var(--accent4);">req2</span><div class="h2-stream-bar" style="width:100%;background:rgba(255,170,0,0.4);">CSS (대기)</div></div>
+        <div class="h2-stream"><span class="h2-stream-id" style="color:var(--accent4);">req3</span><div class="h2-stream-bar" style="width:100%;background:rgba(255,170,0,0.2);">JS (대기)</div></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);margin-top:6px;">HOL 블로킹: 앞 요청이 완료될 때까지 대기</div>
+      </div>
+      <div class="h2-panel" style="border-color:rgba(0,255,170,0.3);">
+        <div class="h2-title" style="color:var(--accent);">HTTP/2 (스트림 멀티플렉싱)</div>
+        <div class="h2-stream"><span class="h2-stream-id" style="color:var(--accent);">stream 1</span><div class="h2-stream-bar" style="width:80%;background:var(--accent);">HTML</div></div>
+        <div class="h2-stream"><span class="h2-stream-id" style="color:var(--accent);">stream 3</span><div class="h2-stream-bar" style="width:60%;background:var(--accent3);">CSS</div></div>
+        <div class="h2-stream"><span class="h2-stream-id" style="color:var(--accent);">stream 5</span><div class="h2-stream-bar" style="width:70%;background:var(--accent2);">JS</div></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);margin-top:6px;">단일 TCP 연결로 동시 다중 스트림 처리</div>
+      </div>
+    </div>
     <table class="status-table" style="margin-top:24px;">
       <thead><tr><th>코드</th><th>의미</th><th>설명</th></tr></thead>
       <tbody>
@@ -130,76 +389,357 @@
 </section>
 <div class="section-divider"></div>
 
-<!-- DNS 조회 -->
+<!-- ===== SECTION 7: DNS ===== -->
 <section id="dns">
   <div class="section-header">
     <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">DNS</div>
     <h2>DNS 조회 과정</h2>
-    <p>도메인 이름이 IP 주소로 변환되는 과정을 단계별로 확인합니다.</p>
+    <p class="sec-desc">도메인 이름이 IP 주소로 변환되는 과정입니다. DNS는 계층적 분산 데이터베이스입니다. Root → TLD → Authoritative 순으로 질의합니다. Recursive Resolver(통상 ISP 또는 8.8.8.8)가 대신 조회해 줍니다.</p>
   </div>
   <div class="viz-box">
     <div class="controls">
       <button class="btn active" onclick="dnsNext()" id="dnsNextBtn">다음 단계 →</button>
       <button class="btn danger" onclick="dnsReset()">초기화</button>
     </div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);margin-bottom:12px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);margin-bottom:16px;">
       조회 도메인: <span style="color:#22d3ee">www.example.com</span>
     </div>
+
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;">DNS 계층 구조</div>
+    <div class="dns-tree">
+      <div class="dns-tree-level">
+        <div class="dns-tree-node root">. (Root)</div>
+      </div>
+      <div class="dns-tree-connector"></div>
+      <div class="dns-tree-level">
+        <div class="dns-tree-node tld">.com</div>
+        <div class="dns-tree-node tld">.net</div>
+        <div class="dns-tree-node tld">.org</div>
+        <div class="dns-tree-node tld">.kr</div>
+      </div>
+      <div class="dns-tree-connector"></div>
+      <div class="dns-tree-level">
+        <div class="dns-tree-node sld">example.com</div>
+        <div class="dns-tree-node sld">google.com</div>
+        <div class="dns-tree-node sld">github.com</div>
+      </div>
+      <div class="dns-tree-connector"></div>
+      <div class="dns-tree-level">
+        <div class="dns-tree-node host">www</div>
+        <div class="dns-tree-node host">mail</div>
+        <div class="dns-tree-node host">api</div>
+      </div>
+    </div>
+
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin:16px 0 8px;letter-spacing:1px;">조회 과정 시뮬레이션</div>
     <div class="dns-nodes" id="dnsNodes"></div>
     <div class="info-text" id="dnsInfo" style="margin-top:16px;">다음 단계 버튼을 눌러 DNS 조회를 시작하세요.</div>
+
+    <div class="dns-rec-vs-iter">
+      <div class="rvi-box" style="border-color:rgba(0,255,170,0.25);">
+        <div class="rvi-title" style="color:var(--accent);">재귀 질의 (Recursive)</div>
+        <div class="rvi-step"><span>클라이언트</span> → Resolver</div>
+        <div class="rvi-step">Resolver → Root → .com → Auth</div>
+        <div class="rvi-step">Resolver <span>→ 클라이언트</span> (최종 IP)</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);margin-top:6px;">Resolver가 모든 작업 대신 수행. 일반적 방식.</div>
+      </div>
+      <div class="rvi-box" style="border-color:rgba(107,138,255,0.25);">
+        <div class="rvi-title" style="color:var(--accent3);">반복 질의 (Iterative)</div>
+        <div class="rvi-step"><span>클라이언트</span> → Root (referral)</div>
+        <div class="rvi-step"><span>클라이언트</span> → .com TLD (referral)</div>
+        <div class="rvi-step"><span>클라이언트</span> → Auth (최종 IP)</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);margin-top:6px;">클라이언트가 직접 각 서버에 질의. 서버 간 통신에 사용.</div>
+      </div>
+    </div>
   </div>
 </section>
 
 <footer>CS Visualizer · <a href="index.html" style="color:var(--accent);text-decoration:none;">목차로 돌아가기</a></footer>
 
 <script>
-/* ===== OSI 7계층 ===== */
+/* ============================================================
+   SECTION 1: PACKET JOURNEY
+   ============================================================ */
+const NODES = [
+  { id: 0, label: '내 컴퓨터 💻', color: '#6b8aff', x: 0.06 },
+  { id: 1, label: '공유기/모뎀',  color: '#ffaa00', x: 0.24 },
+  { id: 2, label: 'ISP 라우터',   color: '#ff9944', x: 0.42 },
+  { id: 3, label: '백본 A',       color: '#8888aa', x: 0.60 },
+  { id: 4, label: '백본 B',       color: '#8888aa', x: 0.76 },
+  { id: 5, label: '목적지 🖥️',   color: '#00ffaa', x: 0.94 },
+];
+const TR_MS = [2, 15, 28, 38, 55];
+const EDGES = [[0,1],[1,2],[2,3],[3,4],[4,5]];
+
+let packetAnimId = null;
+let packetPos = -1;
+let packetLossMode = false;
+let packetPhase = 0; // 0=idle 1=sending 2=lost 3=done
+
+const pCanvas = document.getElementById('packetCanvas');
+const pCtx = pCanvas.getContext('2d');
+
+function getNodeY() { return pCanvas.height / 2; }
+
+function drawPacketScene(packetFrac, lostAt) {
+  pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+  const W = pCanvas.width, H = pCanvas.height;
+
+  // Edges
+  pCtx.lineWidth = 2;
+  pCtx.strokeStyle = '#2a2a3a';
+  NODES.forEach((n, i) => {
+    if (i < NODES.length - 1) {
+      pCtx.beginPath();
+      pCtx.moveTo(n.x * W, H / 2);
+      pCtx.lineTo(NODES[i + 1].x * W, H / 2);
+      pCtx.stroke();
+    }
+  });
+
+  // Nodes
+  NODES.forEach((n, i) => {
+    const x = n.x * W, y = H / 2;
+    pCtx.beginPath();
+    pCtx.arc(x, y, 18, 0, Math.PI * 2);
+    pCtx.fillStyle = n.color + '22';
+    pCtx.fill();
+    pCtx.strokeStyle = n.color;
+    pCtx.lineWidth = 2;
+    pCtx.stroke();
+
+    pCtx.fillStyle = n.color;
+    pCtx.font = '600 11px JetBrains Mono, monospace';
+    pCtx.textAlign = 'center';
+    pCtx.fillText(n.label, x, y + 34);
+
+    // TTL indicator
+    if (packetFrac >= 0) {
+      const ttl = 64 - Math.floor(packetFrac * 5);
+      if (i <= Math.floor(packetFrac * 5)) {
+        pCtx.fillStyle = '#888';
+        pCtx.font = '10px JetBrains Mono, monospace';
+        pCtx.fillText('TTL ' + ttl, x, y - 26);
+      }
+    }
+  });
+
+  // Packet
+  if (packetFrac >= 0 && packetFrac <= 1) {
+    const startX = NODES[0].x * W;
+    const endX = NODES[NODES.length - 1].x * W;
+    const px = startX + (endX - startX) * packetFrac;
+    const py = H / 2;
+
+    if (lostAt !== null && packetFrac >= lostAt) {
+      // Lost - draw fragments
+      pCtx.fillStyle = '#ff4466';
+      pCtx.font = '14px monospace';
+      pCtx.fillText('✗', px, py - 8);
+      pCtx.fillStyle = 'rgba(255,68,102,0.3)';
+      pCtx.beginPath(); pCtx.arc(px, py, 10, 0, Math.PI*2); pCtx.fill();
+    } else {
+      pCtx.beginPath();
+      pCtx.arc(px, py, 8, 0, Math.PI * 2);
+      pCtx.fillStyle = '#00ffaa';
+      pCtx.fill();
+      pCtx.strokeStyle = '#fff';
+      pCtx.lineWidth = 1.5;
+      pCtx.stroke();
+
+      // Glow
+      pCtx.beginPath();
+      pCtx.arc(px, py, 16, 0, Math.PI * 2);
+      pCtx.fillStyle = 'rgba(0,255,170,0.1)';
+      pCtx.fill();
+    }
+  }
+}
+
+function resizePacketCanvas() {
+  const wrap = pCanvas.parentElement;
+  pCanvas.width = wrap.clientWidth;
+  pCanvas.height = 200;
+  drawPacketScene(packetPos < 0 ? -1 : packetPos / 5, null);
+}
+
+function packetSend() {
+  if (packetAnimId) cancelAnimationFrame(packetAnimId);
+  packetLossMode = false;
+  packetPos = -1;
+  // Reset traceroute
+  for (let i = 0; i < 5; i++) {
+    const r = document.getElementById('tr' + i);
+    r.style.opacity = '0.3';
+    r.classList.remove('tr-active');
+    r.querySelector('.tr-ms').textContent = '— ms';
+  }
+  document.getElementById('nodeInfoBox').className = 'node-info-box';
+  document.getElementById('nodeInfoBox').textContent = '패킷 전송 중...';
+
+  let frac = 0;
+  let lastHop = -1;
+  function step() {
+    frac += 0.005;
+    if (frac > 1) frac = 1;
+    drawPacketScene(frac, null);
+
+    const hopIdx = Math.floor(frac * 5);
+    if (hopIdx !== lastHop && hopIdx > 0 && hopIdx <= 5) {
+      lastHop = hopIdx;
+      const trEl = document.getElementById('tr' + (hopIdx - 1));
+      if (trEl) {
+        trEl.style.opacity = '1';
+        trEl.classList.add('tr-active');
+        setTimeout(() => trEl.classList.remove('tr-active'), 800);
+        trEl.querySelector('.tr-ms').textContent = TR_MS[hopIdx - 1] + ' ms';
+      }
+      const node = NODES[hopIdx];
+      document.getElementById('nodeInfoBox').className = 'node-info-box active';
+      document.getElementById('nodeInfoBox').innerHTML =
+        '<b style="color:' + node.color + '">' + node.label + '</b> &nbsp;|&nbsp; ' +
+        '목적지: 142.250.80.46 &nbsp;→&nbsp; 다음 홉 결정 중... &nbsp;|&nbsp; TTL: ' + (64 - hopIdx);
+    }
+
+    if (frac < 1) {
+      packetAnimId = requestAnimationFrame(step);
+    } else {
+      document.getElementById('nodeInfoBox').innerHTML = '<b style="color:var(--accent)">✓ 패킷 도착!</b> 142.250.80.46 (Google) &nbsp;|&nbsp; 총 지연: 55ms &nbsp;|&nbsp; TTL: 59';
+    }
+  }
+  packetAnimId = requestAnimationFrame(step);
+}
+
+function packetLoss() {
+  if (packetAnimId) cancelAnimationFrame(packetAnimId);
+  for (let i = 0; i < 5; i++) {
+    const r = document.getElementById('tr' + i);
+    r.style.opacity = '0.3';
+    r.querySelector('.tr-ms').textContent = '— ms';
+  }
+  document.getElementById('nodeInfoBox').className = 'node-info-box active';
+  document.getElementById('nodeInfoBox').textContent = '패킷 손실 시뮬레이션 중... TCP가 재전송합니다.';
+
+  const lossAt = 0.5;
+  let frac = 0;
+  function step() {
+    frac += 0.005;
+    if (frac > lossAt + 0.05) {
+      drawPacketScene(frac, lossAt);
+      // After loss, show retransmit note
+      if (frac > lossAt + 0.2) {
+        document.getElementById('nodeInfoBox').innerHTML =
+          '<b style="color:var(--danger)">✗ 패킷 손실 감지!</b> TCP RTO(Retransmission Timeout) 후 재전송 시작...';
+        return;
+      }
+    } else {
+      drawPacketScene(frac, null);
+    }
+    packetAnimId = requestAnimationFrame(step);
+  }
+  packetAnimId = requestAnimationFrame(step);
+}
+
+function packetReset() {
+  if (packetAnimId) cancelAnimationFrame(packetAnimId);
+  packetPos = -1;
+  for (let i = 0; i < 5; i++) {
+    const r = document.getElementById('tr' + i);
+    r.style.opacity = '0.3';
+    r.querySelector('.tr-ms').textContent = '— ms';
+  }
+  document.getElementById('nodeInfoBox').className = 'node-info-box';
+  document.getElementById('nodeInfoBox').textContent = '노드를 클릭하거나 패킷 전송을 시작하세요.';
+  drawPacketScene(-1, null);
+}
+
+window.addEventListener('resize', resizePacketCanvas);
+resizePacketCanvas();
+
+/* ============================================================
+   SECTION 2: IP ADDRESS
+   ============================================================ */
+function ipToInt(ip) {
+  return ip.split('.').reduce((acc, oct) => (acc << 8) + parseInt(oct), 0) >>> 0;
+}
+function intToIp(n) {
+  return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join('.');
+}
+
+function updateIP() {
+  const ipStr = document.getElementById('ipInput').value.trim();
+  const cidr = parseInt(document.getElementById('cidrSlider').value);
+  document.getElementById('cidrLabel').textContent = '/' + cidr;
+
+  const ipParts = ipStr.split('.').map(Number);
+  if (ipParts.length !== 4 || ipParts.some(p => isNaN(p) || p < 0 || p > 255)) {
+    document.getElementById('ipBitRow').innerHTML = '<span style="color:var(--danger);font-family:JetBrains Mono,monospace;font-size:0.8rem;">유효하지 않은 IP 주소</span>';
+    return;
+  }
+
+  const ipInt = ipToInt(ipStr);
+  const maskInt = cidr === 0 ? 0 : (0xFFFFFFFF << (32 - cidr)) >>> 0;
+  const netInt = (ipInt & maskInt) >>> 0;
+  const broadInt = (netInt | (~maskInt >>> 0)) >>> 0;
+  const hostCount = Math.pow(2, 32 - cidr) - 2;
+
+  // Render bit row
+  let bitsHtml = '';
+  const bits = [];
+  for (let i = 31; i >= 0; i--) bits.push((ipInt >>> i) & 1);
+
+  for (let i = 0; i < 32; i++) {
+    if (i > 0 && i % 8 === 0) bitsHtml += '<span class="ip-bit-sep">.</span>';
+    const isNet = i < cidr;
+    bitsHtml += `<span class="ip-bit ${isNet ? 'net' : 'host'}">${bits[i]}</span>`;
+  }
+
+  document.getElementById('ipBitRow').innerHTML = bitsHtml;
+  document.getElementById('ipNetwork').textContent = intToIp(netInt);
+  document.getElementById('ipBroadcast').textContent = intToIp(broadInt);
+  document.getElementById('ipMask').textContent = intToIp(maskInt);
+  document.getElementById('ipHostCount').textContent = hostCount > 0 ? hostCount.toLocaleString() + '개' : '불가';
+}
+
+updateIP();
+
+/* ============================================================
+   SECTION 3: OSI 7-LAYER
+   ============================================================ */
 const OSI_LAYERS = [
-  {
-    num: 7, name: '응용 계층', en: 'Application',
-    unit: '데이터', color: 'var(--accent)',
-    desc: '사용자와 직접 상호작용하는 최상위 계층입니다. 네트워크 서비스를 응용 프로그램에 제공합니다.',
-    examples: 'HTTP, HTTPS, FTP, SMTP, DNS, SSH, Telnet'
-  },
-  {
-    num: 6, name: '표현 계층', en: 'Presentation',
-    unit: '데이터', color: 'var(--accent3)',
-    desc: '데이터의 형식 변환, 암호화, 압축을 담당합니다. 서로 다른 시스템 간의 데이터 표현 방식을 통일합니다.',
-    examples: 'SSL/TLS, JPEG, PNG, ASCII, Unicode, MPEG'
-  },
-  {
-    num: 5, name: '세션 계층', en: 'Session',
-    unit: '데이터', color: 'var(--accent4)',
-    desc: '통신 세션을 설정, 유지, 종료하는 역할을 합니다. 대화 제어와 동기화를 관리합니다.',
-    examples: 'NetBIOS, RPC, NFS, SQL, SIP'
-  },
-  {
-    num: 4, name: '전송 계층', en: 'Transport',
-    unit: '세그먼트', color: 'var(--accent2)',
-    desc: '종단 간(end-to-end) 신뢰성 있는 데이터 전송을 보장합니다. 포트 번호로 프로세스를 구분합니다.',
-    examples: 'TCP, UDP, SCTP — 포트: HTTP(80), HTTPS(443), SSH(22)'
-  },
-  {
-    num: 3, name: '네트워크 계층', en: 'Network',
-    unit: '패킷', color: 'var(--success)',
-    desc: '서로 다른 네트워크 간의 경로 선택(라우팅)과 논리 주소(IP) 지정을 담당합니다.',
-    examples: 'IP(IPv4/IPv6), ICMP, ARP, OSPF, BGP, 라우터'
-  },
-  {
-    num: 2, name: '데이터링크 계층', en: 'Data Link',
-    unit: '프레임', color: 'var(--danger)',
-    desc: '물리적으로 연결된 두 노드 간의 신뢰성 있는 전송을 담당합니다. MAC 주소로 장치를 식별합니다.',
-    examples: 'Ethernet, Wi-Fi(802.11), PPP, MAC 주소, 스위치, 브리지'
-  },
-  {
-    num: 1, name: '물리 계층', en: 'Physical',
-    unit: '비트', color: 'var(--text-dim)',
-    desc: '물리적 매체를 통한 비트 스트림 전송을 담당합니다. 전기적, 광학적 신호를 정의합니다.',
-    examples: 'USB, RJ45, 광케이블, 허브, 리피터, RS-232'
-  },
+  { num:7, name:'응용 계층', en:'Application', unit:'데이터', color:'var(--accent)',
+    desc:'사용자와 직접 상호작용. 네트워크 서비스를 응용 프로그램에 제공합니다.',
+    examples:'HTTP, HTTPS, FTP, SMTP, DNS, SSH, Telnet',
+    headers: null },
+  { num:6, name:'표현 계층', en:'Presentation', unit:'데이터', color:'var(--accent3)',
+    desc:'데이터 형식 변환, 암호화(TLS), 압축. 서로 다른 시스템 간 데이터 표현 통일.',
+    examples:'SSL/TLS, JPEG, PNG, ASCII, Unicode, MPEG',
+    headers: null },
+  { num:5, name:'세션 계층', en:'Session', unit:'데이터', color:'#a855f7',
+    desc:'통신 세션 설정·유지·종료. 대화 제어 및 동기화 관리.',
+    examples:'NetBIOS, RPC, NFS, SQL, SIP',
+    headers: null },
+  { num:4, name:'전송 계층', en:'Transport', unit:'세그먼트', color:'var(--accent2)',
+    desc:'종단 간(end-to-end) 신뢰성 있는 데이터 전송. 포트 번호로 프로세스를 구분합니다.',
+    examples:'TCP, UDP — 포트: HTTP(80), HTTPS(443), SSH(22)',
+    headers: ['Source Port (16b)', 'Dest Port (16b)', 'Seq Num (32b)', 'Ack Num (32b)', 'Flags', 'Window Size'] },
+  { num:3, name:'네트워크 계층', en:'Network', unit:'패킷', color:'var(--success)',
+    desc:'경로 선택(라우팅)과 논리 주소(IP) 지정을 담당합니다.',
+    examples:'IP(v4/v6), ICMP, ARP, OSPF, BGP, 라우터',
+    headers: ['Version', 'TTL', 'Protocol', 'Source IP (32b)', 'Dest IP (32b)', 'Checksum'] },
+  { num:2, name:'데이터링크 계층', en:'Data Link', unit:'프레임', color:'var(--danger)',
+    desc:'물리적으로 연결된 두 노드 간의 신뢰성 있는 전송. MAC 주소로 장치를 식별합니다.',
+    examples:'Ethernet, Wi-Fi(802.11), PPP, MAC 주소, 스위치',
+    headers: ['Dest MAC (48b)', 'Src MAC (48b)', 'EtherType', 'Payload', 'CRC (32b)'] },
+  { num:1, name:'물리 계층', en:'Physical', unit:'비트', color:'var(--text-dim)',
+    desc:'물리적 매체를 통한 비트 스트림 전송. 전기적·광학적 신호를 정의합니다.',
+    examples:'USB, RJ45, 광케이블, 허브, 리피터, RS-232',
+    headers: null },
 ];
 
 let osiOpen = new Set();
+let encapStep = 0;
+let encapAnimId = null;
 
 function renderOSI() {
   const stack = document.getElementById('osiStack');
@@ -216,6 +756,10 @@ function renderOSI() {
       ${isOpen ? `<div class="osi-detail">
         <p>${layer.desc}</p>
         <div class="osi-examples" style="color:${layer.color}">프로토콜/예시: ${layer.examples}</div>
+        ${layer.headers ? `<div class="header-fields" style="margin-top:8px;">${layer.headers.map(h => {
+          const cls = layer.num === 4 ? 'hf hf-tcp' : layer.num === 3 ? 'hf hf-ip' : 'hf hf-eth';
+          return `<span class="${cls}">${h}</span>`;
+        }).join('')}</div>` : ''}
       </div>` : ''}
     </div>`;
   }).join('');
@@ -229,140 +773,228 @@ function toggleOSI(num) {
 
 renderOSI();
 
-/* ===== TCP 3-way 핸드셰이크 ===== */
-const TCP_STEPS = [
-  {
-    msg: 'SYN', dir: 'c2s',
-    clientState: 'SYN-SENT', serverState: 'LISTEN',
-    desc: '① 클라이언트가 연결을 요청합니다. SYN 패킷을 서버로 전송 (seq=100)',
-    arrow: '→'
-  },
-  {
-    msg: 'SYN-ACK', dir: 's2c',
-    clientState: 'SYN-RECEIVED', serverState: 'SYN-RECEIVED',
-    desc: '② 서버가 SYN을 받고 SYN-ACK로 응답합니다. (seq=300, ack=101)',
-    arrow: '←'
-  },
-  {
-    msg: 'ACK', dir: 'c2s',
-    clientState: 'ESTABLISHED', serverState: 'ESTABLISHED',
-    desc: '③ 클라이언트가 ACK를 보내 연결을 확립합니다. (ack=301) — 3-way 핸드셰이크 완료!',
-    arrow: '→'
-  },
-  {
-    msg: '연결 완료 — 데이터 전송 중...', dir: 'info',
-    clientState: 'ESTABLISHED', serverState: 'ESTABLISHED',
-    desc: '✓ TCP 연결이 수립되었습니다. 신뢰성 있는 양방향 통신이 가능합니다.',
-    arrow: '⟷'
-  },
-  {
-    msg: 'FIN', dir: 'c2s',
-    clientState: 'FIN-WAIT-1', serverState: 'ESTABLISHED',
-    desc: '④ 클라이언트가 연결 종료를 요청합니다. (4-way close 시작)',
-    arrow: '→'
-  },
-  {
-    msg: 'ACK', dir: 's2c',
-    clientState: 'FIN-WAIT-2', serverState: 'CLOSE-WAIT',
-    desc: '⑤ 서버가 FIN을 확인합니다.',
-    arrow: '←'
-  },
-  {
-    msg: 'FIN', dir: 's2c',
-    clientState: 'TIME-WAIT', serverState: 'LAST-ACK',
-    desc: '⑥ 서버도 연결 종료를 요청합니다.',
-    arrow: '←'
-  },
-  {
-    msg: 'ACK', dir: 'c2s',
-    clientState: 'CLOSED', serverState: 'CLOSED',
-    desc: '⑦ 클라이언트가 최종 ACK를 보냅니다. 연결이 완전히 종료됩니다.',
-    arrow: '→'
-  },
+const ENCAP_CONFIGS = [
+  { label: 'L7 데이터 (HTTP)', cls: 'encap-l7', width: 40 },
+  { label: 'L4 세그먼트 (TCP Header + 데이터)', cls: 'encap-l4', width: 55 },
+  { label: 'L3 패킷 (IP Header + TCP)', cls: 'encap-l3', width: 65 },
+  { label: 'L2 프레임 (ETH Header + IP + FCS)', cls: 'encap-l2', width: 78 },
+  { label: 'L1 비트 (0101 1100...)', cls: 'encap-l1', width: 100 },
 ];
 
-let tcpStep = 0;
+const HEADER_DETAILS = {
+  0: { title: 'L7 Application Data', cls: 'hf-tcp', fields: ['GET /index.html HTTP/1.1', 'Host: example.com', 'Accept: text/html'] },
+  1: { title: 'L4 TCP Segment Header', cls: 'hf-tcp', fields: ['Source Port: 54321', 'Dest Port: 80 (HTTP)', 'Seq Num: 0x00A1B2C3', 'Ack Num: 0x00000000', 'Flags: SYN|ACK', 'Window: 65535'] },
+  2: { title: 'L3 IP Packet Header', cls: 'hf-ip', fields: ['Version: 4 (IPv4)', 'TTL: 64', 'Protocol: 6 (TCP)', 'Src IP: 192.168.1.100', 'Dst IP: 93.184.216.34', 'Checksum: 0x3A1B'] },
+  3: { title: 'L2 Ethernet Frame Header', cls: 'hf-eth', fields: ['Dst MAC: AA:BB:CC:DD:EE:FF', 'Src MAC: 11:22:33:44:55:66', 'EtherType: 0x0800 (IPv4)', 'FCS (CRC-32): 0x1A2B3C4D'] },
+  4: { title: 'L1 Physical Bits', cls: 'hf-eth', fields: ['01001000 01101001 00100000 ...', 'Manchester encoding / NRZ', '전압/광신호로 변환되어 전송'] },
+};
 
-function tcpNext() {
-  if (tcpStep >= TCP_STEPS.length) return;
-  const step = TCP_STEPS[tcpStep];
+function renderEncapRows(visibleCount) {
+  const container = document.getElementById('encapRows');
+  container.innerHTML = ENCAP_CONFIGS.slice(0, visibleCount).map((cfg, i) => {
+    return `<div class="encap-row" onclick="showHeaderDetail(${i})">
+      <div class="encap-block ${cfg.cls}" style="width:${cfg.width}%;">${cfg.label}</div>
+    </div>`;
+  }).join('');
+}
 
-  document.getElementById('tcpClientState').textContent = step.clientState;
-  document.getElementById('tcpServerState').textContent = step.serverState;
+function showHeaderDetail(idx) {
+  const detail = HEADER_DETAILS[idx];
+  const box = document.getElementById('headerDetail');
+  const cls = detail.cls;
+  box.className = 'header-detail show';
+  box.innerHTML = `<div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:8px;">${detail.title}</div>
+    <div class="header-fields">${detail.fields.map(f => `<span class="hf ${cls}">${f}</span>`).join('')}</div>`;
+}
 
-  // Color states
-  const clientStateEl = document.getElementById('tcpClientState');
-  const serverStateEl = document.getElementById('tcpServerState');
-  const stateColor = (s) => {
-    if (s === 'ESTABLISHED') return 'var(--accent)';
-    if (s === 'CLOSED') return 'var(--text-dim)';
-    if (s.includes('WAIT') || s.includes('LAST')) return 'var(--accent4)';
+function runEncapAnim() {
+  encapStep = 0;
+  renderEncapRows(0);
+  document.getElementById('headerDetail').className = 'header-detail';
+  function tick() {
+    encapStep++;
+    renderEncapRows(encapStep);
+    if (encapStep < ENCAP_CONFIGS.length) {
+      encapAnimId = setTimeout(tick, 600);
+    }
+  }
+  encapAnimId = setTimeout(tick, 400);
+}
+
+function resetEncap() {
+  clearTimeout(encapAnimId);
+  encapStep = 0;
+  renderEncapRows(0);
+  document.getElementById('headerDetail').className = 'header-detail';
+}
+
+renderEncapRows(ENCAP_CONFIGS.length);
+
+/* ============================================================
+   SECTION 4: TCP SEQUENCE DIAGRAM
+   ============================================================ */
+const TCP_SEQ_STEPS = [
+  { msg: 'SYN', dir:'c2s', detail:'SEQ=0 | SYN=1', clientState:'SYN-SENT', serverState:'LISTEN', desc:'① 클라이언트가 연결 요청. SYN 패킷 전송 (SEQ=0, SYN=1)' },
+  { msg: 'SYN-ACK', dir:'s2c', detail:'SEQ=0, ACK=1', clientState:'SYN-SENT', serverState:'SYN-RECEIVED', desc:'② 서버가 SYN 수신 후 SYN-ACK 응답. (SEQ=0, ACK=1)' },
+  { msg: 'ACK', dir:'c2s', detail:'SEQ=1, ACK=1', clientState:'ESTABLISHED', serverState:'ESTABLISHED', desc:'③ 클라이언트가 ACK 전송. 3-way 핸드셰이크 완료! TCP 연결 확립.' },
+  { msg: '데이터 전송 (Application Data)', dir:'info', detail:'', clientState:'ESTABLISHED', serverState:'ESTABLISHED', desc:'✓ 양방향 신뢰성 있는 데이터 전송 가능. HTTP 요청/응답 등.' },
+  { msg: 'FIN', dir:'c2s', detail:'FIN=1', clientState:'FIN-WAIT-1', serverState:'ESTABLISHED', desc:'④ 클라이언트가 연결 종료 요청 (4-way close 시작)' },
+  { msg: 'ACK', dir:'s2c', detail:'ACK=1', clientState:'FIN-WAIT-2', serverState:'CLOSE-WAIT', desc:'⑤ 서버가 FIN 수신 확인' },
+  { msg: 'FIN', dir:'s2c', detail:'FIN=1', clientState:'TIME-WAIT', serverState:'LAST-ACK', desc:'⑥ 서버도 연결 종료 요청' },
+  { msg: 'ACK', dir:'c2s', detail:'ACK=1', clientState:'CLOSED', serverState:'CLOSED', desc:'⑦ 최종 ACK. 연결 완전 종료. (2MSL Timer 후 CLOSED)' },
+];
+
+let tcpSeqStep = 0;
+
+function tcpSeqNext() {
+  if (tcpSeqStep >= TCP_SEQ_STEPS.length) return;
+  const s = TCP_SEQ_STEPS[tcpSeqStep];
+
+  document.getElementById('tcpClientState').textContent = s.clientState;
+  document.getElementById('tcpServerState').textContent = s.serverState;
+
+  const stateColor = (st) => {
+    if (st === 'ESTABLISHED') return 'var(--accent)';
+    if (st === 'CLOSED') return 'var(--text-dim)';
+    if (st.includes('WAIT') || st.includes('LAST')) return 'var(--accent4)';
     return 'var(--accent2)';
   };
-  clientStateEl.style.color = stateColor(step.clientState);
-  serverStateEl.style.color = stateColor(step.serverState);
+  document.getElementById('tcpClientState').style.color = stateColor(s.clientState);
+  document.getElementById('tcpServerState').style.color = stateColor(s.serverState);
 
-  const msgs = document.getElementById('tcpMessages');
-  if (step.dir !== 'info') {
-    const el = document.createElement('div');
-    el.className = `tcp-msg ${step.dir}`;
-    el.innerHTML = `<span class="tcp-msg-arrow">${step.arrow}</span><span class="tcp-msg-text">${step.msg}</span>`;
-    msgs.appendChild(el);
-    msgs.scrollTop = msgs.scrollHeight;
+  const container = document.getElementById('tcpSeqArrows');
+  const div = document.createElement('div');
+  div.className = 'tcp-seq-msg ' + s.dir;
+  div.style.animation = 'fadeSlideIn 0.3s';
+
+  if (s.dir === 'info') {
+    div.innerHTML = `<span class="msg-label">${s.msg}</span>`;
   } else {
-    const el = document.createElement('div');
-    el.style.cssText = 'font-family:JetBrains Mono,monospace;font-size:0.82rem;color:var(--accent);text-align:center;padding:10px;background:rgba(0,255,170,0.06);border-radius:8px;border:1px solid rgba(0,255,170,0.2);animation:fadeSlideIn 0.3s;';
-    el.textContent = step.msg;
-    msgs.appendChild(el);
+    const arrow = document.createElement('div');
+    arrow.className = 'arrow-line';
+    const label = document.createElement('span');
+    label.className = 'msg-label';
+    label.innerHTML = s.msg + ' <span style="opacity:0.6;font-size:0.62rem;">' + s.detail + '</span>';
+    if (s.dir === 'c2s') {
+      div.appendChild(label);
+      div.appendChild(arrow);
+    } else {
+      div.appendChild(arrow);
+      div.appendChild(label);
+    }
   }
+  container.appendChild(div);
 
-  document.getElementById('tcpStepDesc').textContent = step.desc;
-  tcpStep++;
+  document.getElementById('tcpSeqDesc').textContent = s.desc;
+  tcpSeqStep++;
 
-  if (tcpStep >= TCP_STEPS.length) {
-    document.getElementById('tcpNextBtn').disabled = true;
-    document.getElementById('tcpNextBtn').textContent = '완료';
+  if (tcpSeqStep >= TCP_SEQ_STEPS.length) {
+    document.getElementById('tcpSeqNextBtn').disabled = true;
+    document.getElementById('tcpSeqNextBtn').textContent = '완료';
   }
 }
 
-function tcpReset() {
-  tcpStep = 0;
+function tcpSeqReset() {
+  tcpSeqStep = 0;
+  document.getElementById('tcpSeqArrows').innerHTML = '';
   document.getElementById('tcpClientState').textContent = 'CLOSED';
   document.getElementById('tcpClientState').style.color = '';
   document.getElementById('tcpServerState').textContent = 'LISTEN';
   document.getElementById('tcpServerState').style.color = '';
-  document.getElementById('tcpMessages').innerHTML = '';
-  document.getElementById('tcpStepDesc').textContent = '다음 단계 버튼을 눌러 TCP 핸드셰이크를 시작하세요.';
-  document.getElementById('tcpNextBtn').disabled = false;
-  document.getElementById('tcpNextBtn').textContent = '다음 단계 →';
+  document.getElementById('tcpSeqDesc').textContent = '다음 단계 버튼을 눌러 TCP 핸드셰이크를 시작하세요.';
+  document.getElementById('tcpSeqNextBtn').disabled = false;
+  document.getElementById('tcpSeqNextBtn').textContent = '다음 단계 →';
 }
 
-/* ===== HTTP 요청/응답 ===== */
-const HTTP_BODIES = {
-  GET: {
-    req: '',
-    res200: '{\n  "id": 1,\n  "name": "홍길동",\n  "email": "hong@example.com"\n}',
-  },
-  POST: {
-    req: '{\n  "name": "김철수",\n  "email": "kim@example.com"\n}',
-    res200: '{\n  "id": 2,\n  "name": "김철수",\n  "message": "Created"\n}',
-  },
-  PUT: {
-    req: '{\n  "name": "이영희",\n  "email": "lee@example.com"\n}',
-    res200: '{\n  "id": 1,\n  "name": "이영희",\n  "message": "Updated"\n}',
-  },
-  DELETE: {
-    req: '',
-    res200: '{\n  "message": "Deleted successfully"\n}',
-  },
-};
+/* ============================================================
+   SECTION 5: TLS HANDSHAKE
+   ============================================================ */
+const TLS_STEPS = [
+  { num:'1', title:'Client Hello →', dir:'client',
+    desc:'클라이언트가 지원하는 TLS 버전(1.3), 암호화 suite 목록(AES-256-GCM 등), 랜덤값(Client Random)을 서버에 전송합니다.',
+    packet:'ClientHello: TLS 1.3, cipher_suites=[AES_256_GCM_SHA384,...], random=0x3f2a...' },
+  { num:'2', title:'← Server Hello + Certificate', dir:'server',
+    desc:'서버가 암호화 suite를 선택하고 서버 인증서(공개키 포함)와 Server Random을 전송합니다. TLS 1.3은 여기서 이미 Key Share도 함께 전송합니다.',
+    packet:'ServerHello: cipher=AES_256_GCM_SHA384, Certificate=[CN=example.com,CA=DigiCert]' },
+  { num:'3', title:'인증서 검증 (클라이언트)', dir:'client',
+    desc:'클라이언트가 서버 인증서를 CA(인증 기관) 체인으로 검증합니다. Root CA → Intermediate CA → 서버 인증서 순으로 신뢰 체인을 확인합니다.',
+    packet:'Verify: DigiCert Root CA → DigiCert TLS RSA SHA256 → example.com ✓' },
+  { num:'4', title:'키 교환 / Session Key 생성', dir:'client',
+    desc:'양측이 ECDHE(Elliptic Curve Diffie-Hellman)로 Pre-Master Secret을 교환하고, 여기서 Session Key를 독립적으로 파생합니다. 이 키는 네트워크를 절대 통과하지 않습니다!',
+    packet:'ECDHE key_share → PRF(pre_master, client_random, server_random) → session_key' },
+  { num:'5', title:'Finished 교환 ↔', dir:'server',
+    desc:'양측이 "Finished" 메시지를 암호화하여 교환합니다. 이는 핸드셰이크 전체가 변조 없이 완료되었음을 서로 확인하는 과정입니다.',
+    packet:'Finished(client) + Finished(server) → 핸드셰이크 무결성 검증 완료' },
+  { num:'6', title:'✅ 암호화 채널 확립', dir:'client',
+    desc:'이제 모든 통신은 session key로 대칭 암호화(AES-256-GCM)됩니다. TLS 1.3은 0-RTT 모드로 이전 세션을 재활용하면 핸드셰이크 지연을 줄일 수도 있습니다.',
+    packet:'Application Data: [암호화된 HTTP 요청/응답]' },
+];
 
+let tlsStep = 0;
+
+function renderTLSSteps() {
+  const container = document.getElementById('tlsSteps');
+  container.innerHTML = TLS_STEPS.map((s, i) => {
+    let cls = 'tls-step';
+    if (i < tlsStep) cls += ' tls-done';
+    else if (i === tlsStep) cls += ' tls-active';
+    const pktCls = s.dir === 'client' ? 'client' : 'server';
+    return `<div class="${cls}">
+      <div class="tls-step-num">${s.num}</div>
+      <div class="tls-step-content">
+        <div class="tls-step-title">${s.title}</div>
+        ${i <= tlsStep ? `<div class="tls-step-desc">${s.desc}</div>
+        <div class="tls-packet ${pktCls}" style="margin-top:6px;">${s.packet}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const locked = document.getElementById('tlsLocked');
+  if (tlsStep >= TLS_STEPS.length) {
+    locked.textContent = '🔒 TLS 연결 확립! 모든 통신 암호화됨';
+    locked.style.color = 'var(--accent)';
+  } else if (tlsStep > 0) {
+    locked.textContent = '🔓 핸드셰이크 진행 중... (' + tlsStep + '/' + TLS_STEPS.length + ')';
+    locked.style.color = 'var(--accent4)';
+  }
+}
+
+function tlsNext() {
+  if (tlsStep >= TLS_STEPS.length) return;
+  renderTLSSteps();
+  tlsStep++;
+  renderTLSSteps();
+  if (tlsStep >= TLS_STEPS.length) {
+    document.getElementById('tlsNextBtn').disabled = true;
+    document.getElementById('tlsNextBtn').textContent = '완료';
+  }
+}
+
+function tlsReset() {
+  tlsStep = 0;
+  renderTLSSteps();
+  document.getElementById('tlsNextBtn').disabled = false;
+  document.getElementById('tlsNextBtn').textContent = '다음 단계 →';
+  const locked = document.getElementById('tlsLocked');
+  locked.textContent = '🔓 핸드셰이크 대기 중...';
+  locked.style.color = '';
+}
+
+renderTLSSteps();
+
+/* ============================================================
+   SECTION 6: HTTP
+   ============================================================ */
+const HTTP_BODIES = {
+  GET:    { req:'', res200:'{\n  "id": 1,\n  "name": "홍길동",\n  "email": "hong@example.com"\n}' },
+  POST:   { req:'{\n  "name": "김철수",\n  "email": "kim@example.com"\n}', res200:'{\n  "id": 2,\n  "name": "김철수",\n  "message": "Created"\n}' },
+  PUT:    { req:'{\n  "name": "이영희",\n  "email": "lee@example.com"\n}', res200:'{\n  "id": 1,\n  "name": "이영희",\n  "message": "Updated"\n}' },
+  DELETE: { req:'', res200:'{\n  "message": "Deleted successfully"\n}' },
+};
 const HTTP_STATUS_TEXTS = {
-  '200': 'OK', '201': 'Created', '204': 'No Content',
-  '301': 'Moved Permanently', '304': 'Not Modified',
-  '400': 'Bad Request', '401': 'Unauthorized', '403': 'Forbidden',
-  '404': 'Not Found',
-  '500': 'Internal Server Error', '502': 'Bad Gateway', '503': 'Service Unavailable'
+  '200':'OK','201':'Created','204':'No Content','301':'Moved Permanently',
+  '304':'Not Modified','400':'Bad Request','401':'Unauthorized','403':'Forbidden',
+  '404':'Not Found','500':'Internal Server Error','502':'Bad Gateway','503':'Service Unavailable'
 };
 
 function updateHTTP() {
@@ -371,101 +1003,54 @@ function updateHTTP() {
   const statusText = HTTP_STATUS_TEXTS[statusCode] || 'Unknown';
   const statusClass = 'http-status-' + statusCode[0];
   const body = HTTP_BODIES[method] || HTTP_BODIES.GET;
-  const endpoints = { GET: '/api/users/1', POST: '/api/users', PUT: '/api/users/1', DELETE: '/api/users/1' };
+  const endpoints = { GET:'/api/users/1', POST:'/api/users', PUT:'/api/users/1', DELETE:'/api/users/1' };
   const url = endpoints[method] || '/api/resource';
-
-  const methodColors = { GET: 'var(--accent)', POST: 'var(--accent2)', PUT: 'var(--accent4)', DELETE: 'var(--danger)' };
-  const mColor = methodColors[method] || 'var(--accent)';
+  const mColors = { GET:'var(--accent)', POST:'var(--accent2)', PUT:'var(--accent4)', DELETE:'var(--danger)' };
+  const mColor = mColors[method] || 'var(--accent)';
 
   const reqPanel = document.getElementById('httpReqPanel');
-  const bodyLines = body.req ? body.req.split('\n').map(l =>
-    `<div class="http-line http-body-line">${escapeHTML(l)}</div>`).join('') : '';
-
+  const bodyLines = body.req ? body.req.split('\n').map(l => `<div class="http-line http-body-line">${escHTML(l)}</div>`).join('') : '';
   reqPanel.innerHTML = `
     <div class="http-line"><span style="color:${mColor};font-weight:700">${method}</span> <span class="http-url">${url}</span> <span style="color:var(--text-dim)">HTTP/1.1</span></div>
     <div class="http-line"><span class="http-header-k">Host:</span> <span class="http-header-v">api.example.com</span></div>
     <div class="http-line"><span class="http-header-k">Accept:</span> <span class="http-header-v">application/json</span></div>
     <div class="http-line"><span class="http-header-k">Authorization:</span> <span class="http-header-v">Bearer eyJhbGci...</span></div>
-    <div class="http-line"><span class="http-header-k">User-Agent:</span> <span class="http-header-v">Mozilla/5.0</span></div>
+    <div class="http-line"><span class="http-header-k">User-Agent:</span> <span class="http-header-v">Mozilla/5.0 (Chrome/120)</span></div>
     ${body.req ? `<div class="http-line"><span class="http-header-k">Content-Type:</span> <span class="http-header-v">application/json</span></div>
     <div class="http-line"><span class="http-header-k">Content-Length:</span> <span class="http-header-v">${body.req.length}</span></div>
-    <div class="http-line" style="margin-top:8px;color:var(--text-dim)">— body —</div>
-    ${bodyLines}` : ''}
-  `;
+    <div class="http-line" style="margin-top:8px;color:var(--text-dim)">— body —</div>${bodyLines}` : ''}`;
 
   const resPanel = document.getElementById('httpResPanel');
-  const resBodySrc = parseInt(statusCode) >= 200 && parseInt(statusCode) < 300 ? body.res200 :
-    `{\n  "error": "${statusText}",\n  "code": ${statusCode}\n}`;
-  const resBodyLines = resBodySrc.split('\n').map(l =>
-    `<div class="http-line http-body-line">${escapeHTML(l)}</div>`).join('');
-
+  const resBodySrc = parseInt(statusCode) >= 200 && parseInt(statusCode) < 300 ? body.res200
+    : `{\n  "error": "${statusText}",\n  "code": ${statusCode}\n}`;
+  const resBodyLines = resBodySrc.split('\n').map(l => `<div class="http-line http-body-line">${escHTML(l)}</div>`).join('');
   resPanel.innerHTML = `
     <div class="http-line"><span style="color:var(--text-dim)">HTTP/1.1</span> <span class="${statusClass}">${statusCode} ${statusText}</span></div>
-    <div class="http-line"><span class="http-header-k">Content-Type:</span> <span class="http-header-v">application/json</span></div>
+    <div class="http-line"><span class="http-header-k">Content-Type:</span> <span class="http-header-v">application/json; charset=utf-8</span></div>
     <div class="http-line"><span class="http-header-k">Date:</span> <span class="http-header-v">Thu, 27 Feb 2026 00:00:00 GMT</span></div>
     <div class="http-line"><span class="http-header-k">Server:</span> <span class="http-header-v">nginx/1.24.0</span></div>
-    <div class="http-line"><span class="http-header-k">Cache-Control:</span> <span class="http-header-v">no-cache</span></div>
-    ${statusCode !== '204' ? `<div class="http-line" style="margin-top:8px;color:var(--text-dim)">— body —</div>${resBodyLines}` : ''}
-  `;
+    <div class="http-line"><span class="http-header-k">Cache-Control:</span> <span class="http-header-v">no-cache, no-store</span></div>
+    <div class="http-line"><span class="http-header-k">Strict-Transport-Security:</span> <span class="http-header-v">max-age=31536000</span></div>
+    ${statusCode !== '204' ? `<div class="http-line" style="margin-top:8px;color:var(--text-dim)">— body —</div>${resBodyLines}` : ''}`;
 }
 
-function escapeHTML(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function escHTML(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 updateHTTP();
 
-/* ===== DNS 조회 ===== */
+/* ============================================================
+   SECTION 7: DNS
+   ============================================================ */
 const DNS_STEPS = [
-  {
-    icon: '🌐',
-    name: '브라우저 캐시',
-    desc: 'www.example.com 의 IP를 브라우저 캐시에서 검색합니다.',
-    packet: '캐시 미스',
-    result: null
-  },
-  {
-    icon: '💻',
-    name: 'OS / hosts 파일',
-    desc: '/etc/hosts 파일과 OS DNS 캐시를 검색합니다.',
-    packet: '캐시 미스',
-    result: null
-  },
-  {
-    icon: '🔄',
-    name: 'Recursive Resolver',
-    desc: 'ISP 또는 로컬 DNS 서버에 재귀 질의를 요청합니다.',
-    packet: 'Query: www.example.com?',
-    result: null
-  },
-  {
-    icon: '🌍',
-    name: 'Root Name Server',
-    desc: '루트 네임서버에 .com TLD 서버 주소를 요청합니다.',
-    packet: 'Referral → .com TLD',
-    result: '192.5.6.30'
-  },
-  {
-    icon: '📡',
-    name: 'TLD Name Server (.com)',
-    desc: '.com TLD 서버에서 example.com의 권한 서버 주소를 반환합니다.',
-    packet: 'Referral → Authoritative',
-    result: '205.251.196.1'
-  },
-  {
-    icon: '🏢',
-    name: 'Authoritative Name Server',
-    desc: 'example.com의 권한 서버에서 최종 IP 주소를 반환합니다.',
-    packet: 'A Record: 93.184.216.34',
-    result: '93.184.216.34'
-  },
-  {
-    icon: '✅',
-    name: 'IP 주소 반환',
-    desc: 'www.example.com → 93.184.216.34 로 해석 완료! 브라우저가 해당 IP로 TCP 연결을 시도합니다.',
-    packet: '93.184.216.34',
-    result: '93.184.216.34'
-  },
+  { icon:'🌐', name:'브라우저 캐시', desc:'www.example.com의 IP를 브라우저 캐시에서 검색합니다.', packet:'캐시 미스 (TTL 만료)', result:null },
+  { icon:'💻', name:'OS / hosts 파일', desc:'/etc/hosts 파일과 OS DNS 캐시(nscd)를 검색합니다.', packet:'캐시 미스', result:null },
+  { icon:'🔄', name:'Recursive Resolver', desc:'ISP 또는 로컬 DNS(8.8.8.8)에 재귀 질의를 요청합니다.', packet:'Query: www.example.com Type=A?', result:null },
+  { icon:'🌍', name:'Root Name Server', desc:'13개 Root 서버 중 하나에 .com TLD 서버 주소를 질의합니다.', packet:'Referral → .com TLD: 192.5.6.30', result:'192.5.6.30' },
+  { icon:'📡', name:'TLD Name Server (.com)', desc:'.com TLD 서버에서 example.com의 권한 서버 주소를 반환합니다.', packet:'Referral → NS: ns1.example.com', result:'205.251.196.1' },
+  { icon:'🏢', name:'Authoritative Name Server', desc:'example.com의 권한 서버에서 최종 A 레코드를 반환합니다.', packet:'A Record: 93.184.216.34 (TTL=3600)', result:'93.184.216.34' },
+  { icon:'✅', name:'IP 주소 반환 + 캐시', desc:'www.example.com → 93.184.216.34 해석 완료! Resolver가 결과를 캐시합니다. 브라우저가 TCP 연결 시도.', packet:'93.184.216.34 (캐시 저장됨)', result:'93.184.216.34' },
 ];
 
 let dnsStep = -1;
@@ -491,21 +1076,19 @@ function dnsNext() {
     dnsStep = DNS_STEPS.length;
     document.getElementById('dnsNextBtn').disabled = true;
     document.getElementById('dnsNextBtn').textContent = '완료';
-    document.getElementById('dnsInfo').textContent =
-      '✓ DNS 조회 완료: www.example.com = 93.184.216.34 (TTL: 3600s)';
+    document.getElementById('dnsInfo').textContent = '✓ DNS 조회 완료: www.example.com = 93.184.216.34 (TTL: 3600s, 캐시 저장됨)';
     renderDNS();
     return;
   }
   renderDNS();
-  const step = DNS_STEPS[dnsStep];
   const msgs = [
     '브라우저 캐시를 확인합니다...',
-    'OS 캐시 및 hosts 파일을 확인합니다...',
-    'Recursive Resolver에 DNS 질의를 보냅니다...',
+    'OS 캐시 및 /etc/hosts 파일을 확인합니다...',
+    'Recursive Resolver(8.8.8.8)에 DNS 질의를 보냅니다...',
     'Root Name Server에 .com TLD 서버를 질의합니다...',
     '.com TLD 서버에서 권한 서버 주소를 가져옵니다...',
-    '권한 서버에서 최종 IP 주소를 가져옵니다...',
-    `DNS 해석 완료! IP: ${step.result}`,
+    '권한 서버(ns1.example.com)에서 최종 IP 주소를 가져옵니다...',
+    'DNS 해석 완료! IP: 93.184.216.34 — TCP 연결 시작',
   ];
   document.getElementById('dnsInfo').textContent = msgs[dnsStep] || '';
 }
