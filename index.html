@@ -147,6 +147,11 @@ canvas{display:block;width:100%;border-radius:8px;}
 .sort-speed{display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);}
 .sort-speed input[type=range]{-webkit-appearance:none;width:120px;height:4px;background:var(--border);border-radius:2px;outline:none;}
 .sort-speed input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--accent);border-radius:50%;cursor:pointer;}
+.sort-array-view{display:flex;flex-wrap:wrap;gap:3px;margin-top:10px;justify-content:center;}
+.sarr-cell{font-family:'JetBrains Mono',monospace;font-size:0.72rem;min-width:26px;padding:2px 4px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--surface2);transition:background 0.15s,border-color 0.15s,color 0.15s;}
+.sarr-cell.comparing{border-color:var(--accent4);background:rgba(255,217,61,0.2);color:var(--accent4);}
+.sarr-cell.swapping{border-color:var(--accent2);background:rgba(255,107,157,0.25);color:var(--accent2);}
+.sarr-cell.sorted{border-color:var(--accent);background:rgba(0,255,170,0.1);color:var(--accent);}
 /* STACK & QUEUE */
 .ds-container{display:flex;gap:40px;flex-wrap:wrap;justify-content:center;}
 .ds-panel{flex:1;min-width:280px;max-width:400px;}
@@ -687,6 +692,7 @@ footer{text-align:center;padding:60px 24px;color:var(--text-dim);font-size:0.85r
       <div class="sort-speed">🏎️<input type="range" id="sortSpeed" min="1" max="100" value="50"></div>
     </div>
     <div class="sort-bars" id="sortBars"></div>
+    <div class="sort-array-view" id="sortArrayView"></div>
     <div class="info-text" id="sortInfo">정렬 알고리즘을 선택하세요. 노란색=비교중, 분홍=교환중, 초록=정렬완료</div>
   </div>
 </section>
@@ -1276,8 +1282,12 @@ function renderHT(highlight=-1){document.getElementById('htVisual').innerHTML=ht
 
 // ===== SORTING =====
 let sA=[],sR=false;
-function initSort(){sA=Array.from({length:50},()=>Math.random()*0.9+0.1);rSB();}
-function rSB(c=[],s=[],d=[]){document.getElementById('sortBars').innerHTML=sA.map((v,i)=>{let cl='sort-bar';if(d.includes(i))cl+=' sorted';else if(s.includes(i))cl+=' swapping';else if(c.includes(i))cl+=' comparing';return`<div class="${cl}" style="height:${v*100}%"></div>`;}).join('');}
+function initSort(){sA=Array.from({length:30},()=>Math.floor(Math.random()*90)+5);rSB();}
+function rSB(c=[],s=[],d=[]){
+  const mx=Math.max(...sA);
+  document.getElementById('sortBars').innerHTML=sA.map((v,i)=>{let cl='sort-bar';if(d.includes(i))cl+=' sorted';else if(s.includes(i))cl+=' swapping';else if(c.includes(i))cl+=' comparing';return`<div class="${cl}" style="height:${(v/mx)*100}%"></div>`;}).join('');
+  document.getElementById('sortArrayView').innerHTML=sA.map((v,i)=>{let cl='sarr-cell';if(d.includes(i))cl+=' sorted';else if(s.includes(i))cl+=' swapping';else if(c.includes(i))cl+=' comparing';return`<span class="${cl}">${v}</span>`;}).join('');
+}
 function gD(){return 200-document.getElementById('sortSpeed').value*1.8;}
 const sl=ms=>new Promise(r=>setTimeout(r,ms));
 function resetSort(){sR=false;initSort();document.getElementById('sortInfo').textContent='정렬 알고리즘을 선택하세요. 노란색=비교중, 분홍=교환중, 초록=정렬완료';}
