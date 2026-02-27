@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.2 자료구조 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* Segment Tree & Fenwick extras */
+.st-array-view{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;}
+.st-cell{min-width:40px;height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.82rem;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);transition:all 0.25s;cursor:pointer;user-select:none;}
+.st-cell:hover{border-color:var(--accent3);background:rgba(107,138,255,0.12);}
+.st-cell.st-hl{border-color:var(--accent);background:rgba(0,255,170,0.18);color:var(--accent);}
+.st-cell.st-range{border-color:var(--accent3);background:rgba(107,138,255,0.12);color:var(--accent3);}
+.st-cell .st-idx{font-size:0.5rem;color:var(--text-dim);}
+.st-input-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+.st-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.9rem;padding:8px 12px;width:80px;outline:none;}
+.st-input:focus{border-color:var(--accent);}
+.st-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.82rem;padding:8px 12px;outline:none;cursor:pointer;}
+.st-result-box{font-family:'JetBrains Mono',monospace;font-size:0.88rem;color:var(--accent);margin-top:10px;padding:10px 16px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--accent);min-height:36px;}
+/* Fenwick */
+.bit-arr-view{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
+.bit-cell2{min-width:40px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.82rem;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);transition:all 0.25s;}
+.bit-cell2 .bc-idx{font-size:0.5rem;color:var(--text-dim);}
+.bit-cell2.bit-hl{border-color:var(--accent4);background:rgba(255,170,0,0.15);color:var(--accent4);}
+.bit-cell2.bit-hl2{border-color:var(--accent2);background:rgba(255,107,157,0.15);color:var(--accent2);}
+.bit-label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:4px;}
+.bit-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.9rem;padding:8px 12px;width:80px;outline:none;}
+.bit-input:focus{border-color:var(--accent);}
+.bit-result-box{font-family:'JetBrains Mono',monospace;font-size:0.88rem;color:var(--accent4);margin-top:10px;padding:10px 16px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--accent4);min-height:36px;}
+</style>
+</head>
+<body class="page-body">
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:var(--accent3)">Ch.2 — 자료구조</div>
+  <div class="nav-sections">
+    <a href="#linkedlist" class="nav-sec-link">배열/LL</a>
+    <a href="#stackqueue" class="nav-sec-link">스택&큐</a>
+    <a href="#bst" class="nav-sec-link">BST</a>
+    <a href="#hashtable" class="nav-sec-link">해시테이블</a>
+    <a href="#heap" class="nav-sec-link">이진힙</a>
+    <a href="#unionfind" class="nav-sec-link">Union-Find</a>
+    <a href="#segtree" class="nav-sec-link">세그먼트트리</a>
+    <a href="#fenwick" class="nav-sec-link">펜윅트리</a>
+  </div>
+</nav>
+
+<!-- BANNER -->
+<div class="chapter-banner cb2">
+  <div class="ch-num">CHAPTER 02</div>
+  <h2>자료구조</h2>
+  <p class="ch-desc">데이터를 효율적으로 저장하고 접근하는 방법. 알고리즘의 성능은 자료구조 선택에 달려 있습니다.</p>
+  <div class="ch-pills">
+    <span>배열/링크드리스트</span><span>스택&큐</span><span>BST</span><span>해시테이블</span>
+    <span>이진힙</span><span>Union-Find</span><span>세그먼트트리</span><span>펜윅트리</span>
+  </div>
+</div>
+
+<!-- ===== 1. ARRAY vs LINKED LIST ===== -->
+<section id="linkedlist">
+  <div class="section-header">
+    <div class="tag tag-ch2">01 — 배열 vs 링크드 리스트</div>
+    <h2>Array vs Linked List</h2>
+    <p>같은 데이터를 배열과 링크드 리스트로 동시에 표현합니다. 메모리 배치와 포인터 구조의 차이를 직접 확인해 보세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="llAppend()">끝에 추가</button>
+      <button class="btn" onclick="llInsertFront()">앞에 삽입</button>
+      <button class="btn" onclick="llRemoveLast()">마지막 삭제</button>
+      <button class="btn danger" onclick="llClear()">초기화</button>
+    </div>
+    <div class="ll-compare">
+      <div>
+        <div class="ll-panel-title" style="color:var(--accent3)">▦ Array <small style="color:var(--text-dim);font-size:0.72rem;">연속 메모리</small></div>
+        <div class="arr-visual" id="arr-visual"></div>
+        <div class="complexity-row">
+          <span class="complexity-badge fast">접근 O(1)</span>
+          <span class="complexity-badge fast">끝추가 O(1)</span>
+          <span class="complexity-badge slow">앞삽입 O(n)</span>
+        </div>
+      </div>
+      <div>
+        <div class="ll-panel-title" style="color:var(--accent)">⟶ Linked List <small style="color:var(--text-dim);font-size:0.72rem;">포인터 연결</small></div>
+        <div class="ll-visual" id="ll-visual"></div>
+        <div class="complexity-row">
+          <span class="complexity-badge slow">접근 O(n)</span>
+          <span class="complexity-badge fast">앞삽입 O(1)</span>
+          <span class="complexity-badge fast">끝추가 O(n)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ===== 2. STACK & QUEUE ===== -->
+<section id="stackqueue">
+  <div class="section-header">
+    <div class="tag tag-ch2">02 — 스택 &amp; 큐</div>
+    <h2>Stack &amp; Queue</h2>
+    <p>스택(LIFO)과 큐(FIFO)는 가장 기본적인 선형 자료구조입니다. 함수 호출 스택, 프린터 대기열 등 실생활에서도 쓰입니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="ds-container">
+      <div class="ds-panel">
+        <h3 style="color:var(--accent3)">⬆ Stack <small style="font-size:0.72rem;color:var(--text-dim);">LIFO</small></h3>
+        <div class="ds-visual" id="stack-visual">
+          <div class="ds-empty">비어있음</div>
+        </div>
+        <div class="ds-controls">
+          <button class="btn" onclick="stackPush()">Push</button>
+          <button class="btn" onclick="stackPop()">Pop</button>
+          <button class="btn danger" onclick="stackClear()">Clear</button>
+        </div>
+      </div>
+      <div class="ds-panel">
+        <h3 style="color:var(--accent4)">→ Queue <small style="font-size:0.72rem;color:var(--text-dim);">FIFO</small></h3>
+        <div class="ds-visual" id="queue-visual">
+          <div class="ds-empty">비어있음</div>
+        </div>
+        <div class="ds-controls">
+          <button class="btn" onclick="queueEnqueue()">Enqueue</button>
+          <button class="btn" onclick="queueDequeue()">Dequeue</button>
+          <button class="btn danger" onclick="queueClear()">Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ===== 3. BST ===== -->
+<section id="bst">
+  <div class="section-header">
+    <div class="tag tag-ch2">03 — 이진 탐색 트리</div>
+    <h2>Binary Search Tree</h2>
+    <p>왼쪽 자식 &lt; 부모 &lt; 오른쪽 자식. 균형 잡힌 BST는 삽입·탐색·삭제 모두 O(log n)에 처리합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="bst-controls">
+      <input type="number" id="bst-input" class="bst-input" placeholder="1–99" min="1" max="99"
+        onkeydown="if(event.key==='Enter')bstInsert()">
+      <button class="btn" onclick="bstInsert()">삽입</button>
+      <button class="btn" onclick="bstSearch()">탐색</button>
+      <button class="btn" onclick="bstRandom()">랜덤 5개</button>
+      <button class="btn danger" onclick="bstReset()">초기화</button>
+    </div>
+    <div class="bst-info" id="bst-info">값을 입력하고 삽입해 보세요.</div>
+    <canvas id="bst-canvas" height="380" style="background:var(--surface2);border-radius:8px;margin-top:8px;"></canvas>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ===== 4. HASH TABLE ===== -->
+<section id="hashtable">
+  <div class="section-header">
+    <div class="tag tag-ch2">04 — 해시 테이블</div>
+    <h2>Hash Table</h2>
+    <p>키를 해시 함수로 변환해 버킷에 저장합니다. 평균 O(1) 탐색·삽입. 충돌은 체이닝으로 해결합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="ht-inputs">
+      <input type="text" id="ht-key" class="ht-input" placeholder="Key" maxlength="12"
+        onkeydown="if(event.key==='Enter')htInsert()">
+      <input type="text" id="ht-val" class="ht-input" placeholder="Value" maxlength="16"
+        onkeydown="if(event.key==='Enter')htInsert()">
+      <button class="btn" onclick="htInsert()">저장</button>
+      <button class="btn" onclick="htDelete()">삭제</button>
+      <button class="btn danger" onclick="htClear()">초기화</button>
+    </div>
+    <div class="ht-formula" id="ht-formula">hash(key) = Σ charCode % 8</div>
+    <div class="ht-visual" id="ht-visual"></div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ===== 5. BINARY HEAP ===== -->
+<section id="heap">
+  <div class="section-header">
+    <div class="tag tag-ch2">05 — 이진 힙</div>
+    <h2>Binary Heap</h2>
+    <p>힙은 완전 이진 트리 형태로, 부모 노드가 항상 자식보다 작은(Min-Heap) 또는 큰(Max-Heap) 자료구조입니다. 삽입과 최솟값 추출이 O(log n)으로, 우선순위 큐 구현에 사용됩니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="heap-controls">
+      <input type="number" id="heap-input" class="heap-input" placeholder="1–99" min="1" max="99"
+        onkeydown="if(event.key==='Enter')heapInsert()">
+      <button class="btn" onclick="heapInsert()">삽입</button>
+      <button class="btn" id="heap-extract-btn" onclick="heapExtract()">Extract Min</button>
+      <button class="btn danger" onclick="heapReset()">초기화</button>
+      <button class="btn" id="heap-toggle-btn" onclick="heapToggle()" style="margin-left:8px;">Max-Heap으로 전환</button>
+    </div>
+    <div class="bit-label" style="margin-bottom:4px;">배열 표현</div>
+    <div class="heap-array-view" id="heap-array-view"></div>
+    <div class="bit-label" style="margin-bottom:4px;">트리 시각화</div>
+    <canvas id="heap-canvas" height="320" style="background:var(--surface2);border-radius:8px;"></canvas>
+    <div class="info-text" id="heap-info">값을 입력하고 삽입해 보세요.</div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ===== 6. UNION-FIND ===== -->
+<section id="unionfind">
+  <div class="section-header">
+    <div class="tag tag-ch2">06 — Union-Find</div>
+    <h2>Union-Find (서로소 집합)</h2>
+    <p>서로소 집합(Disjoint Set) 자료구조입니다. 여러 원소를 집합으로 묶고, 두 원소가 같은 집합에 있는지 O(α(n)) ≈ O(1)에 판단합니다. 크루스칼 알고리즘, 네트워크 연결성 판단에 핵심적으로 사용됩니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="ufUnion()">합치기 (Union)</button>
+      <button class="btn" onclick="ufSame()">같은 집합?</button>
+      <button class="btn danger" onclick="ufInit()">초기화</button>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);margin-bottom:8px;">
+      노드를 두 개 클릭해서 선택하세요. (선택됨: <span id="uf-selected-label" style="color:var(--accent);">없음</span>)
+    </div>
+    <div class="uf-nodes" id="uf-nodes"></div>
+    <div class="info-text" id="uf-info">두 노드를 클릭해 선택한 뒤 Union 또는 Find를 실행하세요.</div>
+    <canvas id="uf-canvas" height="180" style="background:var(--surface2);border-radius:8px;margin-top:12px;"></canvas>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ===== 7. SEGMENT TREE ===== -->
+<section id="segtree">
+  <div class="section-header">
+    <div class="tag tag-ch2">07 — 세그먼트 트리</div>
+    <h2>Segment Tree</h2>
+    <p>배열의 구간 합(또는 최솟값/최댓값)을 O(log n)에 구할 수 있는 트리 자료구조입니다. 게임 랭킹, 주식 데이터 분석 등에 활용됩니다.</p>
+  </div>
+  <div class="viz-box">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);margin-bottom:8px;">
+      셀을 클릭하면 값이 재랜덤화됩니다.
+    </div>
+    <div class="st-array-view" id="st-array-view"></div>
+    <div class="st-input-row">
+      <select class="st-select" id="st-query-type" onchange="stQueryTypeChange()">
+        <option value="sum">Sum Query</option>
+        <option value="min">Min Query</option>
+        <option value="max">Max Query</option>
+      </select>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);">L:</span>
+      <input type="number" id="st-l" class="st-input" min="0" max="7" value="2">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);">R:</span>
+      <input type="number" id="st-r" class="st-input" min="0" max="7" value="5">
+      <button class="btn" onclick="stRunQuery()">쿼리 실행</button>
+      <button class="btn" onclick="stRandomize()">배열 재랜덤</button>
+    </div>
+    <div class="st-result-box" id="st-result">쿼리를 실행하면 결과가 표시됩니다.</div>
+    <div class="bit-label" style="margin-top:14px;margin-bottom:4px;">세그먼트 트리</div>
+    <canvas id="st-canvas" height="320" style="background:var(--surface2);border-radius:8px;"></canvas>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- ===== 8. FENWICK TREE ===== -->
+<section id="fenwick">
+  <div class="section-header">
+    <div class="tag tag-ch2">08 — 펜윅 트리 (BIT)</div>
+    <h2>Fenwick Tree (Binary Indexed Tree)</h2>
+    <p>Binary Indexed Tree(BIT)라고도 합니다. 세그먼트 트리보다 구현이 간단하면서도 구간 합 쿼리와 점 업데이트를 O(log n)에 처리합니다. 내부적으로 비트 연산(i &amp; -i)을 사용하는 것이 특징입니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="bit-label">원본 배열 (1-indexed)</div>
+    <div class="bit-arr-view" id="bit-orig-view"></div>
+    <div class="bit-label" style="margin-top:8px;">BIT 배열 (i &amp; -i 구조)</div>
+    <div class="bit-arr-view" id="bit-bit-view"></div>
+
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:16px;">
+      <div>
+        <div class="bit-label" style="margin-bottom:6px;">점 업데이트</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);">인덱스:</span>
+          <input type="number" id="bit-upd-i" class="bit-input" min="1" max="8" value="3">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);">Δ:</span>
+          <input type="number" id="bit-upd-d" class="bit-input" value="5">
+          <button class="btn" onclick="bitDoUpdate()">업데이트</button>
+        </div>
+      </div>
+      <div>
+        <div class="bit-label" style="margin-bottom:6px;">구간 합 쿼리</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);">L:</span>
+          <input type="number" id="bit-ql" class="bit-input" min="1" max="8" value="2">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);">R:</span>
+          <input type="number" id="bit-qr" class="bit-input" min="1" max="8" value="6">
+          <button class="btn" onclick="bitDoQuery()">쿼리</button>
+        </div>
+      </div>
+    </div>
+    <div class="bit-result-box" id="bit-result">업데이트 또는 쿼리를 실행하면 결과가 표시됩니다.</div>
+  </div>
+</section>
+
+<footer>
+  <p>CS Visualizer · MIT License · <a href="https://github.com/M1zz/cs-visualizer" style="color:var(--accent);text-decoration:none;">GitHub</a></p>
+</footer>
+
+<script>
+/* ======================================================
+   SECTION 1 — Array vs Linked List
+====================================================== */
+let llData = [3, 7, 12];
+
+function llAppend() {
+  const v = Math.floor(Math.random() * 90) + 1;
+  llData.push(v);
+  renderLL();
+  renderArr();
+}
+function llInsertFront() {
+  const v = Math.floor(Math.random() * 90) + 1;
+  llData.unshift(v);
+  renderLL();
+  renderArr();
+}
+function llRemoveLast() {
+  if (llData.length === 0) return;
+  llData.pop();
+  renderLL();
+  renderArr();
+}
+function llClear() {
+  llData = [];
+  renderLL();
+  renderArr();
+}
+
+function renderArr() {
+  const el = document.getElementById('arr-visual');
+  if (llData.length === 0) { el.innerHTML = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:0.78rem;color:var(--text-dim);opacity:0.5;">비어있음</span>'; return; }
+  el.innerHTML = llData.map((v, i) =>
+    `<div class="arr-cell"><span>${v}</span><span class="arr-idx">[${i}]</span></div>`
+  ).join('');
+}
+
+function renderLL() {
+  const el = document.getElementById('ll-visual');
+  if (llData.length === 0) { el.innerHTML = '<span class="ll-null">NULL</span>'; return; }
+  let html = '';
+  llData.forEach((v, i) => {
+    const isLast = i === llData.length - 1;
+    html += `<div class="ll-node">
+      <div class="ll-val-box">${v}</div>
+      <div class="ll-ptr-box" title="${isLast ? 'null' : 'next'}">→</div>
+    </div>`;
+    if (!isLast) html += '<span class="ll-arrow"></span>';
+  });
+  html += '<span class="ll-null">NULL</span>';
+  el.innerHTML = html;
+}
+
+renderArr();
+renderLL();
+
+/* ======================================================
+   SECTION 2 — Stack & Queue
+====================================================== */
+let stackData = [], queueData = [];
+const COLORS = ['#6b8aff','#ff6b9d','#ffaa00','#00ffaa','#22d3ee','#a855f7','#f97316','#00cc88'];
+
+function rndVal() { return Math.floor(Math.random() * 90) + 10; }
+function rndColor() { return COLORS[Math.floor(Math.random() * COLORS.length)]; }
+
+function renderStack() {
+  const el = document.getElementById('stack-visual');
+  if (stackData.length === 0) { el.innerHTML = '<div class="ds-empty">비어있음</div>'; return; }
+  // top is last in array, show top first (bottom → top order reversed for display)
+  el.innerHTML = [...stackData].reverse().map((item, i) => {
+    const isTop = i === 0;
+    return `<div class="ds-item stack-item" style="border-color:${item.color};background:${item.color}22;">
+      <span style="color:${item.color}">${item.val}</span>
+      <span class="idx">${isTop ? '← TOP' : ''}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderQueue() {
+  const el = document.getElementById('queue-visual');
+  if (queueData.length === 0) { el.innerHTML = '<div class="ds-empty">비어있음</div>'; return; }
+  el.innerHTML = queueData.map((item, i) => {
+    const isFront = i === 0;
+    const isBack = i === queueData.length - 1;
+    return `<div class="ds-item queue-item" style="border-color:${item.color};background:${item.color}22;">
+      <span style="color:${item.color};font-size:0.65rem;">${isFront ? 'FRONT→' : ''}</span>
+      <span style="color:${item.color}">${item.val}</span>
+      <span class="idx">${isBack ? '←BACK' : ''}</span>
+    </div>`;
+  }).join('');
+}
+
+function stackPush() {
+  stackData.push({ val: rndVal(), color: rndColor() });
+  renderStack();
+}
+function stackPop() {
+  if (stackData.length === 0) return;
+  stackData.pop();
+  renderStack();
+}
+function stackClear() { stackData = []; renderStack(); }
+
+function queueEnqueue() {
+  queueData.push({ val: rndVal(), color: rndColor() });
+  renderQueue();
+}
+function queueDequeue() {
+  if (queueData.length === 0) return;
+  queueData.shift();
+  renderQueue();
+}
+function queueClear() { queueData = []; renderQueue(); }
+
+/* ======================================================
+   SECTION 3 — BST
+====================================================== */
+let bstRoot = null;
+let bstHighlighted = [];
+
+function bstInsertNode(root, val) {
+  if (!root) return { val, left: null, right: null, x: 0, y: 0 };
+  if (val < root.val) root.left = bstInsertNode(root.left, val);
+  else if (val > root.val) root.right = bstInsertNode(root.right, val);
+  return root;
+}
+
+function bstSearchNode(root, val, path) {
+  if (!root) return false;
+  path.push(root.val);
+  if (root.val === val) return true;
+  if (val < root.val) return bstSearchNode(root.left, val, path);
+  return bstSearchNode(root.right, val, path);
+}
+
+function bstInsert() {
+  const inp = document.getElementById('bst-input');
+  const v = parseInt(inp.value);
+  if (isNaN(v) || v < 1 || v > 99) { document.getElementById('bst-info').textContent = '1~99 사이 값을 입력하세요.'; return; }
+  bstRoot = bstInsertNode(bstRoot, v);
+  bstHighlighted = [v];
+  document.getElementById('bst-info').textContent = `${v} 삽입 완료`;
+  inp.value = '';
+  drawBST();
+}
+
+function bstSearch() {
+  const inp = document.getElementById('bst-input');
+  const v = parseInt(inp.value);
+  if (isNaN(v)) { document.getElementById('bst-info').textContent = '탐색할 값을 입력하세요.'; return; }
+  const path = [];
+  const found = bstSearchNode(bstRoot, v, path);
+  bstHighlighted = path;
+  document.getElementById('bst-info').textContent =
+    found ? `✓ ${v} 발견! 경로: ${path.join(' → ')}` : `✗ ${v} 없음. 탐색 경로: ${path.join(' → ')}`;
+  drawBST();
+}
+
+function bstReset() {
+  bstRoot = null;
+  bstHighlighted = [];
+  document.getElementById('bst-info').textContent = '초기화되었습니다.';
+  drawBST();
+}
+
+function bstRandom() {
+  bstRoot = null;
+  bstHighlighted = [];
+  const used = new Set();
+  for (let i = 0; i < 5; i++) {
+    let v;
+    do { v = Math.floor(Math.random() * 90) + 5; } while (used.has(v));
+    used.add(v);
+    bstRoot = bstInsertNode(bstRoot, v);
+  }
+  document.getElementById('bst-info').textContent = `랜덤 5개 삽입: ${[...used].join(', ')}`;
+  drawBST();
+}
+
+function assignPos(node, depth, leftBound, rightBound) {
+  if (!node) return;
+  const x = (leftBound + rightBound) / 2;
+  node.x = x;
+  node.y = depth * 72 + 48;
+  assignPos(node.left, depth + 1, leftBound, x);
+  assignPos(node.right, depth + 1, x, rightBound);
+}
+
+function drawBST() {
+  const canvas = document.getElementById('bst-canvas');
+  const W = canvas.parentElement.clientWidth - 64;
+  canvas.width = Math.max(W, 300);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!bstRoot) return;
+  assignPos(bstRoot, 0, 0, canvas.width);
+
+  function drawEdges(node) {
+    if (!node) return;
+    const hlSet = new Set(bstHighlighted);
+    if (node.left) {
+      const bothHl = hlSet.has(node.val) && hlSet.has(node.left.val);
+      ctx.beginPath();
+      ctx.moveTo(node.x, node.y);
+      ctx.lineTo(node.left.x, node.left.y);
+      ctx.strokeStyle = bothHl ? '#6b8aff' : '#2a2a3a';
+      ctx.lineWidth = bothHl ? 2.5 : 1.5;
+      ctx.stroke();
+      drawEdges(node.left);
+    }
+    if (node.right) {
+      const bothHl = hlSet.has(node.val) && hlSet.has(node.right.val);
+      ctx.beginPath();
+      ctx.moveTo(node.x, node.y);
+      ctx.lineTo(node.right.x, node.right.y);
+      ctx.strokeStyle = bothHl ? '#6b8aff' : '#2a2a3a';
+      ctx.lineWidth = bothHl ? 2.5 : 1.5;
+      ctx.stroke();
+      drawEdges(node.right);
+    }
+  }
+  drawEdges(bstRoot);
+
+  function drawNodes(node) {
+    if (!node) return;
+    const hl = bstHighlighted.includes(node.val);
+    const isTarget = hl && bstHighlighted[bstHighlighted.length - 1] === node.val;
+
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, 20, 0, Math.PI * 2);
+    ctx.fillStyle = isTarget ? 'rgba(0,255,170,0.25)' : hl ? 'rgba(107,138,255,0.2)' : '#1a1a28';
+    ctx.fill();
+    ctx.strokeStyle = isTarget ? '#00ffaa' : hl ? '#6b8aff' : '#2a2a3a';
+    ctx.lineWidth = hl ? 2.5 : 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = isTarget ? '#00ffaa' : hl ? '#6b8aff' : '#e0e0f0';
+    ctx.font = 'bold 13px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(node.val, node.x, node.y);
+
+    drawNodes(node.left);
+    drawNodes(node.right);
+  }
+  drawNodes(bstRoot);
+}
+
+window.addEventListener('resize', drawBST);
+
+/* ======================================================
+   SECTION 4 — Hash Table
+====================================================== */
+const HT_BUCKETS = 8;
+let htTable = Array.from({ length: HT_BUCKETS }, () => []);
+let htLastBucket = -1;
+
+function htHash(key) {
+  let h = 0;
+  for (const c of key) h += c.charCodeAt(0);
+  return h % HT_BUCKETS;
+}
+
+function htInsert() {
+  const key = document.getElementById('ht-key').value.trim();
+  const val = document.getElementById('ht-val').value.trim();
+  if (!key) return;
+  const h = htHash(key);
+  htLastBucket = h;
+  const bucket = htTable[h];
+  const existing = bucket.findIndex(e => e.k === key);
+  if (existing >= 0) bucket[existing].v = val;
+  else bucket.push({ k: key, v: val });
+  const codes = [...key].map(c => c.charCodeAt(0)).join('+');
+  const sum = [...key].reduce((a, c) => a + c.charCodeAt(0), 0);
+  document.getElementById('ht-formula').textContent =
+    `hash("${key}") = (${codes}) % 8 = ${sum} % 8 = ${h}`;
+  document.getElementById('ht-key').value = '';
+  document.getElementById('ht-val').value = '';
+  renderHT();
+}
+
+function htDelete() {
+  const key = document.getElementById('ht-key').value.trim();
+  if (!key) return;
+  const h = htHash(key);
+  htLastBucket = h;
+  htTable[h] = htTable[h].filter(e => e.k !== key);
+  document.getElementById('ht-key').value = '';
+  renderHT();
+}
+
+function htClear() {
+  htTable = Array.from({ length: HT_BUCKETS }, () => []);
+  htLastBucket = -1;
+  document.getElementById('ht-formula').textContent = 'hash(key) = Σ charCode % 8';
+  renderHT();
+}
+
+function renderHT() {
+  const el = document.getElementById('ht-visual');
+  el.innerHTML = htTable.map((bucket, i) => {
+    const isHl = i === htLastBucket;
+    let chain = '';
+    if (bucket.length === 0) {
+      chain = '<span class="ht-empty">— empty —</span>';
+    } else {
+      bucket.forEach((e, j) => {
+        if (j > 0) chain += '<span class="ht-link">→</span>';
+        chain += `<div class="ht-entry"><span class="ht-key">${e.k}</span><span class="ht-sep">:</span><span class="ht-val">${e.v}</span></div>`;
+      });
+    }
+    return `<div class="ht-bucket${isHl ? ' ht-highlight' : ''}">
+      <span class="ht-idx">[${i}]</span>
+      <div class="ht-chain">${chain}</div>
+    </div>`;
+  }).join('');
+}
+
+renderHT();
+
+/* ======================================================
+   SECTION 5 — Binary Heap
+====================================================== */
+let heapArr = [];
+let heapIsMin = true;
+let heapHighlight = new Set();
+
+function heapToggle() {
+  heapIsMin = !heapIsMin;
+  document.getElementById('heap-toggle-btn').textContent =
+    heapIsMin ? 'Max-Heap으로 전환' : 'Min-Heap으로 전환';
+  document.getElementById('heap-extract-btn').textContent =
+    heapIsMin ? 'Extract Min' : 'Extract Max';
+  // rebuild heap from existing values
+  const vals = [...heapArr];
+  heapArr = [];
+  vals.forEach(v => {
+    heapArr.push(v);
+    heapBubbleUp(heapArr.length - 1);
+  });
+  heapHighlight = new Set();
+  document.getElementById('heap-info').textContent =
+    `${heapIsMin ? 'Min' : 'Max'}-Heap으로 전환되었습니다.`;
+  renderHeapArray();
+  drawHeap();
+}
+
+function heapCmp(a, b) {
+  return heapIsMin ? a < b : a > b;
+}
+
+function heapBubbleUp(i) {
+  while (i > 0) {
+    const parent = Math.floor((i - 1) / 2);
+    if (heapCmp(heapArr[i], heapArr[parent])) {
+      [heapArr[i], heapArr[parent]] = [heapArr[parent], heapArr[i]];
+      heapHighlight.add(i);
+      heapHighlight.add(parent);
+      i = parent;
+    } else break;
+  }
+}
+
+function heapBubbleDown(i) {
+  const n = heapArr.length;
+  while (true) {
+    let best = i;
+    const l = 2 * i + 1, r = 2 * i + 2;
+    if (l < n && heapCmp(heapArr[l], heapArr[best])) best = l;
+    if (r < n && heapCmp(heapArr[r], heapArr[best])) best = r;
+    if (best === i) break;
+    [heapArr[i], heapArr[best]] = [heapArr[best], heapArr[i]];
+    heapHighlight.add(i);
+    heapHighlight.add(best);
+    i = best;
+  }
+}
+
+function heapInsert() {
+  const inp = document.getElementById('heap-input');
+  const v = parseInt(inp.value);
+  if (isNaN(v) || v < 1 || v > 99) {
+    document.getElementById('heap-info').textContent = '1~99 사이 값을 입력하세요.';
+    return;
+  }
+  heapHighlight = new Set();
+  heapArr.push(v);
+  heapBubbleUp(heapArr.length - 1);
+  document.getElementById('heap-info').textContent =
+    `${v} 삽입 완료. Bubble-up으로 힙 속성 복원. (힙 크기: ${heapArr.length})`;
+  inp.value = '';
+  renderHeapArray();
+  drawHeap();
+  // fade highlight
+  setTimeout(() => { heapHighlight = new Set(); renderHeapArray(); drawHeap(); }, 800);
+}
+
+function heapExtract() {
+  if (heapArr.length === 0) {
+    document.getElementById('heap-info').textContent = '힙이 비어있습니다.';
+    return;
+  }
+  const top = heapArr[0];
+  heapHighlight = new Set([0, heapArr.length - 1]);
+  heapArr[0] = heapArr[heapArr.length - 1];
+  heapArr.pop();
+  heapBubbleDown(0);
+  document.getElementById('heap-info').textContent =
+    `${heapIsMin ? '최솟값' : '최댓값'} ${top} 추출 완료. Bubble-down으로 힙 속성 복원.`;
+  renderHeapArray();
+  drawHeap();
+  setTimeout(() => { heapHighlight = new Set(); renderHeapArray(); drawHeap(); }, 800);
+}
+
+function heapReset() {
+  heapArr = [];
+  heapHighlight = new Set();
+  document.getElementById('heap-info').textContent = '힙이 초기화되었습니다.';
+  renderHeapArray();
+  drawHeap();
+}
+
+function renderHeapArray() {
+  const el = document.getElementById('heap-array-view');
+  if (heapArr.length === 0) {
+    el.innerHTML = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:0.78rem;color:var(--text-dim);opacity:0.5;">비어있음</span>';
+    return;
+  }
+  el.innerHTML = heapArr.map((v, i) => {
+    const hl = heapHighlight.has(i);
+    return `<div class="heap-cell${hl ? ' hl' : ''}" title="index ${i}">${v}</div>`;
+  }).join('');
+}
+
+function drawHeap() {
+  const canvas = document.getElementById('heap-canvas');
+  const W = canvas.parentElement.clientWidth - 64;
+  canvas.width = Math.max(W, 300);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const n = heapArr.length;
+  if (n === 0) return;
+
+  // Compute positions
+  const positions = [];
+  function pos(i, depth, lo, hi) {
+    if (i >= n) return;
+    const x = (lo + hi) / 2;
+    const y = depth * 68 + 48;
+    positions[i] = { x, y };
+    pos(2 * i + 1, depth + 1, lo, (lo + hi) / 2);
+    pos(2 * i + 2, depth + 1, (lo + hi) / 2, hi);
+  }
+  pos(0, 0, 0, canvas.width);
+
+  // Draw edges
+  for (let i = 0; i < n; i++) {
+    const l = 2 * i + 1, r = 2 * i + 2;
+    if (positions[i]) {
+      if (l < n && positions[l]) {
+        const hl = heapHighlight.has(i) && heapHighlight.has(l);
+        ctx.beginPath();
+        ctx.moveTo(positions[i].x, positions[i].y);
+        ctx.lineTo(positions[l].x, positions[l].y);
+        ctx.strokeStyle = hl ? (heapIsMin ? '#00ffaa' : '#ff6b9d') : '#2a2a3a';
+        ctx.lineWidth = hl ? 2.5 : 1.5;
+        ctx.stroke();
+      }
+      if (r < n && positions[r]) {
+        const hl = heapHighlight.has(i) && heapHighlight.has(r);
+        ctx.beginPath();
+        ctx.moveTo(positions[i].x, positions[i].y);
+        ctx.lineTo(positions[r].x, positions[r].y);
+        ctx.strokeStyle = hl ? (heapIsMin ? '#00ffaa' : '#ff6b9d') : '#2a2a3a';
+        ctx.lineWidth = hl ? 2.5 : 1.5;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Draw nodes
+  for (let i = 0; i < n; i++) {
+    if (!positions[i]) continue;
+    const { x, y } = positions[i];
+    const hl = heapHighlight.has(i);
+    const isRoot = i === 0;
+    ctx.beginPath();
+    ctx.arc(x, y, 22, 0, Math.PI * 2);
+    const baseColor = heapIsMin ? '#00ffaa' : '#ff6b9d';
+    ctx.fillStyle = isRoot ? (heapIsMin ? 'rgba(0,255,170,0.2)' : 'rgba(255,107,157,0.2)') :
+                    hl ? `${baseColor}33` : '#1a1a28';
+    ctx.fill();
+    ctx.strokeStyle = isRoot ? baseColor : hl ? baseColor : '#2a2a3a';
+    ctx.lineWidth = (isRoot || hl) ? 2.5 : 1.5;
+    ctx.stroke();
+    ctx.fillStyle = isRoot ? baseColor : hl ? baseColor : '#e0e0f0';
+    ctx.font = 'bold 13px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(heapArr[i], x, y);
+  }
+}
+
+renderHeapArray();
+drawHeap();
+window.addEventListener('resize', drawHeap);
+
+/* ======================================================
+   SECTION 6 — Union-Find
+====================================================== */
+let ufParent = [], ufRank = [], ufSelected = [];
+const UF_N = 8;
+const UF_COLORS = ['#6b8aff','#ff6b9d','#ffaa00','#00ffaa','#22d3ee','#a855f7','#f97316','#00cc88'];
+
+function ufInit() {
+  ufParent = Array.from({ length: UF_N }, (_, i) => i);
+  ufRank = new Array(UF_N).fill(0);
+  ufSelected = [];
+  document.getElementById('uf-info').textContent = '모든 노드가 개별 집합으로 초기화되었습니다.';
+  renderUF();
+}
+
+function ufFind(x) {
+  if (ufParent[x] !== x) ufParent[x] = ufFind(ufParent[x]); // path compression
+  return ufParent[x];
+}
+
+function ufUnion() {
+  if (ufSelected.length < 2) {
+    document.getElementById('uf-info').textContent = '노드를 두 개 선택해 주세요.';
+    return;
+  }
+  const a = ufSelected[0], b = ufSelected[1];
+  const ra = ufFind(a), rb = ufFind(b);
+  if (ra === rb) {
+    document.getElementById('uf-info').textContent = `노드 ${a}와 ${b}는 이미 같은 집합입니다.`;
+  } else {
+    if (ufRank[ra] < ufRank[rb]) ufParent[ra] = rb;
+    else if (ufRank[ra] > ufRank[rb]) ufParent[rb] = ra;
+    else { ufParent[rb] = ra; ufRank[ra]++; }
+    document.getElementById('uf-info').textContent =
+      `노드 ${a}와 ${b}를 합쳤습니다. 공통 루트: ${ufFind(a)}`;
+  }
+  ufSelected = [];
+  renderUF();
+}
+
+function ufSame() {
+  if (ufSelected.length < 2) {
+    document.getElementById('uf-info').textContent = '노드를 두 개 선택해 주세요.';
+    return;
+  }
+  const a = ufSelected[0], b = ufSelected[1];
+  const same = ufFind(a) === ufFind(b);
+  document.getElementById('uf-info').textContent =
+    same ? `✓ 노드 ${a}와 ${b}는 같은 집합 (루트: ${ufFind(a)})입니다.`
+         : `✗ 노드 ${a}와 ${b}는 다른 집합입니다. (루트: ${ufFind(a)} vs ${ufFind(b)})`;
+  ufSelected = [];
+  renderUF();
+}
+
+function renderUF() {
+  // Color by root
+  const rootColorMap = {};
+  let colorIdx = 0;
+  for (let i = 0; i < UF_N; i++) {
+    const r = ufFind(i);
+    if (!(r in rootColorMap)) rootColorMap[r] = UF_COLORS[colorIdx++ % UF_COLORS.length];
+  }
+
+  const nodesEl = document.getElementById('uf-nodes');
+  nodesEl.innerHTML = '';
+  for (let i = 0; i < UF_N; i++) {
+    const r = ufFind(i);
+    const color = rootColorMap[r];
+    const isSelected = ufSelected.includes(i);
+    const node = document.createElement('div');
+    node.className = 'uf-node' + (isSelected ? ' selected' : '');
+    node.style.borderColor = color;
+    node.style.background = isSelected ? color + '33' : color + '18';
+    node.innerHTML = `<span style="color:${color};font-size:1rem;font-weight:700;">${i}</span><span class="uf-parent">p:${ufParent[i]}</span>`;
+    node.onclick = () => {
+      if (ufSelected.includes(i)) {
+        ufSelected = ufSelected.filter(x => x !== i);
+      } else if (ufSelected.length < 2) {
+        ufSelected.push(i);
+      } else {
+        ufSelected = [i];
+      }
+      const lbl = ufSelected.length === 0 ? '없음' : ufSelected.join(', ');
+      document.getElementById('uf-selected-label').textContent = lbl;
+      renderUF();
+    };
+    nodesEl.appendChild(node);
+  }
+
+  // Update label
+  const lbl = ufSelected.length === 0 ? '없음' : ufSelected.join(', ');
+  document.getElementById('uf-selected-label').textContent = lbl;
+
+  // Draw canvas
+  drawUF(rootColorMap);
+}
+
+function drawUF(rootColorMap) {
+  const canvas = document.getElementById('uf-canvas');
+  const W = canvas.parentElement.clientWidth - 64;
+  canvas.width = Math.max(W, 300);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Place nodes in a row
+  const nodeRadius = 22;
+  const nodePositions = [];
+  const spacing = Math.min((canvas.width - 60) / UF_N, 80);
+  const startX = (canvas.width - spacing * (UF_N - 1)) / 2;
+  const nodeY = 130;
+
+  for (let i = 0; i < UF_N; i++) {
+    nodePositions[i] = { x: startX + i * spacing, y: nodeY };
+  }
+
+  // Draw parent arrows (only if parent != self)
+  for (let i = 0; i < UF_N; i++) {
+    const p = ufParent[i];
+    if (p !== i) {
+      const r = ufFind(i);
+      const color = rootColorMap[r] || '#2a2a3a';
+      const from = nodePositions[i];
+      const to = nodePositions[p];
+      // Draw curved arrow above nodes
+      ctx.beginPath();
+      const cpY = Math.min(from.y, to.y) - 50 - Math.abs(from.x - to.x) * 0.15;
+      ctx.moveTo(from.x, from.y - nodeRadius);
+      ctx.quadraticCurveTo((from.x + to.x) / 2, cpY, to.x, to.y - nodeRadius);
+      ctx.strokeStyle = color + 'aa';
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Arrowhead
+      const angle = Math.atan2(to.y - nodeRadius - cpY, to.x - (from.x + to.x) / 2);
+      ctx.beginPath();
+      ctx.moveTo(to.x, to.y - nodeRadius);
+      ctx.lineTo(to.x - 8 * Math.cos(angle - 0.4), to.y - nodeRadius - 8 * Math.sin(angle - 0.4));
+      ctx.lineTo(to.x - 8 * Math.cos(angle + 0.4), to.y - nodeRadius - 8 * Math.sin(angle + 0.4));
+      ctx.closePath();
+      ctx.fillStyle = color + 'aa';
+      ctx.fill();
+    }
+  }
+
+  // Draw nodes
+  for (let i = 0; i < UF_N; i++) {
+    const { x, y } = nodePositions[i];
+    const r = ufFind(i);
+    const color = rootColorMap[r] || '#2a2a3a';
+    const isSelected = ufSelected.includes(i);
+    ctx.beginPath();
+    ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
+    ctx.fillStyle = isSelected ? color + '55' : color + '22';
+    ctx.fill();
+    ctx.strokeStyle = isSelected ? color : color + '88';
+    ctx.lineWidth = isSelected ? 2.5 : 1.8;
+    ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.font = 'bold 14px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i, x, y);
+  }
+}
+
+ufInit();
+window.addEventListener('resize', () => {
+  const rootColorMap = {};
+  let colorIdx = 0;
+  for (let i = 0; i < UF_N; i++) {
+    const r = ufFind(i);
+    if (!(r in rootColorMap)) rootColorMap[r] = UF_COLORS[colorIdx++ % UF_COLORS.length];
+  }
+  drawUF(rootColorMap);
+});
+
+/* ======================================================
+   SECTION 7 — Segment Tree
+====================================================== */
+let stArr = [], stTree = [], stN = 8, stQueryType = 'sum';
+let stQueryHighlight = new Set();
+
+function stBuild(node, start, end) {
+  if (start === end) { stTree[node] = stArr[start]; return; }
+  const mid = Math.floor((start + end) / 2);
+  stBuild(2 * node, start, mid);
+  stBuild(2 * node + 1, mid + 1, end);
+  if (stQueryType === 'sum') stTree[node] = stTree[2 * node] + stTree[2 * node + 1];
+  else if (stQueryType === 'min') stTree[node] = Math.min(stTree[2 * node], stTree[2 * node + 1]);
+  else stTree[node] = Math.max(stTree[2 * node], stTree[2 * node + 1]);
+}
+
+function stQuery(node, start, end, l, r) {
+  if (r < start || end < l) return stQueryType === 'min' ? Infinity : stQueryType === 'max' ? -Infinity : 0;
+  if (l <= start && end <= r) { stQueryHighlight.add(node); return stTree[node]; }
+  stQueryHighlight.add(node);
+  const mid = Math.floor((start + end) / 2);
+  const left = stQuery(2 * node, start, mid, l, r);
+  const right = stQuery(2 * node + 1, mid + 1, end, l, r);
+  if (stQueryType === 'sum') return left + right;
+  if (stQueryType === 'min') return Math.min(left, right);
+  return Math.max(left, right);
+}
+
+function stRandomize() {
+  stArr = Array.from({ length: stN }, () => Math.floor(Math.random() * 50) + 1);
+  stTree = new Array(4 * stN).fill(0);
+  stQueryHighlight = new Set();
+  stBuild(1, 0, stN - 1);
+  renderStArray();
+  drawSegTree();
+  document.getElementById('st-result').textContent = '쿼리를 실행하면 결과가 표시됩니다.';
+}
+
+function stQueryTypeChange() {
+  stQueryType = document.getElementById('st-query-type').value;
+  stTree = new Array(4 * stN).fill(0);
+  stQueryHighlight = new Set();
+  stBuild(1, 0, stN - 1);
+  drawSegTree();
+}
+
+function stRunQuery() {
+  let l = parseInt(document.getElementById('st-l').value);
+  let r = parseInt(document.getElementById('st-r').value);
+  l = Math.max(0, Math.min(stN - 1, l));
+  r = Math.max(0, Math.min(stN - 1, r));
+  if (l > r) [l, r] = [r, l];
+  stQueryHighlight = new Set();
+  const result = stQuery(1, 0, stN - 1, l, r);
+  const typeLabel = { sum: '합', min: '최솟값', max: '최댓값' }[stQueryType];
+  document.getElementById('st-result').textContent =
+    `구간 [${l}, ${r}]의 ${typeLabel} = ${result === Infinity ? '(없음)' : result === -Infinity ? '(없음)' : result}`;
+  renderStArray(l, r);
+  drawSegTree();
+}
+
+function renderStArray(hl_l = -1, hl_r = -1) {
+  const el = document.getElementById('st-array-view');
+  el.innerHTML = stArr.map((v, i) => {
+    const inRange = i >= hl_l && i <= hl_r;
+    return `<div class="st-cell${inRange ? ' st-range' : ''}" onclick="stClickCell(${i})" title="클릭해서 재랜덤화">
+      <span>${v}</span><span class="st-idx">[${i}]</span>
+    </div>`;
+  }).join('');
+}
+
+function stClickCell(i) {
+  stArr[i] = Math.floor(Math.random() * 50) + 1;
+  stTree = new Array(4 * stN).fill(0);
+  stQueryHighlight = new Set();
+  stBuild(1, 0, stN - 1);
+  renderStArray();
+  drawSegTree();
+  document.getElementById('st-result').textContent = `[${i}] 값이 ${stArr[i]}로 변경되었습니다.`;
+}
+
+function drawSegTree() {
+  const canvas = document.getElementById('st-canvas');
+  const W = canvas.parentElement.clientWidth - 64;
+  canvas.width = Math.max(W, 300);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Build position map
+  const posMap = {};
+  function buildPos(node, depth, lo, hi) {
+    const x = ((lo + hi) / 2 / (stN - 1)) * (canvas.width - 60) + 30;
+    const y = depth * 64 + 40;
+    posMap[node] = { x, y, lo, hi };
+    if (lo === hi) return;
+    const mid = Math.floor((lo + hi) / 2);
+    buildPos(2 * node, depth + 1, lo, mid);
+    buildPos(2 * node + 1, depth + 1, mid + 1, hi);
+  }
+  buildPos(1, 0, 0, stN - 1);
+
+  // Draw edges
+  function drawEdges(node) {
+    const p = posMap[node];
+    if (!p) return;
+    const lc = posMap[2 * node], rc = posMap[2 * node + 1];
+    if (lc) {
+      const hl = stQueryHighlight.has(node) && stQueryHighlight.has(2 * node);
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(lc.x, lc.y);
+      ctx.strokeStyle = hl ? '#6b8aff' : '#2a2a3a'; ctx.lineWidth = hl ? 2 : 1.2; ctx.stroke();
+      drawEdges(2 * node);
+    }
+    if (rc) {
+      const hl = stQueryHighlight.has(node) && stQueryHighlight.has(2 * node + 1);
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(rc.x, rc.y);
+      ctx.strokeStyle = hl ? '#6b8aff' : '#2a2a3a'; ctx.lineWidth = hl ? 2 : 1.2; ctx.stroke();
+      drawEdges(2 * node + 1);
+    }
+  }
+  drawEdges(1);
+
+  // Draw nodes
+  function drawNodes(node) {
+    const p = posMap[node];
+    if (!p || stTree[node] === undefined || stTree[node] === 0 && p.lo !== p.hi) return;
+    const hl = stQueryHighlight.has(node);
+    const isLeaf = p.lo === p.hi;
+    const radius = isLeaf ? 18 : 20;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = hl ? 'rgba(107,138,255,0.25)' : isLeaf ? 'rgba(0,255,170,0.08)' : '#1a1a28';
+    ctx.fill();
+    ctx.strokeStyle = hl ? '#6b8aff' : isLeaf ? 'rgba(0,255,170,0.4)' : '#2a2a3a';
+    ctx.lineWidth = hl ? 2.5 : 1.5;
+    ctx.stroke();
+    ctx.fillStyle = hl ? '#6b8aff' : isLeaf ? '#00ffaa' : '#e0e0f0';
+    ctx.font = `bold ${isLeaf ? 12 : 11}px JetBrains Mono, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const displayVal = stTree[node] === Infinity ? '∞' : stTree[node] === -Infinity ? '-∞' : stTree[node];
+    ctx.fillText(displayVal, p.x, p.y);
+    if (posMap[2 * node]) { drawNodes(2 * node); drawNodes(2 * node + 1); }
+  }
+  drawNodes(1);
+}
+
+stRandomize();
+window.addEventListener('resize', drawSegTree);
+
+/* ======================================================
+   SECTION 8 — Fenwick Tree (BIT)
+====================================================== */
+const BIT_N = 8;
+let bitArr = new Array(BIT_N + 1).fill(0); // 1-indexed BIT
+let bitOrig = new Array(BIT_N + 1).fill(0); // 1-indexed orig
+let bitHighlightUpdate = new Set();
+let bitHighlightQuery = new Set();
+
+function bitUpdate(i, delta) {
+  bitOrig[i] += delta;
+  const touched = [];
+  let j = i;
+  while (j <= BIT_N) {
+    bitArr[j] += delta;
+    touched.push(j);
+    j += j & -j;
+  }
+  return touched;
+}
+
+function bitQuery(i) {
+  const touched = [];
+  let sum = 0, j = i;
+  while (j > 0) {
+    sum += bitArr[j];
+    touched.push(j);
+    j -= j & -j;
+  }
+  return { sum, touched };
+}
+
+function bitRangeQuery(l, r) {
+  const right = bitQuery(r);
+  const left = bitQuery(l - 1);
+  return {
+    sum: right.sum - left.sum,
+    touched: [...new Set([...right.touched, ...left.touched])]
+  };
+}
+
+function bitInit() {
+  bitArr = new Array(BIT_N + 1).fill(0);
+  bitOrig = Array.from({ length: BIT_N + 1 }, (_, i) => i === 0 ? 0 : Math.floor(Math.random() * 20) + 1);
+  // Build BIT from bitOrig
+  for (let i = 1; i <= BIT_N; i++) {
+    let j = i;
+    while (j <= BIT_N) { bitArr[j] += bitOrig[i]; j += j & -j; }
+  }
+  bitHighlightUpdate = new Set();
+  bitHighlightQuery = new Set();
+  renderBIT();
+}
+
+function renderBIT() {
+  const origEl = document.getElementById('bit-orig-view');
+  const bitEl = document.getElementById('bit-bit-view');
+  let origHtml = '', bitHtml = '';
+  for (let i = 1; i <= BIT_N; i++) {
+    const hlU = bitHighlightUpdate.has(i);
+    const hlQ = bitHighlightQuery.has(i);
+    const cls = hlU ? ' bit-hl' : hlQ ? ' bit-hl2' : '';
+    origHtml += `<div class="bit-cell2${cls}" title="index ${i}">
+      <span>${bitOrig[i]}</span><span class="bc-idx">[${i}]</span>
+    </div>`;
+    // BIT cell: show which indices it covers (i & -i)
+    const span = i & -i;
+    bitHtml += `<div class="bit-cell2${cls}" title="covers ${span} element(s)">
+      <span>${bitArr[i]}</span><span class="bc-idx">[${i}] (${span})</span>
+    </div>`;
+  }
+  origEl.innerHTML = origHtml;
+  bitEl.innerHTML = bitHtml;
+}
+
+function bitDoUpdate() {
+  const i = parseInt(document.getElementById('bit-upd-i').value);
+  const d = parseInt(document.getElementById('bit-upd-d').value);
+  if (isNaN(i) || i < 1 || i > BIT_N || isNaN(d)) {
+    document.getElementById('bit-result').textContent = '유효한 인덱스(1-8)와 델타를 입력하세요.';
+    return;
+  }
+  bitHighlightQuery = new Set();
+  const touched = bitUpdate(i, d);
+  bitHighlightUpdate = new Set(touched);
+  const touchedBits = touched.map(t => `[${t}](i&-i=${t & -t})`).join(' → ');
+  document.getElementById('bit-result').textContent =
+    `인덱스 ${i}에 Δ=${d} 적용. 업데이트된 BIT 셀: ${touchedBits}`;
+  renderBIT();
+  setTimeout(() => { bitHighlightUpdate = new Set(); renderBIT(); }, 1000);
+}
+
+function bitDoQuery() {
+  let l = parseInt(document.getElementById('bit-ql').value);
+  let r = parseInt(document.getElementById('bit-qr').value);
+  if (isNaN(l) || isNaN(r) || l < 1 || r > BIT_N) {
+    document.getElementById('bit-result').textContent = '유효한 범위(1-8)를 입력하세요.';
+    return;
+  }
+  if (l > r) [l, r] = [r, l];
+  bitHighlightUpdate = new Set();
+  const { sum, touched } = bitRangeQuery(l, r);
+  bitHighlightQuery = new Set(touched);
+  const touchedStr = touched.map(t => `[${t}]`).join(', ');
+  document.getElementById('bit-result').textContent =
+    `구간 [${l}, ${r}] 합 = ${sum}. 참조 BIT 셀: ${touchedStr}`;
+  renderBIT();
+  setTimeout(() => { bitHighlightQuery = new Set(); renderBIT(); }, 1000);
+}
+
+bitInit();
+</script>
+</body>
+</html>

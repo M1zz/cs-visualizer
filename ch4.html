@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.4 그래프 알고리즘 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── page nav ── */
+.page-nav{position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;padding:12px 28px;flex-wrap:wrap;}
+.nav-back{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);text-decoration:none;transition:color 0.2s;}
+.nav-back:hover{color:var(--accent);}
+.nav-chapter-title{font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:600;}
+.nav-sections{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;}
+.nav-sec-link{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);text-decoration:none;padding:4px 10px;border-radius:6px;transition:all 0.2s;}
+.nav-sec-link:hover{color:var(--accent2);background:rgba(255,107,157,0.08);}
+/* ── graph canvas area ── */
+.canvas-wrap{position:relative;background:var(--surface2);border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+.canvas-wrap canvas{display:block;}
+/* ── adjacency list ── */
+.adj-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:16px;}
+.adj-node{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;}
+.adj-node-label{font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;color:var(--accent2);margin-bottom:6px;}
+.adj-edges{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);line-height:1.8;}
+.adj-edge-item{color:var(--text);}
+/* ── traversal log ── */
+.tlog{display:flex;flex-wrap:wrap;gap:6px;min-height:38px;padding:8px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);align-items:center;}
+.tlog-label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-right:6px;}
+.tlog-node{font-family:'JetBrains Mono',monospace;font-size:0.78rem;padding:3px 10px;border-radius:100px;background:rgba(0,255,170,0.12);border:1px solid rgba(0,255,170,0.3);color:var(--accent);animation:fadeIn 0.2s;}
+/* ── stack / queue display ── */
+.struct-display{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;}
+.struct-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:180px;flex:1;}
+.struct-title{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;}
+.struct-items{display:flex;gap:4px;flex-wrap:wrap;min-height:28px;align-items:center;}
+.struct-item{font-family:'JetBrains Mono',monospace;font-size:0.78rem;padding:3px 8px;border-radius:6px;background:rgba(107,138,255,0.12);border:1px solid rgba(107,138,255,0.3);color:var(--accent3);}
+.struct-item.top{background:rgba(255,107,157,0.15);border-color:rgba(255,107,157,0.4);color:var(--accent2);}
+/* ── MST edge list ── */
+.edge-list{display:flex;flex-direction:column;gap:6px;margin-top:14px;max-height:260px;overflow-y:auto;}
+.edge-item{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;transition:all 0.3s;}
+.edge-item.selected{border-color:var(--accent);background:rgba(0,255,170,0.06);color:var(--accent);}
+.edge-item.rejected{border-color:var(--danger);background:rgba(255,68,102,0.06);color:var(--danger);text-decoration:line-through;opacity:0.7;}
+.edge-item.current{border-color:var(--accent4);background:rgba(255,170,0,0.08);color:var(--accent4);box-shadow:0 0 12px rgba(255,170,0,0.15);}
+.edge-item-badge{font-size:0.68rem;padding:2px 6px;border-radius:4px;}
+.edge-item-badge.sel{background:rgba(0,255,170,0.2);color:var(--accent);}
+.edge-item-badge.rej{background:rgba(255,68,102,0.2);color:var(--danger);}
+.mst-weight-display{font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--accent);margin-top:12px;padding:10px 16px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);}
+/* ── Dijkstra dist table ── */
+.dist-table{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:14px;}
+.dist-cell{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center;transition:all 0.3s;}
+.dist-cell.visited{border-color:var(--accent);background:rgba(0,255,170,0.06);}
+.dist-cell.current{border-color:var(--accent4);background:rgba(255,170,0,0.08);box-shadow:0 0 12px rgba(255,170,0,0.2);}
+.dist-cell.in-path{border-color:var(--accent2);background:rgba(255,107,157,0.08);}
+.dist-cell-node{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:4px;}
+.dist-cell-val{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;color:var(--text);}
+.dist-cell.visited .dist-cell-val{color:var(--accent);}
+.dist-cell.current .dist-cell-val{color:var(--accent4);}
+/* ── Floyd cycle ── */
+.floyd-nodes{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:20px 0;justify-content:center;}
+.floyd-node{display:flex;flex-direction:column;align-items:center;gap:0;}
+.floyd-node-box{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;background:var(--surface2);border:2px solid var(--border);color:var(--text);transition:all 0.35s;position:relative;}
+.floyd-node-box.slow{border-color:#ffd700;background:rgba(255,215,0,0.12);box-shadow:0 0 16px rgba(255,215,0,0.25);}
+.floyd-node-box.fast{border-color:var(--accent2);background:rgba(255,107,157,0.12);box-shadow:0 0 16px rgba(255,107,157,0.25);}
+.floyd-node-box.both{border-color:var(--accent);background:rgba(0,255,170,0.18);box-shadow:0 0 20px rgba(0,255,170,0.35);}
+.floyd-node-box.cycle-start{border-color:var(--accent3);background:rgba(107,138,255,0.15);}
+.floyd-arrow{font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--text-dim);padding:0 6px;align-self:center;}
+.floyd-arrow.cycle{color:var(--accent2);}
+.floyd-pointer-label{font-family:'JetBrains Mono',monospace;font-size:0.65rem;margin-top:4px;min-height:14px;color:var(--text-dim);}
+.floyd-status{font-family:'JetBrains Mono',monospace;font-size:0.88rem;padding:10px 16px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);margin-top:12px;min-height:42px;color:var(--text-dim);}
+.floyd-status.found{border-color:var(--accent);color:var(--accent);background:rgba(0,255,170,0.06);}
+.floyd-status.start-found{border-color:var(--accent3);color:var(--accent3);background:rgba(107,138,255,0.06);}
+/* ── speed slider ── */
+.speed-row{display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);}
+.speed-slider{-webkit-appearance:none;width:130px;height:4px;border-radius:2px;background:var(--border);outline:none;}
+.speed-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;}
+/* ── select ── */
+.node-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.82rem;padding:7px 12px;outline:none;cursor:pointer;}
+.node-select:focus{border-color:var(--accent);}
+/* ── two-col layout ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:14px;}
+@media(max-width:640px){.two-col{grid-template-columns:1fr;}}
+/* ── info badge row ── */
+.algo-info{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.algo-badge{font-family:'JetBrains Mono',monospace;font-size:0.72rem;padding:4px 12px;border-radius:100px;border:1px solid var(--border);color:var(--text-dim);}
+.algo-badge.highlight{border-color:var(--accent2);color:var(--accent2);background:rgba(255,107,157,0.07);}
+.algo-badge.time{border-color:var(--accent4);color:var(--accent4);background:rgba(255,170,0,0.07);}
+.algo-badge.space{border-color:var(--accent3);color:var(--accent3);background:rgba(107,138,255,0.07);}
+</style>
+</head>
+<body class="page-body">
+
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:var(--accent2)">Ch.4 — 그래프 알고리즘</div>
+  <div class="nav-sections">
+    <a href="#graph"    class="nav-sec-link">그래프 기본</a>
+    <a href="#bfsdfs"   class="nav-sec-link">DFS/BFS</a>
+    <a href="#mst"      class="nav-sec-link">MST</a>
+    <a href="#dijkstra" class="nav-sec-link">다익스트라</a>
+    <a href="#cycle"    class="nav-sec-link">사이클 탐지</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     CHAPTER BANNER
+═══════════════════════════════════════════ -->
+<div class="chapter-banner cb4">
+  <div class="ch-num">CHAPTER 04</div>
+  <h2>그래프 알고리즘</h2>
+  <p class="ch-desc">정점과 간선으로 세상을 모델링하다 — DFS, BFS, MST, 최단 경로, 사이클 탐지까지</p>
+  <div class="ch-pills">
+    <span>Graph Traversal</span>
+    <span>DFS / BFS</span>
+    <span>Kruskal MST</span>
+    <span>Dijkstra</span>
+    <span>Floyd Cycle</span>
+    <span>Union-Find</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 1: 그래프 기본
+═══════════════════════════════════════════ -->
+<section id="graph">
+  <div class="section-header">
+    <div class="tag tag-ch4">§1 · 그래프 기본</div>
+    <h2>Graph Basics</h2>
+    <p>그래프는 정점(Vertex)과 간선(Edge)으로 이루어진 자료구조입니다. 소셜 네트워크, 지도, 인터넷 라우팅 — 현실의 수많은 문제가 그래프로 모델링됩니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" id="btnDirected" onclick="toggleDirected()">방향 그래프</button>
+      <button class="btn" id="btnWeight"   onclick="toggleWeight()">가중치 표시</button>
+      <button class="btn"                  onclick="resetGraphDrag()">위치 초기화</button>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="graphCanvas" height="420"></canvas>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-top:8px;">
+      노드를 드래그해서 이동할 수 있습니다.
+    </div>
+    <div style="margin-top:18px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:10px;letter-spacing:1px;">ADJACENCY LIST</div>
+      <div class="adj-list" id="adjList"></div>
+    </div>
+    <div class="algo-info" style="margin-top:16px;">
+      <span class="algo-badge">정점 V = 6</span>
+      <span class="algo-badge">간선 E = 8</span>
+      <span class="algo-badge time">공간 O(V+E)</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SECTION 2: DFS / BFS
+═══════════════════════════════════════════ -->
+<section id="bfsdfs">
+  <div class="section-header">
+    <div class="tag tag-ch4">§2 · 깊이/너비 우선 탐색</div>
+    <h2>DFS / BFS</h2>
+    <p>그래프를 탐색하는 두 가지 전략입니다. DFS(깊이우선탐색)는 스택을 사용해 한 방향으로 끝까지 파고들고, BFS(너비우선탐색)는 큐를 사용해 가까운 노드부터 탐색합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls" style="align-items:center;">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);">시작 노드</span>
+      <select class="node-select" id="traversalStart">
+        <option value="0">A</option><option value="1">B</option>
+        <option value="2">C</option><option value="3">D</option>
+        <option value="4">E</option><option value="5">F</option>
+      </select>
+      <button class="btn" id="btnDFS" onclick="runDFS(+document.getElementById('traversalStart').value)">DFS 실행</button>
+      <button class="btn" id="btnBFS" onclick="runBFS(+document.getElementById('traversalStart').value)">BFS 실행</button>
+      <button class="btn" onclick="resetTraversal()">초기화</button>
+      <div class="speed-row">
+        <span>속도</span>
+        <input type="range" class="speed-slider" id="speedSlider" min="1" max="10" value="5">
+        <span id="speedVal">5</span>
+      </div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="traversalCanvas" height="380"></canvas>
+    </div>
+    <div class="struct-display">
+      <div class="struct-box">
+        <div class="struct-title" id="structTitle">STACK / QUEUE</div>
+        <div class="struct-items" id="structItems"></div>
+      </div>
+      <div class="struct-box">
+        <div class="struct-title">VISITED</div>
+        <div class="struct-items" id="visitedItems"></div>
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <div class="tlog" id="traversalLog">
+        <span class="tlog-label">탐색 순서:</span>
+      </div>
+    </div>
+    <div class="algo-info" style="margin-top:12px;">
+      <span class="algo-badge time">시간 O(V+E)</span>
+      <span class="algo-badge space">공간 O(V)</span>
+      <span class="algo-badge">DFS: 스택 기반</span>
+      <span class="algo-badge">BFS: 큐 기반</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SECTION 3: MST — Kruskal
+═══════════════════════════════════════════ -->
+<section id="mst">
+  <div class="section-header">
+    <div class="tag tag-ch4">§3 · 최소 신장 트리</div>
+    <h2>Kruskal's Algorithm</h2>
+    <p>신장 트리(Spanning Tree)는 모든 정점을 연결하는 최소한의 간선 집합입니다. Kruskal 알고리즘은 가중치 오름차순으로 간선을 추가하되, 사이클을 만들지 않는 간선만 선택합니다(Union-Find 활용).</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" id="btnKruskalStep" onclick="kruskalStep()">다음 단계</button>
+      <button class="btn" id="btnKruskalAuto" onclick="kruskalAuto()">자동 실행</button>
+      <button class="btn" onclick="kruskalReset()">초기화</button>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="canvas-wrap">
+          <canvas id="mstCanvas" height="380"></canvas>
+        </div>
+        <div class="mst-weight-display" id="mstWeightDisplay">MST 가중치: —</div>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;">정렬된 간선 리스트</div>
+        <div class="edge-list" id="kruskalEdgeList"></div>
+      </div>
+    </div>
+    <div class="algo-info" style="margin-top:14px;">
+      <span class="algo-badge time">시간 O(E log E)</span>
+      <span class="algo-badge space">공간 O(V)</span>
+      <span class="algo-badge highlight">Union-Find</span>
+      <span class="algo-badge">Greedy Algorithm</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SECTION 4: 다익스트라
+═══════════════════════════════════════════ -->
+<section id="dijkstra">
+  <div class="section-header">
+    <div class="tag tag-ch4">§4 · 최단 경로</div>
+    <h2>Dijkstra's Algorithm</h2>
+    <p>단일 출발점 최단 경로 알고리즘입니다. 음수 가중치가 없는 그래프에서 출발점에서 모든 정점까지의 최단 거리를 구합니다. 구글 지도, 네트워크 라우팅의 핵심 알고리즘입니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls" style="align-items:center;">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);">출발 노드</span>
+      <select class="node-select" id="dijkStart">
+        <option value="0">A</option><option value="1">B</option>
+        <option value="2">C</option><option value="3">D</option>
+        <option value="4">E</option><option value="5">F</option>
+      </select>
+      <button class="btn" id="btnDijkStep" onclick="dijkstraStep()">다음 단계</button>
+      <button class="btn" id="btnDijkAuto" onclick="dijkstraAuto()">자동 실행</button>
+      <button class="btn" onclick="dijkstraReset()">초기화</button>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="dijkCanvas" height="380"></canvas>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin:14px 0 8px;letter-spacing:1px;">최단 거리 테이블</div>
+    <div class="dist-table" id="distTable"></div>
+    <div class="algo-info" style="margin-top:14px;">
+      <span class="algo-badge time">시간 O((V+E) log V)</span>
+      <span class="algo-badge space">공간 O(V)</span>
+      <span class="algo-badge highlight">Priority Queue</span>
+      <span class="algo-badge">음수 가중치 불가</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SECTION 5: 사이클 탐지 — Floyd
+═══════════════════════════════════════════ -->
+<section id="cycle">
+  <div class="section-header">
+    <div class="tag tag-ch4">§5 · 사이클 탐지</div>
+    <h2>Floyd's Tortoise &amp; Hare</h2>
+    <p>Floyd의 토끼와 거북이 알고리즘은 연결 리스트에서 사이클을 O(n) 시간, O(1) 공간으로 탐지합니다. 느린 포인터(거북이)는 한 칸씩, 빠른 포인터(토끼)는 두 칸씩 이동합니다. 사이클이 있으면 반드시 만납니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" id="btnFloydStep" onclick="floydStep()">다음 단계</button>
+      <button class="btn" onclick="floydReset()">초기화</button>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-bottom:12px;">
+      연결 리스트: 1 → 2 → 3 → 4 → 5 → 6 → 3 (사이클)
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="floydCanvas" height="260"></canvas>
+    </div>
+    <div class="floyd-status" id="floydStatus">🐢 거북이(slow) = 1, 🐇 토끼(fast) = 1 — 탐색 시작</div>
+    <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
+      <div class="struct-box" style="min-width:180px;">
+        <div class="struct-title">SLOW POINTER 🐢</div>
+        <div class="struct-items"><span class="struct-item" id="slowPos">노드 1</span></div>
+      </div>
+      <div class="struct-box" style="min-width:180px;">
+        <div class="struct-title">FAST POINTER 🐇</div>
+        <div class="struct-items"><span class="struct-item top" id="fastPos">노드 1</span></div>
+      </div>
+      <div class="struct-box" style="min-width:180px;">
+        <div class="struct-title">단계</div>
+        <div class="struct-items"><span class="struct-item" id="floydStep_count">0</span></div>
+      </div>
+    </div>
+    <div class="algo-info" style="margin-top:14px;">
+      <span class="algo-badge time">시간 O(n)</span>
+      <span class="algo-badge space">공간 O(1)</span>
+      <span class="algo-badge highlight">Two Pointers</span>
+      <span class="algo-badge">사이클 시작점도 탐지 가능</span>
+    </div>
+  </div>
+</section>
+
+<div style="height:80px;"></div>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+<script>
+"use strict";
+
+// ─────────────────────────────────────────
+// SHARED DATA
+// ─────────────────────────────────────────
+const sl = ms => new Promise(r => setTimeout(r, ms));
+const LABELS = ['A','B','C','D','E','F'];
+
+// Preset node positions (will be scaled by canvas width)
+const BASE_W = 580; // design width
+const BASE_NODES = [
+  {x:150, y:100},
+  {x:350, y:80},
+  {x:500, y:200},
+  {x:400, y:350},
+  {x:200, y:350},
+  {x:80,  y:250}
+];
+// Undirected weighted edges [u, v, weight]
+const EDGES = [
+  [0,1,4],[0,5,2],[1,2,5],[1,4,10],
+  [2,3,3],[3,4,4],[4,5,6],[5,2,8]
+];
+
+// CSS var helpers
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+const C = {
+  bg:      ()=> cssVar('--bg'),
+  surface: ()=> cssVar('--surface'),
+  surface2:()=> cssVar('--surface2'),
+  border:  ()=> cssVar('--border'),
+  text:    ()=> cssVar('--text'),
+  dim:     ()=> cssVar('--text-dim'),
+  accent:  ()=> cssVar('--accent'),
+  accent2: ()=> cssVar('--accent2'),
+  accent3: ()=> cssVar('--accent3'),
+  accent4: ()=> cssVar('--accent4'),
+  danger:  ()=> cssVar('--danger'),
+  success: ()=> cssVar('--success'),
+};
+
+// ─────────────────────────────────────────
+// SECTION 1: GRAPH BASICS
+// ─────────────────────────────────────────
+const gCanvas = document.getElementById('graphCanvas');
+const gCtx    = gCanvas.getContext('2d');
+let gDirected = false;
+let gWeighted = true;
+let gNodes    = [];
+
+function initGraph(){
+  resizeCanvas(gCanvas);
+  const scale = gCanvas.width / BASE_W;
+  gNodes = BASE_NODES.map(n => ({x: n.x * scale, y: n.y * scale}));
+  drawGraph();
+  renderAdjList();
+}
+
+function resizeCanvas(c){
+  const rect = c.parentElement.getBoundingClientRect();
+  c.width  = Math.floor(rect.width);
+  c.height = parseInt(c.getAttribute('height'));
+}
+
+function drawGraph(
+  nodeColors   = {},
+  edgeColors   = {},
+  edgeWidths   = {},
+  pulseIdx     = -1,
+  arrowOffsets = {}
+){
+  const ctx = gCtx;
+  const w = gCanvas.width, h = gCanvas.height;
+  ctx.clearRect(0,0,w,h);
+
+  // Draw edges
+  for(const [u,v,wt] of EDGES){
+    const nu = gNodes[u], nv = gNodes[v];
+    const col = edgeColors[[u,v]] || edgeColors[[v,u]] || C.border();
+    const lw  = edgeWidths[[u,v]] || edgeWidths[[v,u]] || 2;
+    ctx.save();
+    ctx.strokeStyle = col;
+    ctx.lineWidth   = lw;
+    ctx.shadowColor = col;
+    ctx.shadowBlur  = lw > 2 ? 8 : 0;
+
+    if(gDirected){
+      drawArrow(ctx, nu.x, nu.y, nv.x, nv.y, 22, col);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(nu.x, nu.y);
+      ctx.lineTo(nv.x, nv.y);
+      ctx.stroke();
+    }
+
+    if(gWeighted){
+      const mx = (nu.x+nv.x)/2, my = (nu.y+nv.y)/2;
+      const dx = nv.x-nu.x, dy = nv.y-nu.y;
+      const len = Math.hypot(dx,dy)||1;
+      const ox = -dy/len*12, oy = dx/len*12;
+      ctx.shadowBlur = 0;
+      ctx.fillStyle   = col !== C.border() ? col : C.accent4();
+      ctx.font        = '600 12px JetBrains Mono, monospace';
+      ctx.textAlign   = 'center';
+      ctx.textBaseline= 'middle';
+      ctx.fillText(wt, mx+ox, my+oy);
+    }
+    ctx.restore();
+  }
+
+  // Draw nodes
+  for(let i=0;i<gNodes.length;i++){
+    const n = gNodes[i];
+    const col = nodeColors[i] || C.surface2();
+    const bc  = nodeColors[i] ? nodeColors[i] : C.border();
+    const r   = 22;
+    const pulsing = (i === pulseIdx);
+
+    ctx.save();
+    if(pulsing){
+      ctx.shadowColor = C.accent();
+      ctx.shadowBlur  = 20;
+    }
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r + (pulsing?3:0), 0, Math.PI*2);
+    ctx.fillStyle   = col;
+    ctx.fill();
+    ctx.strokeStyle = bc;
+    ctx.lineWidth   = pulsing ? 3 : 2;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.font      = 'bold 14px JetBrains Mono, monospace';
+    ctx.fillStyle = nodeColors[i] ? C.bg() : C.text();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(LABELS[i], n.x, n.y);
+  }
+}
+
+function drawArrow(ctx, x1,y1, x2,y2, nodeR, color){
+  const dx = x2-x1, dy = y2-y1;
+  const len= Math.hypot(dx,dy)||1;
+  const ux = dx/len, uy = dy/len;
+  const sx = x1 + ux*nodeR, sy = y1 + uy*nodeR;
+  const ex = x2 - ux*nodeR, ey = y2 - uy*nodeR;
+  const aw = 10, ah = 7;
+  ctx.beginPath();
+  ctx.moveTo(sx,sy);
+  ctx.lineTo(ex,ey);
+  ctx.stroke();
+  // arrowhead
+  const ax = ex - ux*aw + (-uy)*ah;
+  const ay = ey - uy*aw + (ux)*ah;
+  const bx = ex - ux*aw - (-uy)*ah;
+  const by = ey - uy*aw - (ux)*ah;
+  ctx.beginPath();
+  ctx.moveTo(ex,ey);
+  ctx.lineTo(ax,ay);
+  ctx.lineTo(bx,by);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function toggleDirected(){
+  gDirected = !gDirected;
+  const btn = document.getElementById('btnDirected');
+  btn.classList.toggle('active', gDirected);
+  btn.textContent = gDirected ? '방향 그래프 ON' : '방향 그래프';
+  drawGraph();
+}
+function toggleWeight(){
+  gWeighted = !gWeighted;
+  const btn = document.getElementById('btnWeight');
+  btn.classList.toggle('active', gWeighted);
+  btn.textContent = gWeighted ? '가중치 ON' : '가중치 표시';
+  drawGraph();
+}
+function resetGraphDrag(){
+  const scale = gCanvas.width / BASE_W;
+  gNodes = BASE_NODES.map(n => ({x: n.x*scale, y: n.y*scale}));
+  drawGraph();
+}
+
+function renderAdjList(){
+  const div = document.getElementById('adjList');
+  const adj = LABELS.map(()=>[]);
+  for(const [u,v,w] of EDGES){
+    adj[u].push({to:v, w});
+    if(!gDirected) adj[v].push({to:u, w});
+  }
+  div.innerHTML = LABELS.map((l,i)=>`
+    <div class="adj-node">
+      <div class="adj-node-label">${l}</div>
+      <div class="adj-edges">${
+        adj[i].length
+          ? adj[i].map(e=>`<span class="adj-edge-item">→ ${LABELS[e.to]} <small style="color:var(--accent4)">(${e.w})</small></span>`).join('<br>')
+          : '<span style="opacity:.4">없음</span>'
+      }</div>
+    </div>`).join('');
+}
+
+// Drag on graph canvas
+let dragIdx = -1;
+gCanvas.addEventListener('mousedown', e => {
+  const r = gCanvas.getBoundingClientRect();
+  const mx = (e.clientX-r.left)*(gCanvas.width/r.width);
+  const my = (e.clientY-r.top)*(gCanvas.height/r.height);
+  dragIdx = gNodes.findIndex(n => Math.hypot(n.x-mx,n.y-my) < 26);
+});
+gCanvas.addEventListener('mousemove', e => {
+  if(dragIdx<0) return;
+  const r = gCanvas.getBoundingClientRect();
+  gNodes[dragIdx].x = (e.clientX-r.left)*(gCanvas.width/r.width);
+  gNodes[dragIdx].y = (e.clientY-r.top)*(gCanvas.height/r.height);
+  drawGraph();
+});
+gCanvas.addEventListener('mouseup',   ()=>{ dragIdx=-1; });
+gCanvas.addEventListener('mouseleave',()=>{ dragIdx=-1; });
+
+// Touch drag
+gCanvas.addEventListener('touchstart', e=>{
+  e.preventDefault();
+  const t = e.touches[0];
+  const r = gCanvas.getBoundingClientRect();
+  const mx = (t.clientX-r.left)*(gCanvas.width/r.width);
+  const my = (t.clientY-r.top)*(gCanvas.height/r.height);
+  dragIdx = gNodes.findIndex(n => Math.hypot(n.x-mx,n.y-my) < 30);
+},{passive:false});
+gCanvas.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  if(dragIdx<0) return;
+  const t = e.touches[0];
+  const r = gCanvas.getBoundingClientRect();
+  gNodes[dragIdx].x = (t.clientX-r.left)*(gCanvas.width/r.width);
+  gNodes[dragIdx].y = (t.clientY-r.top)*(gCanvas.height/r.height);
+  drawGraph();
+},{passive:false});
+gCanvas.addEventListener('touchend',()=>{ dragIdx=-1; });
+
+
+// ─────────────────────────────────────────
+// SECTION 2: DFS / BFS
+// ─────────────────────────────────────────
+const tCanvas = document.getElementById('traversalCanvas');
+const tCtx    = tCanvas.getContext('2d');
+let tNodes    = [];
+let traversalRunning = false;
+
+document.getElementById('speedSlider').addEventListener('input', function(){
+  document.getElementById('speedVal').textContent = this.value;
+});
+
+function initTraversal(){
+  resizeCanvas(tCanvas);
+  const scale = tCanvas.width / BASE_W;
+  tNodes = BASE_NODES.map(n => ({x: n.x*scale, y: n.y*scale}));
+  drawTraversal({});
+}
+
+function drawTraversal(state){
+  const ctx = tCtx;
+  const w = tCanvas.width, h = tCanvas.height;
+  ctx.clearRect(0,0,w,h);
+
+  const {visited={}, current=-1, path=[], edgeStates={}} = state;
+
+  // Edges
+  for(const [u,v,wt] of EDGES){
+    const nu = tNodes[u], nv = tNodes[v];
+    const ek = edgeStates[[u,v]] || edgeStates[[v,u]] || 'normal';
+    let col = C.border(), lw = 2;
+    if(ek==='traversed'){col=C.accent(); lw=3;}
+    ctx.save();
+    ctx.strokeStyle=col; ctx.lineWidth=lw;
+    ctx.shadowColor=col; ctx.shadowBlur = lw>2?8:0;
+    ctx.beginPath();
+    ctx.moveTo(nu.x,nu.y); ctx.lineTo(nv.x,nv.y);
+    ctx.stroke();
+    // weight
+    const mx=(nu.x+nv.x)/2, my=(nu.y+nv.y)/2;
+    const dx=nv.x-nu.x,dy=nv.y-nu.y,len=Math.hypot(dx,dy)||1;
+    ctx.shadowBlur=0;
+    ctx.fillStyle=C.accent4(); ctx.font='600 11px JetBrains Mono,monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(wt, mx+(-dy/len*11), my+(dx/len*11));
+    ctx.restore();
+  }
+
+  // Nodes
+  for(let i=0;i<tNodes.length;i++){
+    const n = tNodes[i];
+    const isVisited = visited[i];
+    const isCurrent = i===current;
+    const r=22;
+    ctx.save();
+    let fill   = C.surface2();
+    let stroke = C.border();
+    if(isVisited){ fill=C.accent();    stroke=C.accent();  }
+    if(isCurrent){ fill=C.accent2();   stroke=C.accent2(); ctx.shadowColor=C.accent2(); ctx.shadowBlur=18; }
+    ctx.beginPath(); ctx.arc(n.x,n.y,r+(isCurrent?3:0),0,Math.PI*2);
+    ctx.fillStyle=fill; ctx.fill();
+    ctx.strokeStyle=stroke; ctx.lineWidth=2; ctx.stroke();
+    ctx.restore();
+    ctx.font='bold 14px JetBrains Mono,monospace';
+    ctx.fillStyle=(isVisited||isCurrent)?C.bg():C.text();
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(LABELS[i], n.x, n.y);
+  }
+}
+
+function buildAdj(){
+  const adj = Array.from({length:6},()=>[]);
+  for(const [u,v] of EDGES){ adj[u].push(v); adj[v].push(u); }
+  return adj;
+}
+
+function getSpeed(){
+  const v = +document.getElementById('speedSlider').value;
+  return Math.round(1000/v);
+}
+
+function setTraversalBtns(disabled){
+  ['btnDFS','btnBFS'].forEach(id=>{ document.getElementById(id).disabled=disabled; });
+}
+
+function resetTraversal(){
+  traversalRunning=false;
+  drawTraversal({});
+  document.getElementById('traversalLog').innerHTML='<span class="tlog-label">탐색 순서:</span>';
+  document.getElementById('structItems').innerHTML='';
+  document.getElementById('visitedItems').innerHTML='';
+  document.getElementById('structTitle').textContent='STACK / QUEUE';
+  setTraversalBtns(false);
+}
+
+function updateStructDisplay(title, items, top=-1){
+  document.getElementById('structTitle').textContent = title;
+  const el = document.getElementById('structItems');
+  el.innerHTML = items.map((it,i)=>`<span class="struct-item${i===items.length-1&&top>=0?' top':''}">${LABELS[it]}</span>`).join('');
+}
+function updateVisitedDisplay(visited){
+  const el = document.getElementById('visitedItems');
+  el.innerHTML = Object.keys(visited).map(i=>`<span class="struct-item">${LABELS[i]}</span>`).join('');
+}
+function addToLog(nodeIdx){
+  const log = document.getElementById('traversalLog');
+  const pill = document.createElement('span');
+  pill.className='tlog-node'; pill.textContent=LABELS[nodeIdx];
+  log.appendChild(pill);
+}
+
+async function runDFS(start){
+  if(traversalRunning) return;
+  traversalRunning=true;
+  setTraversalBtns(true);
+  document.getElementById('traversalLog').innerHTML='<span class="tlog-label">DFS 순서:</span>';
+  document.getElementById('structItems').innerHTML='';
+  document.getElementById('visitedItems').innerHTML='';
+
+  const adj = buildAdj();
+  const visited = {};
+  const edgeStates = {};
+  const stack = [start];
+
+  while(stack.length>0 && traversalRunning){
+    const cur = stack.pop();
+    if(visited[cur]) continue;
+    visited[cur] = true;
+    addToLog(cur);
+    updateStructDisplay('STACK (DFS)', [...stack]);
+    updateVisitedDisplay(visited);
+    drawTraversal({visited, current:cur, edgeStates});
+    await sl(getSpeed());
+
+    for(const nb of [...adj[cur]].reverse()){
+      if(!visited[nb]) stack.push(nb);
+    }
+    // mark edges
+    for(const nb of adj[cur]){
+      if(visited[nb]){
+        edgeStates[[cur,nb]] = 'traversed';
+        edgeStates[[nb,cur]] = 'traversed';
+      }
+    }
+  }
+  drawTraversal({visited, current:-1, edgeStates});
+  setTraversalBtns(false);
+  traversalRunning=false;
+}
+
+async function runBFS(start){
+  if(traversalRunning) return;
+  traversalRunning=true;
+  setTraversalBtns(true);
+  document.getElementById('traversalLog').innerHTML='<span class="tlog-label">BFS 순서:</span>';
+  document.getElementById('structItems').innerHTML='';
+  document.getElementById('visitedItems').innerHTML='';
+
+  const adj = buildAdj();
+  const visited = {};
+  const edgeStates = {};
+  const queue = [start];
+  visited[start] = true;
+
+  while(queue.length>0 && traversalRunning){
+    const cur = queue.shift();
+    addToLog(cur);
+    updateStructDisplay('QUEUE (BFS)', [...queue]);
+    updateVisitedDisplay(visited);
+    drawTraversal({visited, current:cur, edgeStates});
+    await sl(getSpeed());
+
+    for(const nb of adj[cur]){
+      if(!visited[nb]){
+        visited[nb]=true;
+        queue.push(nb);
+        edgeStates[[cur,nb]]='traversed';
+        edgeStates[[nb,cur]]='traversed';
+      }
+    }
+  }
+  drawTraversal({visited, current:-1, edgeStates});
+  setTraversalBtns(false);
+  traversalRunning=false;
+}
+
+
+// ─────────────────────────────────────────
+// SECTION 3: KRUSKAL MST
+// ─────────────────────────────────────────
+const mCanvas = document.getElementById('mstCanvas');
+const mCtx    = mCanvas.getContext('2d');
+let mNodes    = [];
+// Sort edges by weight
+const SORTED_EDGES = [...EDGES].sort((a,b)=>a[2]-b[2]);
+let kState = null;
+let kAutoRunning = false;
+
+function initMST(){
+  resizeCanvas(mCanvas);
+  const scale = mCanvas.width / BASE_W;
+  mNodes = BASE_NODES.map(n => ({x:n.x*scale, y:n.y*scale}));
+  kruskalReset();
+}
+
+// Union-Find
+function makeUF(n){ return {parent:Array.from({length:n},(_,i)=>i), rank:new Array(n).fill(0)}; }
+function ufFind(uf,x){ if(uf.parent[x]!==x) uf.parent[x]=ufFind(uf,uf.parent[x]); return uf.parent[x]; }
+function ufUnion(uf,x,y){
+  const rx=ufFind(uf,x), ry=ufFind(uf,y);
+  if(rx===ry) return false;
+  if(uf.rank[rx]<uf.rank[ry]) uf.parent[rx]=ry;
+  else if(uf.rank[rx]>uf.rank[ry]) uf.parent[ry]=rx;
+  else { uf.parent[ry]=rx; uf.rank[rx]++; }
+  return true;
+}
+
+function kruskalReset(){
+  kAutoRunning=false;
+  kState = {
+    uf: makeUF(6),
+    idx: 0,
+    selected: [],
+    rejected: [],
+    currentEdgeIdx: -1,
+    totalWeight: 0,
+    done: false
+  };
+  drawMST(kState);
+  renderKruskalEdgeList(kState);
+  document.getElementById('mstWeightDisplay').textContent='MST 가중치: —';
+  document.getElementById('btnKruskalStep').disabled=false;
+  document.getElementById('btnKruskalAuto').disabled=false;
+}
+
+function kruskalStep(){
+  if(!kState || kState.done) return;
+  const {uf, idx, selected, rejected} = kState;
+  if(idx >= SORTED_EDGES.length){
+    kState.done=true;
+    document.getElementById('mstWeightDisplay').textContent=`MST 가중치: ${kState.totalWeight}`;
+    document.getElementById('btnKruskalStep').disabled=true;
+    drawMST(kState);
+    return;
+  }
+  const [u,v,w] = SORTED_EDGES[idx];
+  kState.currentEdgeIdx = idx;
+  if(ufUnion(uf,u,v)){
+    selected.push(idx);
+    kState.totalWeight += w;
+  } else {
+    rejected.push(idx);
+  }
+  kState.idx++;
+  if(kState.idx >= SORTED_EDGES.length || selected.length===5){
+    kState.done=true;
+    document.getElementById('mstWeightDisplay').textContent=`MST 가중치: ${kState.totalWeight}`;
+    document.getElementById('btnKruskalStep').disabled=true;
+  }
+  drawMST(kState);
+  renderKruskalEdgeList(kState);
+}
+
+async function kruskalAuto(){
+  if(kAutoRunning) return;
+  kAutoRunning=true;
+  document.getElementById('btnKruskalAuto').disabled=true;
+  while(!kState.done && kAutoRunning){
+    kruskalStep();
+    await sl(700);
+  }
+  kAutoRunning=false;
+}
+
+function drawMST(state){
+  const ctx=mCtx;
+  ctx.clearRect(0,0,mCanvas.width,mCanvas.height);
+  const {selected, rejected, currentEdgeIdx} = state;
+
+  for(let ei=0; ei<SORTED_EDGES.length; ei++){
+    const [u,v,w] = SORTED_EDGES[ei];
+    const nu=mNodes[u], nv=mNodes[v];
+    let col=C.border(), lw=2;
+    if(selected.includes(ei)){  col=C.accent();  lw=3; }
+    if(rejected.includes(ei)){  col=C.danger();  lw=2; }
+    if(ei===currentEdgeIdx && !state.done){ col=C.accent4(); lw=3.5; }
+    ctx.save();
+    ctx.strokeStyle=col; ctx.lineWidth=lw;
+    ctx.shadowColor=col; ctx.shadowBlur=lw>2?10:0;
+    ctx.beginPath(); ctx.moveTo(nu.x,nu.y); ctx.lineTo(nv.x,nv.y); ctx.stroke();
+    const mx=(nu.x+nv.x)/2,my=(nu.y+nv.y)/2;
+    const dx=nv.x-nu.x,dy=nv.y-nu.y,len=Math.hypot(dx,dy)||1;
+    ctx.shadowBlur=0;
+    ctx.fillStyle=col!==C.border()?col:C.accent4();
+    ctx.font='600 12px JetBrains Mono,monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(w, mx+(-dy/len*12), my+(dx/len*12));
+    ctx.restore();
+  }
+
+  for(let i=0;i<mNodes.length;i++){
+    const n=mNodes[i];
+    const inMST = selected.some(ei=>{ const [u,v]=SORTED_EDGES[ei]; return u===i||v===i; });
+    ctx.save();
+    let fill=C.surface2(), stroke=C.border();
+    if(inMST){ fill=C.accent(); stroke=C.accent(); }
+    ctx.shadowColor=stroke; ctx.shadowBlur=inMST?14:0;
+    ctx.beginPath(); ctx.arc(n.x,n.y,22,0,Math.PI*2);
+    ctx.fillStyle=fill; ctx.fill();
+    ctx.strokeStyle=stroke; ctx.lineWidth=2; ctx.stroke();
+    ctx.restore();
+    ctx.font='bold 14px JetBrains Mono,monospace';
+    ctx.fillStyle=inMST?C.bg():C.text();
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(LABELS[i],n.x,n.y);
+  }
+}
+
+function renderKruskalEdgeList(state){
+  const {selected, rejected, currentEdgeIdx} = state;
+  const el = document.getElementById('kruskalEdgeList');
+  el.innerHTML = SORTED_EDGES.map((e,i)=>{
+    const [u,v,w]=e;
+    let cls='edge-item';
+    let badge='';
+    if(selected.includes(i)){  cls+=' selected'; badge=`<span class="edge-item-badge sel">선택</span>`; }
+    if(rejected.includes(i)){  cls+=' rejected'; badge=`<span class="edge-item-badge rej">사이클</span>`; }
+    if(i===currentEdgeIdx && !state.done){ cls+=' current'; badge=`<span class="edge-item-badge" style="background:rgba(255,170,0,0.2);color:var(--accent4)">검토중</span>`; }
+    return `<div class="${cls}">
+      <span style="color:var(--accent2)">${LABELS[u]}–${LABELS[v]}</span>
+      <span style="color:var(--accent4);font-size:0.78rem">w=${w}</span>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+
+// ─────────────────────────────────────────
+// SECTION 4: DIJKSTRA
+// ─────────────────────────────────────────
+const dCanvas = document.getElementById('dijkCanvas');
+const dCtx    = dCanvas.getContext('2d');
+let dNodes    = [];
+let dijkState = null;
+let dijkAutoRunning = false;
+
+function initDijkstra(){
+  resizeCanvas(dCanvas);
+  const scale = dCanvas.width / BASE_W;
+  dNodes = BASE_NODES.map(n => ({x:n.x*scale, y:n.y*scale}));
+  dijkstraReset();
+}
+
+function dijkstraReset(){
+  dijkAutoRunning=false;
+  const src = +document.getElementById('dijkStart').value;
+  const INF = Infinity;
+  dijkState = {
+    src,
+    dist:   new Array(6).fill(INF),
+    prev:   new Array(6).fill(-1),
+    visited:new Array(6).fill(false),
+    pq:     [{node:src, d:0}],
+    current:-1,
+    relaxedEdges: {},
+    done: false
+  };
+  dijkState.dist[src]=0;
+  drawDijkstra(dijkState);
+  renderDistTable(dijkState);
+  document.getElementById('btnDijkStep').disabled=false;
+  document.getElementById('btnDijkAuto').disabled=false;
+}
+
+// adjacency with weights
+function buildWeightedAdj(){
+  const adj = Array.from({length:6},()=>[]);
+  for(const [u,v,w] of EDGES){
+    adj[u].push({to:v,w});
+    adj[v].push({to:u,w});
+  }
+  return adj;
+}
+
+function dijkstraStep(){
+  if(!dijkState || dijkState.done) return;
+  const {dist,prev,visited,pq,relaxedEdges} = dijkState;
+  const adj = buildWeightedAdj();
+
+  // Pop min from pq
+  if(pq.length===0){ dijkState.done=true; drawDijkstra(dijkState); renderDistTable(dijkState); return; }
+  pq.sort((a,b)=>a.d-b.d);
+  const {node:u, d:du} = pq.shift();
+  if(visited[u]){ drawDijkstra(dijkState); return; }
+  visited[u]=true;
+  dijkState.current=u;
+
+  for(const {to:v,w} of adj[u]){
+    if(visited[v]) continue;
+    const nd = dist[u]+w;
+    if(nd<dist[v]){
+      dist[v]=nd; prev[v]=u;
+      pq.push({node:v, d:nd});
+      relaxedEdges[[u,v]]=true; relaxedEdges[[v,u]]=true;
+    }
+  }
+
+  if(pq.filter(x=>!visited[x.node]).length===0 && visited.every(v=>v)){
+    dijkState.done=true;
+    document.getElementById('btnDijkStep').disabled=true;
+  }
+  drawDijkstra(dijkState);
+  renderDistTable(dijkState);
+}
+
+async function dijkstraAuto(){
+  if(dijkAutoRunning) return;
+  dijkAutoRunning=true;
+  document.getElementById('btnDijkAuto').disabled=true;
+  while(!dijkState.done && dijkAutoRunning){
+    dijkstraStep();
+    await sl(700);
+  }
+  dijkAutoRunning=false;
+}
+
+function getPathEdges(state){
+  const edges = new Set();
+  const {prev} = state;
+  for(let v=0;v<6;v++){
+    if(prev[v]>=0){
+      edges.add(`${prev[v]}-${v}`);
+      edges.add(`${v}-${prev[v]}`);
+    }
+  }
+  return edges;
+}
+
+function drawDijkstra(state){
+  const ctx=dCtx;
+  ctx.clearRect(0,0,dCanvas.width,dCanvas.height);
+  const {visited,current,relaxedEdges,dist,done} = state;
+  const pathEdges = done ? getPathEdges(state) : new Set();
+
+  for(const [u,v,w] of EDGES){
+    const nu=dNodes[u], nv=dNodes[v];
+    const isRelaxed = relaxedEdges[[u,v]] || relaxedEdges[[v,u]];
+    const isPath    = pathEdges.has(`${u}-${v}`);
+    let col=C.border(), lw=2;
+    if(isRelaxed){  col=C.accent3(); lw=2.5; }
+    if(isPath){     col=C.accent();  lw=3.5; }
+    ctx.save();
+    ctx.strokeStyle=col; ctx.lineWidth=lw;
+    ctx.shadowColor=col; ctx.shadowBlur=isPath?12:0;
+    ctx.beginPath(); ctx.moveTo(nu.x,nu.y); ctx.lineTo(nv.x,nv.y); ctx.stroke();
+    const mx=(nu.x+nv.x)/2,my=(nu.y+nv.y)/2;
+    const dx=nv.x-nu.x,dy=nv.y-nu.y,len=Math.hypot(dx,dy)||1;
+    ctx.shadowBlur=0;
+    ctx.fillStyle=isPath?C.accent():(isRelaxed?C.accent3():C.accent4());
+    ctx.font='600 11px JetBrains Mono,monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(w, mx+(-dy/len*12), my+(dx/len*12));
+    ctx.restore();
+  }
+
+  for(let i=0;i<dNodes.length;i++){
+    const n=dNodes[i];
+    const isCur  = i===current;
+    const isVis  = visited[i];
+    const isSrc  = i===state.src;
+    ctx.save();
+    let fill=C.surface2(), stroke=C.border();
+    if(isVis){  fill=C.accent();  stroke=C.accent();  }
+    if(isCur){  fill=C.accent2(); stroke=C.accent2(); ctx.shadowColor=C.accent2(); ctx.shadowBlur=18; }
+    if(isSrc && !isCur){ fill=C.accent4(); stroke=C.accent4(); }
+    ctx.shadowColor=stroke; ctx.shadowBlur=ctx.shadowBlur||( (isVis||isSrc)?12:0 );
+    ctx.beginPath(); ctx.arc(n.x,n.y,22+(isCur?3:0),0,Math.PI*2);
+    ctx.fillStyle=fill; ctx.fill();
+    ctx.strokeStyle=stroke; ctx.lineWidth=2; ctx.stroke();
+    ctx.restore();
+
+    ctx.font='bold 14px JetBrains Mono,monospace';
+    ctx.fillStyle=(isVis||isCur||isSrc)?C.bg():C.text();
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(LABELS[i],n.x,n.y);
+
+    // dist label above node
+    if(dist[i]<Infinity){
+      ctx.font='500 10px JetBrains Mono,monospace';
+      ctx.fillStyle=C.accent4();
+      ctx.textAlign='center'; ctx.textBaseline='bottom';
+      ctx.fillText(dist[i], n.x, n.y-26);
+    }
+  }
+}
+
+function renderDistTable(state){
+  const {dist,visited,current,src} = state;
+  const el = document.getElementById('distTable');
+  el.innerHTML = LABELS.map((l,i)=>{
+    let cls='dist-cell';
+    if(visited[i]) cls+=' visited';
+    if(i===current) cls+=' current';
+    if(i===src) cls+=' in-path';
+    const d = dist[i]===Infinity ? '∞' : dist[i];
+    return `<div class="${cls}">
+      <div class="dist-cell-node">${l}</div>
+      <div class="dist-cell-val">${d}</div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('dijkStart').addEventListener('change', dijkstraReset);
+
+
+// ─────────────────────────────────────────
+// SECTION 5: FLOYD CYCLE DETECTION
+// ─────────────────────────────────────────
+// List: 1→2→3→4→5→6→3 (indices 0-5, cycle back to index 2)
+const FLOYD_NODES = [1,2,3,4,5,6];
+const FLOYD_NEXT  = [1,2,3,4,5,2]; // next[i] = index of next node (0-based)
+const CYCLE_ENTRY = 2; // index 2 = node value 3
+
+const fCanvas = document.getElementById('floydCanvas');
+const fCtx    = fCanvas.getContext('2d');
+let floydState = null;
+
+function initFloyd(){
+  resizeCanvas(fCanvas);
+  floydReset();
+}
+
+function floydReset(){
+  floydState = {
+    slow: 0,
+    fast: 0,
+    phase: 'detect',  // 'detect' | 'found' | 'locate' | 'done'
+    step: 0,
+    meetPoint: -1,
+    cycleStart: -1,
+    locateSlow: -1
+  };
+  drawFloyd(floydState);
+  updateFloydUI(floydState);
+  document.getElementById('btnFloydStep').disabled=false;
+}
+
+function floydStep(){
+  if(!floydState || floydState.phase==='done') return;
+  const st = floydState;
+
+  if(st.phase==='detect'){
+    st.slow = FLOYD_NEXT[st.slow];
+    st.fast = FLOYD_NEXT[FLOYD_NEXT[st.fast]];
+    st.step++;
+    if(st.slow===st.fast){
+      st.phase='found';
+      st.meetPoint=st.slow;
+    }
+  } else if(st.phase==='found'){
+    // Start locating cycle entry: one pointer from head, one from meeting point
+    st.locateSlow = 0;
+    st.phase='locate';
+    st.step++;
+  } else if(st.phase==='locate'){
+    // Advance both one step
+    st.locateSlow = FLOYD_NEXT[st.locateSlow];
+    st.slow       = FLOYD_NEXT[st.slow];
+    st.step++;
+    if(st.locateSlow===st.slow){
+      st.cycleStart=st.locateSlow;
+      st.phase='done';
+      document.getElementById('btnFloydStep').disabled=true;
+    }
+  }
+  drawFloyd(st);
+  updateFloydUI(st);
+}
+
+function updateFloydUI(st){
+  const sIdx = st.phase==='locate'?st.locateSlow:st.slow;
+  const fIdx = st.fast;
+  document.getElementById('slowPos').textContent  = `노드 ${FLOYD_NODES[sIdx]}`;
+  document.getElementById('fastPos').textContent  = `노드 ${FLOYD_NODES[fIdx]}`;
+  document.getElementById('floydStep_count').textContent = `${st.step}`;
+
+  const statusEl = document.getElementById('floydStatus');
+  statusEl.className='floyd-status';
+  if(st.phase==='detect'){
+    statusEl.textContent=`🐢 slow = 노드${FLOYD_NODES[st.slow]},  🐇 fast = 노드${FLOYD_NODES[st.fast]}  — 사이클 탐지 중...`;
+  } else if(st.phase==='found'){
+    statusEl.className='floyd-status found';
+    statusEl.textContent=`만남 지점: 노드${FLOYD_NODES[st.meetPoint]}! "다음 단계" 버튼으로 사이클 시작점을 찾으세요.`;
+  } else if(st.phase==='locate'){
+    statusEl.className='floyd-status found';
+    statusEl.textContent=`사이클 시작점 탐색 중 — head=노드${FLOYD_NODES[st.locateSlow]}, meet=노드${FLOYD_NODES[st.slow]}`;
+  } else if(st.phase==='done'){
+    statusEl.className='floyd-status start-found';
+    statusEl.textContent=`사이클 시작점 발견: 노드${FLOYD_NODES[st.cycleStart]}  (인덱스 ${st.cycleStart})`;
+  }
+}
+
+function drawFloyd(st){
+  const ctx=fCtx;
+  const W=fCanvas.width, H=fCanvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const n = FLOYD_NODES.length;
+  const nodeR = 24;
+  const startX = 40, topY = H/2 - 20;
+  const spacing = (W - startX*2) / (n - 1);
+
+  // Compute node positions
+  const pos = FLOYD_NODES.map((_,i)=>({ x: startX + i*spacing, y: topY }));
+
+  // Draw cycle arrow (6→3, index 5→2)
+  {
+    const from = pos[5], to = pos[2];
+    const cy = topY + 80;
+    ctx.save();
+    ctx.strokeStyle = C.accent2();
+    ctx.lineWidth   = 2.5;
+    ctx.shadowColor = C.accent2();
+    ctx.shadowBlur  = 8;
+    ctx.setLineDash([5,4]);
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y + nodeR);
+    ctx.bezierCurveTo(from.x, cy, to.x, cy, to.x, to.y + nodeR);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // arrowhead
+    ctx.shadowBlur=0;
+    ctx.fillStyle=C.accent2();
+    ctx.beginPath();
+    ctx.moveTo(to.x, to.y+nodeR);
+    ctx.lineTo(to.x-7, to.y+nodeR+14);
+    ctx.lineTo(to.x+7, to.y+nodeR+14);
+    ctx.closePath();
+    ctx.fill();
+    // label
+    ctx.font='600 11px JetBrains Mono,monospace';
+    ctx.fillStyle=C.accent2();
+    ctx.textAlign='center';
+    ctx.fillText('cycle', (from.x+to.x)/2, cy+16);
+    ctx.restore();
+  }
+
+  // Draw straight arrows
+  for(let i=0;i<n-1;i++){
+    const p=pos[i], q=pos[i+1];
+    ctx.save();
+    ctx.strokeStyle=C.border(); ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(p.x+nodeR,p.y); ctx.lineTo(q.x-nodeR,q.y); ctx.stroke();
+    // arrowhead
+    ctx.fillStyle=C.border();
+    ctx.beginPath();
+    ctx.moveTo(q.x-nodeR, q.y);
+    ctx.lineTo(q.x-nodeR-10, q.y-6);
+    ctx.lineTo(q.x-nodeR-10, q.y+6);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  // Draw nodes
+  for(let i=0;i<n;i++){
+    const p=pos[i];
+    const isSlow   = (st.phase==='detect'||st.phase==='found') && st.slow===i;
+    const isFast   = (st.phase==='detect'||st.phase==='found') && st.fast===i;
+    const isLocS   = (st.phase==='locate'||st.phase==='done') && st.locateSlow===i;
+    const isLocF   = (st.phase==='locate'||st.phase==='done') && st.slow===i;
+    const isMeet   = st.phase==='found' && st.meetPoint===i;
+    const isCycleStart = st.phase==='done' && st.cycleStart===i;
+    const both     = isSlow && isFast || isLocS && isLocF;
+    const isCycle  = i>=CYCLE_ENTRY;
+
+    let fill=C.surface2(), stroke=C.border();
+    if(isCycle){     fill=C.surface2(); stroke='rgba(107,138,255,0.4)'; }
+    if(isSlow||isLocS){ fill='rgba(255,215,0,0.15)'; stroke='#ffd700'; }
+    if(isFast||isLocF){ fill=C.accent2(); stroke=C.accent2(); }
+    if(both){           fill='rgba(0,255,170,0.2)';   stroke=C.accent(); }
+    if(isCycleStart){   fill='rgba(107,138,255,0.3)'; stroke=C.accent3(); }
+
+    ctx.save();
+    if(isSlow||isFast||both||isCycleStart){
+      ctx.shadowColor=stroke; ctx.shadowBlur=18;
+    }
+    ctx.beginPath(); ctx.arc(p.x,p.y,nodeR+(both?3:0),0,Math.PI*2);
+    ctx.fillStyle=fill; ctx.fill();
+    ctx.strokeStyle=stroke; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.restore();
+
+    // node value
+    ctx.font='bold 13px JetBrains Mono,monospace';
+    ctx.fillStyle=C.text();
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(FLOYD_NODES[i], p.x, p.y);
+
+    // pointer labels
+    const labels=[];
+    if(both)           labels.push('🐢🐇');
+    else {
+      if(isSlow||isLocS) labels.push('🐢');
+      if(isFast||isLocF) labels.push('🐇');
+    }
+    if(isMeet)         labels.push('MEET');
+    if(isCycleStart)   labels.push('CYCLE\nSTART');
+    if(labels.length>0){
+      ctx.font='500 10px JetBrains Mono,monospace';
+      ctx.fillStyle=both?C.accent():(isSlow||isLocS?'#ffd700':C.accent2());
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText(labels.join(' '), p.x, p.y-nodeR-16);
+    }
+  }
+
+  // Index labels below nodes
+  ctx.font='500 10px JetBrains Mono,monospace';
+  ctx.fillStyle=C.dim();
+  ctx.textBaseline='top';
+  for(let i=0;i<n;i++){
+    ctx.textAlign='center';
+    ctx.fillText(`[${i}]`, pos[i].x, pos[i].y+nodeR+6);
+  }
+}
+
+
+// ─────────────────────────────────────────
+// INIT ALL on load
+// ─────────────────────────────────────────
+function initAll(){
+  initGraph();
+  initTraversal();
+  initMST();
+  initDijkstra();
+  initFloyd();
+}
+
+// Resize handler
+let resizeTimer;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(initAll, 150);
+});
+
+window.addEventListener('load', initAll);
+</script>
+</body>
+</html>

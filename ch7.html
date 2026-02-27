@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.7 컴퓨터구조 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="page-body">
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:#a855f7">Ch.7 — 컴퓨터구조</div>
+  <div class="nav-sections">
+    <a href="#cpu" class="nav-sec-link">CPU동작원리</a>
+    <a href="#cache" class="nav-sec-link">캐시메모리</a>
+  </div>
+</nav>
+
+<div class="chapter-banner cb7">
+  <div class="ch-num">CHAPTER 07</div>
+  <h2>컴퓨터구조</h2>
+  <p class="ch-desc">CPU의 Fetch-Decode-Execute 사이클과 캐시 메모리 계층 구조를 인터랙티브하게 탐구합니다.</p>
+  <div class="ch-pills">
+    <span>CPU동작원리</span><span>캐시메모리</span>
+  </div>
+</div>
+
+<!-- CPU 동작원리 -->
+<section id="cpu">
+  <div class="section-header">
+    <div class="tag tag-ch7">CPU</div>
+    <h2>CPU 동작원리</h2>
+    <p>Fetch → Decode → Execute 사이클을 단계별로 시뮬레이션합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn active" id="cpuStepBtn" onclick="cpuStep()">다음 단계 →</button>
+      <button class="btn danger" onclick="cpuReset()">초기화</button>
+    </div>
+    <div class="cpu-phase-bar" id="cpuPhaseBar">
+      <div class="cpu-phase-step fetch" id="cpuFetch">FETCH</div>
+      <div class="cpu-phase-step decode" id="cpuDecode">DECODE</div>
+      <div class="cpu-phase-step execute" id="cpuExecute">EXECUTE</div>
+    </div>
+    <div class="cpu-layout">
+      <div>
+        <div class="cpu-box" id="cpuBoxPC">
+          <div class="cpu-box-title">PC (Program Counter)</div>
+          <div class="cpu-box-val" id="cpuPCVal">0x0000</div>
+        </div>
+        <div class="cpu-box" style="margin-top:12px;" id="cpuBoxIR">
+          <div class="cpu-box-title">IR (Instruction Register)</div>
+          <div class="cpu-box-val" id="cpuIRVal">—</div>
+        </div>
+        <div class="cpu-box" style="margin-top:12px;" id="cpuBoxRegs">
+          <div class="cpu-box-title">레지스터</div>
+          <div class="cpu-regs" id="cpuRegs">
+            <div class="cpu-reg"><span class="cpu-reg-name">R1</span><span class="cpu-reg-val" id="regR1">0</span></div>
+            <div class="cpu-reg"><span class="cpu-reg-name">R2</span><span class="cpu-reg-val" id="regR2">0</span></div>
+            <div class="cpu-reg"><span class="cpu-reg-name">R3</span><span class="cpu-reg-val" id="regR3">0</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="cpu-box" id="cpuBoxMem">
+          <div class="cpu-box-title">메모리 (프로그램)</div>
+          <div class="cpu-program" id="cpuProgram"></div>
+        </div>
+      </div>
+    </div>
+    <div class="cpu-desc-box" id="cpuDescBox">시작하려면 "다음 단계" 버튼을 누르세요.</div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- 캐시메모리 -->
+<section id="cache">
+  <div class="section-header">
+    <div class="tag tag-ch7">CACHE</div>
+    <h2>캐시메모리</h2>
+    <p>메모리 계층 구조와 LRU 캐시 교체 알고리즘을 시뮬레이션합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="cacheAccess()">랜덤 메모리 접근</button>
+      <button class="btn" onclick="cacheAccessSequential()">순차 접근 (×5)</button>
+      <button class="btn danger" onclick="cacheReset()">초기화</button>
+    </div>
+    <div class="cache-pyramid" id="cachePyramid">
+      <div class="cache-level l1" id="cacheL1">
+        <span class="cache-level-name">L1 Cache</span>
+        <span class="cache-level-info">4KB · 1ns</span>
+      </div>
+      <div class="cache-level l2" id="cacheL2">
+        <span class="cache-level-name">L2 Cache</span>
+        <span class="cache-level-info">256KB · 5ns</span>
+      </div>
+      <div class="cache-level l3" id="cacheL3">
+        <span class="cache-level-name">L3 Cache</span>
+        <span class="cache-level-info">8MB · 20ns</span>
+      </div>
+      <div class="cache-level ram" id="cacheRAM">
+        <span class="cache-level-name">RAM</span>
+        <span class="cache-level-info">16GB · 100ns</span>
+      </div>
+      <div class="cache-level ssd" id="cacheSSD">
+        <span class="cache-level-name">SSD</span>
+        <span class="cache-level-info">1TB · 100μs</span>
+      </div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-bottom:8px;">L1 캐시 슬롯 (LRU 4-way)</div>
+    <div class="cache-slots" id="cacheSlots">
+      <div class="cache-slot" id="cacheSlot0">비어있음</div>
+      <div class="cache-slot" id="cacheSlot1">비어있음</div>
+      <div class="cache-slot" id="cacheSlot2">비어있음</div>
+      <div class="cache-slot" id="cacheSlot3">비어있음</div>
+    </div>
+    <div class="cache-stats-row">
+      <div class="cache-stat hit-c">
+        <div class="cache-stat-val" id="cacheHits">0</div>
+        <div>HIT</div>
+      </div>
+      <div class="cache-stat miss-c">
+        <div class="cache-stat-val" id="cacheMisses">0</div>
+        <div>MISS</div>
+      </div>
+      <div class="cache-stat" style="margin-left:auto;">
+        <div class="cache-stat-val" id="cacheRatio" style="color:#a855f7">—</div>
+        <div style="font-size:0.75rem;color:var(--text-dim)">HIT RATE</div>
+      </div>
+    </div>
+    <div class="info-text" id="cacheInfo">메모리 접근 버튼을 눌러 캐시 동작을 확인하세요.</div>
+  </div>
+</section>
+
+<footer>CS Visualizer · <a href="index.html" style="color:var(--accent);text-decoration:none;">목차로 돌아가기</a></footer>
+
+<script>
+/* ===== CPU 동작원리 ===== */
+const CPU_PROGRAM = [
+  { addr: '0x00', op: 'LOAD',  args: 'R1, 5',      desc: 'R1 레지스터에 값 5를 로드합니다. (R1 ← 5)' },
+  { addr: '0x04', op: 'LOAD',  args: 'R2, 3',      desc: 'R2 레지스터에 값 3을 로드합니다. (R2 ← 3)' },
+  { addr: '0x08', op: 'ADD',   args: 'R3, R1, R2', desc: 'R1과 R2를 더해 R3에 저장합니다. (R3 ← R1 + R2 = 8)' },
+  { addr: '0x0C', op: 'STORE', args: 'R3, 0x10',   desc: 'R3의 값을 메모리 주소 0x10에 저장합니다. (MEM[0x10] ← 8)' },
+  { addr: '0x10', op: 'HALT',  args: '',            desc: '프로그램 실행을 종료합니다.' },
+];
+
+// Each instruction has 3 sub-steps: FETCH, DECODE, EXECUTE
+// cpuStep tracks: instrIdx (0-4), subStep (0=fetch,1=decode,2=execute)
+let cpuInstrIdx = 0;
+let cpuSubStep = 0;   // 0=fetch,1=decode,2=execute
+let cpuRegsState = { R1: 0, R2: 0, R3: 0 };
+let cpuMem = {};
+let cpuDone = false;
+
+function initCPU() {
+  const prog = document.getElementById('cpuProgram');
+  prog.innerHTML = CPU_PROGRAM.map((instr, i) =>
+    `<div class="cpu-instr" id="cpu-instr-${i}">
+      <span class="cpu-addr">${instr.addr}</span>
+      <span class="cpu-op">${instr.op}</span>
+      <span class="cpu-arg">${instr.args}</span>
+    </div>`
+  ).join('');
+}
+
+function cpuReset() {
+  cpuInstrIdx = 0;
+  cpuSubStep = 0;
+  cpuRegsState = { R1: 0, R2: 0, R3: 0 };
+  cpuMem = {};
+  cpuDone = false;
+  document.getElementById('cpuStepBtn').disabled = false;
+  document.getElementById('cpuPCVal').textContent = '0x0000';
+  document.getElementById('cpuIRVal').textContent = '—';
+  ['R1','R2','R3'].forEach(r => document.getElementById('reg'+r).textContent = '0');
+  ['cpuFetch','cpuDecode','cpuExecute'].forEach(id => {
+    document.getElementById(id).className = 'cpu-phase-step ' + id.replace('cpu','').toLowerCase();
+  });
+  document.getElementById('cpuDescBox').textContent = '시작하려면 "다음 단계" 버튼을 누르세요.';
+  document.querySelectorAll('.cpu-instr').forEach(el => el.className = 'cpu-instr');
+  ['cpuBoxPC','cpuBoxIR','cpuBoxRegs','cpuBoxMem'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+}
+
+function cpuStep() {
+  if (cpuDone) return;
+  const instr = CPU_PROGRAM[cpuInstrIdx];
+  const phases = ['fetch','decode','execute'];
+  const phase = phases[cpuSubStep];
+
+  // Highlight phase bar
+  ['cpuFetch','cpuDecode','cpuExecute'].forEach(id => {
+    document.getElementById(id).className = 'cpu-phase-step ' + id.replace('cpu','').toLowerCase();
+  });
+  const phaseIds = ['cpuFetch','cpuDecode','cpuExecute'];
+  document.getElementById(phaseIds[cpuSubStep]).classList.add('active');
+
+  // Highlight instruction in program
+  document.querySelectorAll('.cpu-instr').forEach((el, i) => {
+    el.className = 'cpu-instr' + (i < cpuInstrIdx ? ' done' : i === cpuInstrIdx ? ' current' : '');
+  });
+
+  // Deactivate all boxes
+  ['cpuBoxPC','cpuBoxIR','cpuBoxRegs','cpuBoxMem'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+
+  if (phase === 'fetch') {
+    document.getElementById('cpuBoxPC').classList.add('active');
+    document.getElementById('cpuBoxMem').classList.add('active');
+    document.getElementById('cpuPCVal').textContent = instr.addr;
+    document.getElementById('cpuIRVal').textContent = '불러오는 중...';
+    document.getElementById('cpuDescBox').textContent =
+      `[FETCH] PC=${instr.addr} → 메모리에서 명령어를 가져옵니다. (${instr.op} ${instr.args})`;
+
+  } else if (phase === 'decode') {
+    document.getElementById('cpuBoxIR').classList.add('active');
+    document.getElementById('cpuIRVal').textContent = `${instr.op} ${instr.args}`;
+    document.getElementById('cpuDescBox').textContent =
+      `[DECODE] 명령어 해석: 연산="${instr.op}", 피연산자="${instr.args}" — ${instr.desc}`;
+
+  } else if (phase === 'execute') {
+    document.getElementById('cpuBoxRegs').classList.add('active');
+    // Perform operation
+    if (instr.op === 'LOAD') {
+      const parts = instr.args.replace(/\s/g,'').split(',');
+      const reg = parts[0];
+      const val = parseInt(parts[1]);
+      cpuRegsState[reg] = val;
+      document.getElementById('reg' + reg).textContent = val;
+    } else if (instr.op === 'ADD') {
+      const parts = instr.args.replace(/\s/g,'').split(',');
+      const dst = parts[0], s1 = parts[1], s2 = parts[2];
+      cpuRegsState[dst] = cpuRegsState[s1] + cpuRegsState[s2];
+      document.getElementById('reg' + dst).textContent = cpuRegsState[dst];
+    } else if (instr.op === 'STORE') {
+      const parts = instr.args.replace(/\s/g,'').split(',');
+      const reg = parts[0], addr = parts[1];
+      cpuMem[addr] = cpuRegsState[reg];
+    } else if (instr.op === 'HALT') {
+      cpuDone = true;
+      document.getElementById('cpuStepBtn').disabled = true;
+      document.getElementById('cpuDescBox').textContent =
+        `[HALT] 프로그램 종료. 최종 결과: R1=${cpuRegsState.R1}, R2=${cpuRegsState.R2}, R3=${cpuRegsState.R3}, MEM[0x10]=${cpuMem['0x10'] || 0}`;
+      // Complete phase bar
+      ['cpuFetch','cpuDecode','cpuExecute'].forEach(id => {
+        document.getElementById(id).classList.add('active');
+      });
+    }
+    if (!cpuDone) {
+      document.getElementById('cpuDescBox').textContent =
+        `[EXECUTE] ${instr.desc} ✓  레지스터 갱신됨.`;
+    }
+
+    // Advance PC
+    cpuInstrIdx++;
+    if (cpuInstrIdx < CPU_PROGRAM.length) {
+      document.getElementById('cpuPCVal').textContent = CPU_PROGRAM[cpuInstrIdx].addr;
+    }
+  }
+
+  cpuSubStep = (cpuSubStep + 1) % 3;
+  if (cpuSubStep === 0 && cpuDone) {
+    document.getElementById('cpuStepBtn').disabled = true;
+  }
+}
+
+initCPU();
+
+/* ===== 캐시메모리 ===== */
+let cacheHits = 0, cacheMisses = 0;
+const CACHE_SIZE = 4;
+let cacheSlots = [];   // [{addr, lruTime}]
+let cacheTimer = 0;
+let seqIdx = 0;
+const SEQ_ADDRS = [0x10, 0x20, 0x30, 0x40, 0x50];
+
+function cacheReset() {
+  cacheHits = 0; cacheMisses = 0;
+  cacheSlots = [];
+  cacheTimer = 0;
+  seqIdx = 0;
+  document.getElementById('cacheHits').textContent = '0';
+  document.getElementById('cacheMisses').textContent = '0';
+  document.getElementById('cacheRatio').textContent = '—';
+  for (let i = 0; i < CACHE_SIZE; i++) {
+    const el = document.getElementById(`cacheSlot${i}`);
+    el.className = 'cache-slot';
+    el.textContent = '비어있음';
+  }
+  document.getElementById('cacheInfo').textContent = '메모리 접근 버튼을 눌러 캐시 동작을 확인하세요.';
+  ['cacheL1','cacheL2','cacheL3','cacheRAM','cacheSSD'].forEach(id => {
+    document.getElementById(id).classList.remove('hit-anim');
+  });
+}
+
+function cacheAccess() {
+  const addr = Math.floor(Math.random() * 64) * 4;
+  doCacheAccess(addr);
+}
+
+function cacheAccessSequential() {
+  for (let i = 0; i < 5; i++) {
+    const addr = SEQ_ADDRS[seqIdx % SEQ_ADDRS.length];
+    setTimeout(() => doCacheAccess(addr), i * 350);
+    seqIdx++;
+  }
+}
+
+function doCacheAccess(addr) {
+  cacheTimer++;
+  const hexAddr = `0x${addr.toString(16).padStart(2,'0').toUpperCase()}`;
+  const slotIdx = cacheSlots.findIndex(s => s.addr === addr);
+  const levels = ['cacheL1','cacheL2','cacheL3','cacheRAM','cacheSSD'];
+
+  // Clear previous animations
+  levels.forEach(id => document.getElementById(id).classList.remove('hit-anim'));
+
+  if (slotIdx >= 0) {
+    // HIT
+    cacheHits++;
+    cacheSlots[slotIdx].lruTime = cacheTimer;
+    const el = document.getElementById(`cacheSlot${slotIdx}`);
+    el.classList.add('hit');
+    setTimeout(() => { el.classList.remove('hit'); if (el.classList.contains('filled')) {} renderCacheSlots(); }, 600);
+    document.getElementById('cacheL1').classList.add('hit-anim');
+    setTimeout(() => document.getElementById('cacheL1').classList.remove('hit-anim'), 600);
+    document.getElementById('cacheInfo').textContent =
+      `[HIT] 주소 ${hexAddr} → L1 캐시 슬롯 ${slotIdx}에서 찾음! (${cacheTimer}ns)`;
+  } else {
+    // MISS
+    cacheMisses++;
+    const hitLevel = Math.random();
+    let levelId, latency;
+    if (hitLevel < 0.3) { levelId = 'cacheL2'; latency = '5ns'; }
+    else if (hitLevel < 0.55) { levelId = 'cacheL3'; latency = '20ns'; }
+    else if (hitLevel < 0.85) { levelId = 'cacheRAM'; latency = '100ns'; }
+    else { levelId = 'cacheSSD'; latency = '100μs'; }
+
+    // Cascade animation
+    const cascade = ['cacheL1', 'cacheL2', 'cacheL3', 'cacheRAM', 'cacheSSD'];
+    const hitIdx = cascade.indexOf(levelId);
+    cascade.slice(0, hitIdx + 1).forEach((id, i) => {
+      setTimeout(() => {
+        document.getElementById(id).classList.add('hit-anim');
+        setTimeout(() => document.getElementById(id).classList.remove('hit-anim'), 500);
+      }, i * 200);
+    });
+
+    // LRU eviction
+    let evicted = null;
+    if (cacheSlots.length >= CACHE_SIZE) {
+      // Find LRU
+      let lruSlot = 0;
+      for (let i = 1; i < cacheSlots.length; i++) {
+        if (cacheSlots[i].lruTime < cacheSlots[lruSlot].lruTime) lruSlot = i;
+      }
+      evicted = cacheSlots[lruSlot].addr;
+      cacheSlots[lruSlot] = { addr, lruTime: cacheTimer };
+    } else {
+      cacheSlots.push({ addr, lruTime: cacheTimer });
+    }
+    renderCacheSlots();
+    const evictMsg = evicted !== null ? ` (0x${evicted.toString(16).toUpperCase()} 퇴출)` : '';
+    document.getElementById('cacheInfo').textContent =
+      `[MISS] 주소 ${hexAddr} → ${levelId.replace('cache','')} 접근 (${latency})${evictMsg} → L1 캐시에 로드`;
+  }
+
+  document.getElementById('cacheHits').textContent = cacheHits;
+  document.getElementById('cacheMisses').textContent = cacheMisses;
+  const total = cacheHits + cacheMisses;
+  document.getElementById('cacheRatio').textContent = total > 0 ? Math.round(cacheHits / total * 100) + '%' : '—';
+}
+
+function renderCacheSlots() {
+  for (let i = 0; i < CACHE_SIZE; i++) {
+    const el = document.getElementById(`cacheSlot${i}`);
+    const slot = cacheSlots[i];
+    if (slot) {
+      el.className = 'cache-slot filled';
+      el.textContent = `0x${slot.addr.toString(16).toUpperCase().padStart(2,'0')}`;
+    } else {
+      el.className = 'cache-slot';
+      el.textContent = '비어있음';
+    }
+  }
+}
+</script>
+</body>
+</html>

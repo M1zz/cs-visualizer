@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.9 보안 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="page-body">
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:#f97316">Ch.9 — 보안</div>
+  <div class="nav-sections">
+    <a href="#crypto" class="nav-sec-link">시저암호</a>
+    <a href="#hashfn" class="nav-sec-link">해시함수</a>
+  </div>
+</nav>
+
+<!-- SECTION 1: 시저암호 -->
+<section id="crypto">
+  <div class="section-header">
+    <div class="tag tag-ch9">01 — CAESAR CIPHER</div>
+    <h2>시저암호</h2>
+    <p>시저암호는 가장 오래된 암호 기법 중 하나로, 알파벳을 일정한 수만큼 이동시켜 암호화합니다. 카이사르가 군사 통신에 사용했다고 전해집니다.</p>
+  </div>
+  <div class="viz-box">
+    <input
+      type="text"
+      class="cipher-input"
+      id="cipherInput"
+      placeholder="암호화할 텍스트를 입력하세요..."
+      value="Hello, World!"
+      oninput="updateCipher()"
+    >
+    <div class="cipher-shift-row">
+      <span>Shift</span>
+      <input
+        type="range"
+        min="1" max="25"
+        value="3"
+        id="cipherShift"
+        style="width:180px;-webkit-appearance:none;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer;"
+        oninput="updateCipher()"
+      >
+      <span class="cipher-shift-val" id="shiftVal">3</span>
+    </div>
+    <div class="cipher-io" id="cipherIO">
+      <div class="cipher-box">
+        <div class="cipher-box-label">PLAINTEXT</div>
+        <div class="cipher-text" id="plainText"></div>
+      </div>
+      <div class="cipher-box">
+        <div class="cipher-box-label">CIPHERTEXT</div>
+        <div class="cipher-text encrypted" id="cipherText"></div>
+      </div>
+    </div>
+    <div style="margin-top:18px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;">알파벳 매핑 (A→Z)</div>
+      <div class="cipher-alphabet" id="cipherAlphabet"></div>
+    </div>
+    <div class="info-text" style="margin-top:16px" id="cipherInfo"></div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SECTION 2: 해시함수 -->
+<section id="hashfn">
+  <div class="section-header">
+    <div class="tag tag-ch9">02 — HASH FUNCTION</div>
+    <h2>해시함수</h2>
+    <p>해시함수는 임의 길이의 데이터를 고정된 크기의 값(해시)으로 변환합니다. 같은 입력은 항상 같은 출력을 내지만, 출력에서 입력을 역산하는 것은 매우 어렵습니다.</p>
+  </div>
+  <div class="viz-box">
+    <input
+      type="text"
+      class="hash-input"
+      id="hashInput"
+      placeholder="해시할 텍스트를 입력하세요..."
+      value="hello"
+      oninput="updateHash()"
+    >
+    <div class="hash-visual">
+      <div class="hash-io-box">
+        <div class="hash-io-label">INPUT</div>
+        <div class="hash-io-val" id="hashInputDisplay">hello</div>
+      </div>
+      <div class="hash-fn-box">
+        DJB2<br>
+        <span style="font-size:0.65rem;opacity:0.7;">hash = hash * 33 + c</span>
+      </div>
+      <div class="hash-io-box">
+        <div class="hash-io-label">OUTPUT (HEX)</div>
+        <div class="hash-io-val" id="hashOutput"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:4px;letter-spacing:1px;">DJB2 알고리즘 (32-bit)</div>
+      <div class="info-text" style="line-height:2;">
+        hash = 5381<br>
+        for each char c:<br>
+        &nbsp;&nbsp;hash = ((hash &lt;&lt; 5) + hash) + c<br>
+        &nbsp;&nbsp;<span style="color:var(--text-dim)">// hash = hash * 33 + c</span>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:600;margin-bottom:10px;">눈사태 효과 (Avalanche Effect)</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text-dim);margin-bottom:12px;">입력에 단 한 글자만 추가해도 해시 값이 크게 변합니다.</div>
+      <div class="hash-avalanche" id="hashAvalanche">
+        <div class="hash-avl-item">
+          <div class="hash-avl-label">원본 입력</div>
+          <div class="hash-avl-input" id="avlInput1"></div>
+          <div class="hash-avl-hash" id="avlHash1"></div>
+        </div>
+        <div class="hash-avl-item">
+          <div class="hash-avl-label">원본 + "x"</div>
+          <div class="hash-avl-input" id="avlInput2"></div>
+          <div class="hash-avl-hash" id="avlHash2"></div>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;">
+        <span style="color:var(--text-dim)">비트 차이: </span>
+        <span id="bitDiff" style="color:var(--accent4);font-weight:600;"></span>
+        <span style="color:var(--text-dim)" id="bitDiffBar" style="margin-left:8px;"></span>
+      </div>
+      <div style="margin-top:8px;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+        <div id="bitDiffProgress" style="height:100%;background:var(--accent4);border-radius:4px;transition:width 0.4s;width:0%;"></div>
+      </div>
+    </div>
+
+    <div class="info-text" style="margin-top:20px">
+      해시함수는 비밀번호 저장, 데이터 무결성 검사, 해시 테이블 등에 광범위하게 사용됩니다. DJB2는 단순하지만 분포가 좋은 비암호학적 해시함수입니다.
+    </div>
+  </div>
+</section>
+
+<footer>CS Visualizer · <a href="index.html" style="color:var(--accent);text-decoration:none;">목차로 돌아가기</a></footer>
+
+<script>
+// ─────────────────────────────────────────
+// SECTION 1: CAESAR CIPHER
+// ─────────────────────────────────────────
+function caesarEncrypt(text, shift) {
+  return text.split('').map(ch => {
+    if (ch >= 'A' && ch <= 'Z') {
+      return String.fromCharCode(((ch.charCodeAt(0) - 65 + shift) % 26) + 65);
+    } else if (ch >= 'a' && ch <= 'z') {
+      return String.fromCharCode(((ch.charCodeAt(0) - 97 + shift) % 26) + 97);
+    }
+    return ch;
+  }).join('');
+}
+
+function updateCipher() {
+  const text = document.getElementById('cipherInput').value;
+  const shift = parseInt(document.getElementById('cipherShift').value);
+  document.getElementById('shiftVal').textContent = shift;
+
+  const encrypted = caesarEncrypt(text, shift);
+  document.getElementById('plainText').textContent = text || '(빈 입력)';
+  document.getElementById('cipherText').textContent = encrypted || '(빈 입력)';
+
+  // Build alphabet mapping table
+  const alpha = document.getElementById('cipherAlphabet');
+  alpha.innerHTML = '';
+  for (let i = 0; i < 26; i++) {
+    const plain = String.fromCharCode(65 + i);
+    const enc = String.fromCharCode(((i + shift) % 26) + 65);
+    const col = document.createElement('div');
+    col.className = 'cipher-char-col';
+    col.innerHTML = `<div class="cipher-plain-c">${plain}</div><div class="cipher-enc-c">${enc}</div>`;
+    alpha.appendChild(col);
+  }
+
+  // Info text
+  const alphaCount = text.replace(/[^a-zA-Z]/g, '').length;
+  document.getElementById('cipherInfo').innerHTML =
+    `Shift: <span style="color:var(--accent)">${shift}</span> &nbsp;|&nbsp; 알파벳 문자: <span style="color:var(--accent4)">${alphaCount}개</span> &nbsp;|&nbsp; 복호화 shift: <span style="color:var(--accent2)">${26 - shift}</span>`;
+}
+
+// ─────────────────────────────────────────
+// SECTION 2: DJB2 HASH
+// ─────────────────────────────────────────
+function djb2(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    // hash = ((hash << 5) + hash) + char  →  hash * 33 + char
+    // Use 32-bit arithmetic via |0 and unsigned right shift
+    hash = (((hash << 5) + hash) + str.charCodeAt(i)) | 0;
+  }
+  // Convert to unsigned 32-bit
+  return hash >>> 0;
+}
+
+function countBitDifferences(a, b) {
+  let xor = a ^ b;
+  let count = 0;
+  while (xor) {
+    count += xor & 1;
+    xor >>>= 1;
+  }
+  return count;
+}
+
+function updateHash() {
+  const text = document.getElementById('hashInput').value;
+  const hash = djb2(text);
+  const hexHash = hash.toString(16).toUpperCase().padStart(8, '0');
+
+  document.getElementById('hashInputDisplay').textContent = text || '(빈 입력)';
+  document.getElementById('hashOutput').textContent = '0x' + hexHash;
+
+  // Avalanche effect
+  const text2 = text + 'x';
+  const hash2 = djb2(text2);
+  const hexHash2 = hash2.toString(16).toUpperCase().padStart(8, '0');
+
+  document.getElementById('avlInput1').textContent = JSON.stringify(text) || '""';
+  document.getElementById('avlHash1').textContent = '0x' + hexHash;
+  document.getElementById('avlInput2').textContent = JSON.stringify(text2);
+  document.getElementById('avlHash2').textContent = '0x' + hexHash2;
+
+  const diffBits = countBitDifferences(hash, hash2);
+  const pct = Math.round((diffBits / 32) * 100);
+  document.getElementById('bitDiff').textContent = `${diffBits} / 32 비트 (${pct}%)`;
+  document.getElementById('bitDiffProgress').style.width = pct + '%';
+
+  // Color the progress bar based on degree of avalanche
+  const bar = document.getElementById('bitDiffProgress');
+  if (pct < 25) {
+    bar.style.background = 'var(--danger)';
+  } else if (pct < 40) {
+    bar.style.background = 'var(--accent4)';
+  } else {
+    bar.style.background = 'var(--accent)';
+  }
+}
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+updateCipher();
+updateHash();
+</script>
+</body>
+</html>

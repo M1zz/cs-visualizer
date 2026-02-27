@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.6 운영체제 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="page-body">
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:var(--success)">Ch.6 — 운영체제</div>
+  <div class="nav-sections">
+    <a href="#memory" class="nav-sec-link">메모리관리</a>
+    <a href="#virtualmem" class="nav-sec-link">가상메모리</a>
+    <a href="#scheduling" class="nav-sec-link">프로세스스케줄링</a>
+    <a href="#deadlock" class="nav-sec-link">데드락</a>
+  </div>
+</nav>
+
+<div class="chapter-banner cb6">
+  <div class="ch-num">CHAPTER 06</div>
+  <h2>운영체제</h2>
+  <p class="ch-desc">메모리 관리, 가상메모리, 프로세스 스케줄링, 데드락을 인터랙티브 시각화로 학습합니다.</p>
+  <div class="ch-pills">
+    <span>메모리관리</span><span>가상메모리</span><span>프로세스스케줄링</span><span>데드락</span>
+  </div>
+</div>
+
+<!-- 메모리 관리 -->
+<section id="memory">
+  <div class="section-header">
+    <div class="tag tag-ch6">MEM</div>
+    <h2>메모리 관리</h2>
+    <p>128셀 메모리 그리드에서 프로세스 할당, 해제, 압축을 시각적으로 확인합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="memAlloc()">프로세스 할당</button>
+      <button class="btn" onclick="memFree()">랜덤 해제</button>
+      <button class="btn" onclick="memCompact()">메모리 압축</button>
+      <button class="btn danger" onclick="memReset()">초기화</button>
+    </div>
+    <div id="memGrid" style="display:grid;grid-template-columns:repeat(16,1fr);gap:3px;"></div>
+    <div class="info-text" id="memInfo">메모리 상태: 비어있음 | 단편화: 0%</div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- 가상메모리 -->
+<section id="virtualmem">
+  <div class="section-header">
+    <div class="tag tag-ch6">VM</div>
+    <h2>가상메모리</h2>
+    <p>가상 페이지와 물리 프레임의 FIFO 페이지 교체 알고리즘을 시뮬레이션합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="vmAccessRandom()">랜덤 페이지 접근</button>
+      <button class="btn danger" onclick="vmReset()">초기화</button>
+    </div>
+    <div class="vm-layout">
+      <div>
+        <div class="vm-col-title">가상 페이지 (8개)</div>
+        <div class="vm-pages" id="vmPages"></div>
+      </div>
+      <div>
+        <div class="vm-pt-title">페이지 테이블</div>
+        <div class="vm-pt" id="vmPageTable"></div>
+      </div>
+      <div>
+        <div class="vm-col-title">물리 프레임 (4개)</div>
+        <div class="vm-frames" id="vmFrames"></div>
+      </div>
+    </div>
+    <div class="vm-stats">
+      <div class="vm-stat hit-stat">
+        <div class="vm-stat-val" id="vmHits">0</div>
+        <div class="vm-stat-label">PAGE HIT</div>
+      </div>
+      <div class="vm-stat fault-stat">
+        <div class="vm-stat-val" id="vmFaults">0</div>
+        <div class="vm-stat-label">PAGE FAULT</div>
+      </div>
+    </div>
+    <div class="info-text" id="vmInfo">가상 페이지를 클릭하거나 버튼을 눌러 접근을 시뮬레이션하세요.</div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- 프로세스 스케줄링 -->
+<section id="scheduling">
+  <div class="section-header">
+    <div class="tag tag-ch6">SCHED</div>
+    <h2>프로세스 스케줄링</h2>
+    <p>FCFS, SJF, Round Robin 알고리즘으로 프로세스 실행 순서를 시각화합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn active" id="btnFCFS" onclick="setScheduler('fcfs',this)">FCFS</button>
+      <button class="btn" id="btnSJF" onclick="setScheduler('sjf',this)">SJF</button>
+      <button class="btn" id="btnRR" onclick="setScheduler('rr',this)">Round Robin (q=2)</button>
+      <button class="btn" onclick="runScheduler()">실행</button>
+      <button class="btn danger" onclick="resetScheduler()">초기화</button>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:10px;">프로세스 정보</div>
+      <div id="procTable" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);margin-bottom:8px;">Gantt 차트</div>
+    <div class="process-timeline" id="ganttChart"></div>
+    <div class="process-info" id="procStats"></div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- 데드락 -->
+<section id="deadlock">
+  <div class="section-header">
+    <div class="tag tag-ch6">DEADLOCK</div>
+    <h2>데드락</h2>
+    <p>식사하는 철학자 문제로 데드락의 발생 과정과 해결책을 애니메이션으로 봅니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="dl-phase" id="dlPhaseBar"></div>
+    <div class="controls">
+      <button class="btn active" id="dlStartBtn" onclick="dlStart()">시뮬레이션 시작</button>
+      <button class="btn danger" onclick="dlReset()">초기화</button>
+    </div>
+    <div class="deadlock-canvas-wrap">
+      <canvas id="dlCanvas" height="360"></canvas>
+      <div class="deadlock-status safe" id="dlStatus">정상</div>
+    </div>
+    <div class="dl-progress-wrap"><div class="dl-progress" id="dlProgress"></div></div>
+    <div class="narration-log" id="narrationLog"></div>
+  </div>
+</section>
+
+<footer>CS Visualizer · <a href="index.html" style="color:var(--accent);text-decoration:none;">목차로 돌아가기</a></footer>
+
+<script>
+/* ===== 메모리 관리 ===== */
+const MEM_SIZE = 128;
+let memCells = new Array(MEM_SIZE).fill(null);
+let procIdCounter = 1;
+const procColors = {};
+
+function rMem(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function getProcColor(id) {
+  if (!procColors[id]) {
+    procColors[id] = `hsl(${(id * 67) % 360},70%,55%)`;
+  }
+  return procColors[id];
+}
+
+function memAlloc() {
+  const size = rMem(4, 16);
+  const freeBlocks = [];
+  let start = -1, len = 0;
+  for (let i = 0; i < MEM_SIZE; i++) {
+    if (memCells[i] === null) {
+      if (start === -1) start = i;
+      len++;
+      if (len >= size) { freeBlocks.push({start, len}); start = -1; len = 0; }
+    } else { start = -1; len = 0; }
+  }
+  if (freeBlocks.length === 0) { memUpdateInfo(); return; }
+  const chosen = freeBlocks[0];
+  const pid = procIdCounter++;
+  for (let i = chosen.start; i < chosen.start + size; i++) memCells[i] = pid;
+  memRender();
+}
+
+function memFree() {
+  const pids = [...new Set(memCells.filter(x => x !== null))];
+  if (pids.length === 0) return;
+  const pid = pids[rMem(0, pids.length - 1)];
+  for (let i = 0; i < MEM_SIZE; i++) if (memCells[i] === pid) memCells[i] = null;
+  memRender();
+}
+
+function memCompact() {
+  const used = memCells.filter(x => x !== null);
+  memCells = [...used, ...new Array(MEM_SIZE - used.length).fill(null)];
+  memRender();
+}
+
+function memReset() {
+  memCells.fill(null);
+  procIdCounter = 1;
+  Object.keys(procColors).forEach(k => delete procColors[k]);
+  memRender();
+}
+
+function memUpdateInfo() {
+  const used = memCells.filter(x => x !== null).length;
+  const free = MEM_SIZE - used;
+  let freeBlocks = 0, inFree = false;
+  for (let i = 0; i < MEM_SIZE; i++) {
+    if (memCells[i] === null && !inFree) { freeBlocks++; inFree = true; }
+    else if (memCells[i] !== null) inFree = false;
+  }
+  const frag = free > 0 ? Math.round(((freeBlocks - 1) / freeBlocks) * 100) : 0;
+  document.getElementById('memInfo').textContent =
+    `사용: ${used}셀 (${Math.round(used/MEM_SIZE*100)}%) | 여유: ${free}셀 | 단편화 지수: ${isNaN(frag)?0:frag}% | 자유 블록: ${freeBlocks}개`;
+}
+
+function memRender() {
+  const grid = document.getElementById('memGrid');
+  grid.innerHTML = '';
+  memCells.forEach((pid, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'mem-cell' + (pid !== null ? ' allocated' : '');
+    cell.style.backgroundColor = pid !== null ? getProcColor(pid) : '';
+    cell.textContent = pid !== null ? `P${pid}` : '';
+    cell.title = pid !== null ? `P${pid} @ ${i}` : `free @ ${i}`;
+    grid.appendChild(cell);
+  });
+  memUpdateInfo();
+}
+memRender();
+
+/* ===== 가상메모리 ===== */
+let vmHits = 0, vmFaults = 0;
+const VM_PAGES = 8, VM_FRAMES = 4;
+let vmFrameArr = [];   // array of page nums in physical frames (FIFO order)
+let vmFifoQueue = [];  // FIFO order of pages in frames
+
+function vmAccess(p) {
+  const inFrame = vmFrameArr.includes(p);
+  // animate page
+  const pageEl = document.getElementById(`vm-page-${p}`);
+  if (pageEl) { pageEl.classList.add('accessing'); setTimeout(() => pageEl.classList.remove('accessing'), 400); }
+
+  if (inFrame) {
+    vmHits++;
+    const frameIdx = vmFrameArr.indexOf(p);
+    const frameEl = document.getElementById(`vm-frame-${frameIdx}`);
+    if (frameEl) { frameEl.classList.add('hit'); setTimeout(() => { frameEl.classList.remove('hit'); vmRender(); }, 500); }
+    document.getElementById('vmInfo').textContent = `페이지 ${p} → PAGE HIT! 프레임 ${frameIdx}에서 찾음`;
+  } else {
+    vmFaults++;
+    if (vmFrameArr.length < VM_FRAMES) {
+      const slot = vmFrameArr.length;
+      vmFrameArr.push(p);
+      vmFifoQueue.push(p);
+      const frameEl = document.getElementById(`vm-frame-${slot}`);
+      if (frameEl) { frameEl.classList.add('fault'); setTimeout(() => { frameEl.classList.remove('fault'); vmRender(); }, 500); }
+      document.getElementById('vmInfo').textContent = `페이지 ${p} → PAGE FAULT! 프레임 ${slot}에 적재`;
+    } else {
+      // FIFO evict
+      const evicted = vmFifoQueue.shift();
+      const evictIdx = vmFrameArr.indexOf(evicted);
+      vmFrameArr[evictIdx] = p;
+      vmFifoQueue.push(p);
+      const frameEl = document.getElementById(`vm-frame-${evictIdx}`);
+      if (frameEl) { frameEl.classList.add('fault'); setTimeout(() => { frameEl.classList.remove('fault'); vmRender(); }, 500); }
+      document.getElementById('vmInfo').textContent = `페이지 ${p} → PAGE FAULT! 페이지 ${evicted} 교체 (FIFO)`;
+    }
+  }
+  document.getElementById('vmHits').textContent = vmHits;
+  document.getElementById('vmFaults').textContent = vmFaults;
+  vmRender();
+}
+
+function vmAccessRandom() { vmAccess(Math.floor(Math.random() * VM_PAGES)); }
+
+function vmReset() {
+  vmHits = 0; vmFaults = 0;
+  vmFrameArr = []; vmFifoQueue = [];
+  document.getElementById('vmHits').textContent = '0';
+  document.getElementById('vmFaults').textContent = '0';
+  document.getElementById('vmInfo').textContent = '가상 페이지를 클릭하거나 버튼을 눌러 접근을 시뮬레이션하세요.';
+  vmRender();
+}
+
+function vmRender() {
+  const pagesEl = document.getElementById('vmPages');
+  const ptEl = document.getElementById('vmPageTable');
+  const framesEl = document.getElementById('vmFrames');
+
+  pagesEl.innerHTML = '';
+  for (let i = 0; i < VM_PAGES; i++) {
+    const inMem = vmFrameArr.includes(i);
+    const el = document.createElement('div');
+    el.className = 'vm-page' + (inMem ? ' present' : '');
+    el.id = `vm-page-${i}`;
+    el.innerHTML = `<span>VP ${i}</span><span>${inMem ? '적재됨' : '미적재'}</span>`;
+    el.onclick = () => vmAccess(i);
+    pagesEl.appendChild(el);
+  }
+
+  ptEl.innerHTML = '<div class="vm-pt-title">VP → PF</div>';
+  for (let i = 0; i < VM_PAGES; i++) {
+    const frameIdx = vmFrameArr.indexOf(i);
+    const row = document.createElement('div');
+    row.className = 'vm-pt-row' + (frameIdx >= 0 ? ' mapped' : ' unmapped');
+    row.textContent = frameIdx >= 0 ? `VP${i} → PF${frameIdx}` : `VP${i} → —`;
+    ptEl.appendChild(row);
+  }
+
+  framesEl.innerHTML = '';
+  for (let f = 0; f < VM_FRAMES; f++) {
+    const page = vmFrameArr[f];
+    const el = document.createElement('div');
+    el.className = 'vm-frame' + (page !== undefined ? ' occupied' : '');
+    el.id = `vm-frame-${f}`;
+    el.innerHTML = `<span>PF ${f}</span><span>${page !== undefined ? `VP ${page}` : '비어있음'}</span>`;
+    framesEl.appendChild(el);
+  }
+}
+vmRender();
+
+/* ===== 프로세스 스케줄링 ===== */
+let schedType = 'fcfs';
+const processes = [
+  { id: 'P1', arrival: 0, burst: 6, color: '#00ffaa' },
+  { id: 'P2', arrival: 1, burst: 3, color: '#6b8aff' },
+  { id: 'P3', arrival: 2, burst: 8, color: '#ffaa00' },
+  { id: 'P4', arrival: 3, burst: 2, color: '#ff6b9d' },
+];
+
+function setScheduler(type, el) {
+  schedType = type;
+  ['btnFCFS','btnSJF','btnRR'].forEach(id => document.getElementById(id).classList.remove('active'));
+  el.classList.add('active');
+  resetScheduler();
+}
+
+function resetScheduler() {
+  document.getElementById('ganttChart').innerHTML = '';
+  document.getElementById('procStats').innerHTML = '';
+  renderProcTable();
+}
+
+function renderProcTable() {
+  const tbl = document.getElementById('procTable');
+  tbl.innerHTML = processes.map(p =>
+    `<div style="display:flex;gap:16px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:0.78rem;padding:5px 10px;background:var(--surface2);border-radius:6px;border-left:3px solid ${p.color}">
+      <span style="color:${p.color};font-weight:700;width:24px">${p.id}</span>
+      <span style="color:var(--text-dim)">도착: <span style="color:var(--text)">${p.arrival}</span></span>
+      <span style="color:var(--text-dim)">버스트: <span style="color:var(--text)">${p.burst}</span></span>
+    </div>`
+  ).join('');
+}
+
+function runScheduler() {
+  let schedule = [];
+  if (schedType === 'fcfs') schedule = runFCFS();
+  else if (schedType === 'sjf') schedule = runSJF();
+  else schedule = runRR(2);
+  renderGantt(schedule);
+}
+
+function runFCFS() {
+  const procs = [...processes].sort((a,b) => a.arrival - b.arrival);
+  const result = [];
+  let time = 0;
+  procs.forEach(p => {
+    if (time < p.arrival) time = p.arrival;
+    result.push({ id: p.id, color: p.color, start: time, end: time + p.burst });
+    time += p.burst;
+  });
+  return result;
+}
+
+function runSJF() {
+  const procs = processes.map(p => ({...p}));
+  const result = [];
+  let time = 0, done = 0;
+  while (done < procs.length) {
+    const available = procs.filter(p => p.arrival <= time && !p.done);
+    if (available.length === 0) { time++; continue; }
+    available.sort((a,b) => a.burst - b.burst);
+    const p = available[0];
+    result.push({ id: p.id, color: p.color, start: time, end: time + p.burst });
+    time += p.burst;
+    p.done = true;
+    done++;
+  }
+  return result;
+}
+
+function runRR(quantum) {
+  const procs = processes.map(p => ({...p, remaining: p.burst}));
+  const result = [];
+  let time = 0;
+  const queue = [];
+  let idx = 0;
+  const sorted = [...procs].sort((a,b) => a.arrival - b.arrival);
+  while (true) {
+    while (idx < sorted.length && sorted[idx].arrival <= time) {
+      queue.push(sorted[idx]); idx++;
+    }
+    if (queue.length === 0) {
+      if (idx < sorted.length) { time = sorted[idx].arrival; continue; }
+      break;
+    }
+    const p = queue.shift();
+    const slice = Math.min(quantum, p.remaining);
+    result.push({ id: p.id, color: p.color, start: time, end: time + slice });
+    time += slice;
+    p.remaining -= slice;
+    while (idx < sorted.length && sorted[idx].arrival <= time) {
+      queue.push(sorted[idx]); idx++;
+    }
+    if (p.remaining > 0) queue.push(p);
+  }
+  return result;
+}
+
+function renderGantt(schedule) {
+  const chart = document.getElementById('ganttChart');
+  chart.innerHTML = '';
+  const totalTime = Math.max(...schedule.map(s => s.end));
+  const pids = [...new Set(schedule.map(s => s.id))];
+  const stats = {};
+  processes.forEach(p => { stats[p.id] = { finish: 0, turnaround: 0, waiting: 0, color: p.color }; });
+  schedule.forEach(s => { if (s.end > stats[s.id].finish) stats[s.id].finish = s.end; });
+  processes.forEach(p => {
+    stats[p.id].turnaround = stats[p.id].finish - p.arrival;
+    stats[p.id].waiting = stats[p.id].turnaround - p.burst;
+  });
+
+  pids.forEach(pid => {
+    const row = document.createElement('div');
+    row.className = 'process-row';
+    const label = document.createElement('div');
+    label.className = 'process-label';
+    label.style.color = stats[pid].color;
+    label.textContent = pid;
+    const track = document.createElement('div');
+    track.className = 'process-track';
+    schedule.filter(s => s.id === pid).forEach(s => {
+      const block = document.createElement('div');
+      block.className = 'process-block';
+      block.style.left = `${(s.start / totalTime) * 100}%`;
+      block.style.width = `${((s.end - s.start) / totalTime) * 100}%`;
+      block.style.backgroundColor = s.color;
+      block.title = `${s.id}: ${s.start}→${s.end}`;
+      block.textContent = `${s.start}-${s.end}`;
+      track.appendChild(block);
+    });
+    row.appendChild(label);
+    row.appendChild(track);
+    chart.appendChild(row);
+  });
+
+  const statsEl = document.getElementById('procStats');
+  statsEl.innerHTML = Object.entries(stats).map(([pid, s]) =>
+    `<div class="process-stat">
+      <div class="process-dot" style="background:${s.color}"></div>
+      <span style="color:var(--text-dim)">${pid}: WT=<span style="color:var(--text)">${s.waiting}</span> TAT=<span style="color:var(--text)">${s.turnaround}</span></span>
+    </div>`
+  ).join('');
+}
+
+renderProcTable();
+
+/* ===== 데드락 (식사하는 철학자) ===== */
+const DL_PHASES = [
+  { label: '① 정상식사', cls: 'active-normal' },
+  { label: '② 위험징후', cls: 'active-warning' },
+  { label: '③ 데드락!', cls: 'active-danger' },
+  { label: '④ 원인분석', cls: 'active-resolve' },
+  { label: '⑤ 해결', cls: 'active-done' },
+];
+let dlPhase = -1;
+let dlAnimId = null;
+let dlTime = 0;
+const N = 5;
+let philState = Array(N).fill('thinking');  // thinking | hungry | eating | waiting | deadlocked
+let forkState = Array(N).fill(null);        // null | philosopherIdx
+let dlCanvas, dlCtx;
+
+function initDL() {
+  dlCanvas = document.getElementById('dlCanvas');
+  dlCtx = dlCanvas.getContext('2d');
+  resizeDL();
+  window.addEventListener('resize', resizeDL);
+  renderPhaseBar();
+}
+
+function resizeDL() {
+  const wrap = dlCanvas.parentElement;
+  dlCanvas.width = wrap.clientWidth;
+  dlCanvas.height = 360;
+  drawDL();
+}
+
+function renderPhaseBar() {
+  const bar = document.getElementById('dlPhaseBar');
+  bar.innerHTML = DL_PHASES.map((p, i) =>
+    `<div class="dl-phase-step" id="dl-phase-${i}"><span class="phase-num">${i+1}</span>${p.label}</div>`
+  ).join('');
+}
+
+function setDLPhase(idx) {
+  DL_PHASES.forEach((_, i) => {
+    const el = document.getElementById(`dl-phase-${i}`);
+    el.className = 'dl-phase-step';
+    if (i < idx) el.classList.add('done');
+    else if (i === idx) el.classList.add(DL_PHASES[i].cls);
+  });
+  const pct = ((idx + 1) / DL_PHASES.length * 100);
+  const prog = document.getElementById('dlProgress');
+  prog.style.width = pct + '%';
+  prog.className = 'dl-progress' + (idx === 2 ? ' danger' : idx >= 3 ? ' resolve' : '');
+
+  const status = document.getElementById('dlStatus');
+  if (idx === 0) { status.className = 'deadlock-status safe'; status.textContent = '정상'; }
+  else if (idx === 1) { status.className = 'deadlock-status warning'; status.textContent = '위험'; }
+  else if (idx === 2) { status.className = 'deadlock-status deadlocked'; status.textContent = '데드락!'; }
+  else if (idx === 3) { status.className = 'deadlock-status resolving'; status.textContent = '분석중'; }
+  else { status.className = 'deadlock-status safe'; status.textContent = '해결됨'; }
+}
+
+function addLog(text, type = 'normal') {
+  const log = document.getElementById('narrationLog');
+  const entry = document.createElement('div');
+  entry.className = `narration-entry ${type}`;
+  const t = String(dlTime).padStart(2, '0') + 's';
+  entry.innerHTML = `<span class="narration-time">${t}</span><span class="narration-text">${text}</span>`;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+  dlTime++;
+}
+
+function drawDL() {
+  if (!dlCtx) return;
+  const w = dlCanvas.width, h = dlCanvas.height;
+  const cx = w / 2, cy = h / 2;
+  const R = Math.min(w, h) * 0.32;
+  const fR = R * 0.55;
+
+  dlCtx.clearRect(0, 0, w, h);
+
+  // Draw forks
+  for (let i = 0; i < N; i++) {
+    const angle = (i + 0.5) * (2 * Math.PI / N) - Math.PI / 2;
+    const fx = cx + fR * Math.cos(angle);
+    const fy = cy + fR * Math.sin(angle);
+    const owned = forkState[i] !== null;
+    dlCtx.beginPath();
+    dlCtx.arc(fx, fy, 10, 0, Math.PI * 2);
+    dlCtx.fillStyle = owned ? '#ff4466' : '#2a2a3a';
+    dlCtx.strokeStyle = owned ? '#ff4466' : '#8888aa';
+    dlCtx.lineWidth = 2;
+    dlCtx.fill();
+    dlCtx.stroke();
+    dlCtx.fillStyle = '#e0e0f0';
+    dlCtx.font = '10px JetBrains Mono';
+    dlCtx.textAlign = 'center';
+    dlCtx.textBaseline = 'middle';
+    dlCtx.fillText(`F${i}`, fx, fy);
+  }
+
+  // Draw philosophers
+  const stateColors = {
+    thinking: '#8888aa',
+    hungry: '#ffaa00',
+    eating: '#00ffaa',
+    waiting: '#ff6b9d',
+    deadlocked: '#ff4466',
+    freed: '#6b8aff',
+  };
+  const stateLabels = {
+    thinking: '생각중',
+    hungry: '배고픔',
+    eating: '식사중',
+    waiting: '대기중',
+    deadlocked: '데드락',
+    freed: '해방됨',
+  };
+
+  for (let i = 0; i < N; i++) {
+    const angle = i * (2 * Math.PI / N) - Math.PI / 2;
+    const px = cx + R * Math.cos(angle);
+    const py = cy + R * Math.sin(angle);
+    const col = stateColors[philState[i]] || '#8888aa';
+
+    dlCtx.beginPath();
+    dlCtx.arc(px, py, 24, 0, Math.PI * 2);
+    dlCtx.fillStyle = col + '22';
+    dlCtx.strokeStyle = col;
+    dlCtx.lineWidth = 2.5;
+    dlCtx.fill();
+    dlCtx.stroke();
+
+    // glow for deadlock
+    if (philState[i] === 'deadlocked') {
+      dlCtx.beginPath();
+      dlCtx.arc(px, py, 28, 0, Math.PI * 2);
+      dlCtx.strokeStyle = 'rgba(255,68,102,0.3)';
+      dlCtx.lineWidth = 4;
+      dlCtx.stroke();
+    }
+
+    dlCtx.fillStyle = '#e0e0f0';
+    dlCtx.font = 'bold 11px JetBrains Mono';
+    dlCtx.textAlign = 'center';
+    dlCtx.textBaseline = 'middle';
+    dlCtx.fillText(`P${i}`, px, py - 5);
+    dlCtx.font = '9px JetBrains Mono';
+    dlCtx.fillStyle = col;
+    dlCtx.fillText(stateLabels[philState[i]], px, py + 8);
+  }
+
+  // Center label
+  dlCtx.fillStyle = 'var(--text-dim)';
+  dlCtx.font = '12px JetBrains Mono';
+  dlCtx.textAlign = 'center';
+  dlCtx.fillStyle = '#8888aa';
+  dlCtx.fillText('식사하는 철학자', cx, cy);
+}
+
+function dlStart() {
+  if (dlAnimId) { clearTimeout(dlAnimId); dlAnimId = null; }
+  dlReset();
+  document.getElementById('dlStartBtn').disabled = true;
+  runDLPhase(0);
+}
+
+function dlReset() {
+  if (dlAnimId) { clearTimeout(dlAnimId); dlAnimId = null; }
+  dlPhase = -1;
+  dlTime = 0;
+  philState = Array(N).fill('thinking');
+  forkState = Array(N).fill(null);
+  document.getElementById('narrationLog').innerHTML = '';
+  document.getElementById('dlProgress').style.width = '0%';
+  document.getElementById('dlStatus').className = 'deadlock-status safe';
+  document.getElementById('dlStatus').textContent = '정상';
+  document.getElementById('dlStartBtn').disabled = false;
+  renderPhaseBar();
+  drawDL();
+}
+
+function delay(ms) { return new Promise(r => { dlAnimId = setTimeout(r, ms); }); }
+
+async function runDLPhase(phase) {
+  dlPhase = phase;
+  setDLPhase(phase);
+
+  if (phase === 0) {
+    // Phase 0: 정상 식사
+    addLog('5명의 철학자가 원탁에 앉아 생각하고 있습니다.', 'normal');
+    await delay(600);
+    // Some eating normally
+    for (let cycle = 0; cycle < 3; cycle++) {
+      for (let i = 0; i < N; i++) {
+        philState[i] = 'hungry';
+        drawDL();
+        await delay(200);
+        const leftFork = i, rightFork = (i + 1) % N;
+        if (forkState[leftFork] === null && forkState[rightFork] === null) {
+          forkState[leftFork] = i;
+          forkState[rightFork] = i;
+          philState[i] = 'eating';
+          drawDL();
+          await delay(300);
+          forkState[leftFork] = null;
+          forkState[rightFork] = null;
+          philState[i] = 'thinking';
+          drawDL();
+          addLog(`철학자 P${i}이 포크 F${leftFork}, F${rightFork}를 들고 식사 후 내려놓았습니다.`, 'normal');
+        } else {
+          philState[i] = 'thinking';
+          drawDL();
+        }
+        await delay(100);
+      }
+    }
+    addLog('모든 철학자가 정상적으로 식사 중입니다... 하지만 동시에 포크를 집으려 합니다!', 'warning');
+    await delay(400);
+    runDLPhase(1);
+
+  } else if (phase === 1) {
+    // Phase 1: 위험징후 - 모두 왼쪽 포크를 집음
+    addLog('⚠ 모든 철학자가 동시에 왼쪽 포크를 집으려 합니다!', 'warning');
+    for (let i = 0; i < N; i++) { philState[i] = 'hungry'; }
+    drawDL();
+    await delay(400);
+    for (let i = 0; i < N; i++) {
+      forkState[i] = i;  // 각자 왼쪽 포크(자기 번호) 선점
+      philState[i] = 'waiting';
+      drawDL();
+      addLog(`철학자 P${i}이 왼쪽 포크 F${i}를 집었습니다.`, 'warning');
+      await delay(300);
+    }
+    await delay(500);
+    runDLPhase(2);
+
+  } else if (phase === 2) {
+    // Phase 2: 데드락 발생
+    addLog('🔴 데드락 발생! 모든 철학자가 오른쪽 포크를 기다리고 있습니다.', 'danger');
+    await delay(300);
+    for (let i = 0; i < N; i++) {
+      philState[i] = 'deadlocked';
+      addLog(`철학자 P${i}: 오른쪽 포크 F${(i+1)%N}를 기다리는 중... (보유: F${i})`, 'danger');
+    }
+    drawDL();
+    await delay(400);
+    addLog('모든 프로세스가 서로의 자원을 기다리며 영원히 멈췄습니다!', 'danger');
+    await delay(600);
+    runDLPhase(3);
+
+  } else if (phase === 3) {
+    // Phase 3: 원인 분석
+    addLog('📊 원인 분석: 데드락의 4가지 필요 조건이 모두 충족되었습니다.', 'info');
+    await delay(400);
+    addLog('① 상호배제(Mutual Exclusion): 포크는 한 번에 한 철학자만 사용 가능', 'info');
+    await delay(400);
+    addLog('② 점유 및 대기(Hold & Wait): 포크를 쥔 채 다른 포크를 기다림', 'info');
+    await delay(400);
+    addLog('③ 비선점(No Preemption): 포크를 강제로 빼앗을 수 없음', 'info');
+    await delay(400);
+    addLog('④ 순환 대기(Circular Wait): P0→F1→P1→F2→...→P4→F0→P0 순환', 'info');
+    await delay(600);
+    runDLPhase(4);
+
+  } else if (phase === 4) {
+    // Phase 4: 해결
+    addLog('✅ 해결책 적용: 홀수 번호 철학자는 오른쪽 포크를 먼저 집도록 순서 변경!', 'resolve');
+    await delay(400);
+    // Reset all forks
+    forkState = Array(N).fill(null);
+    for (let i = 0; i < N; i++) { philState[i] = 'thinking'; }
+    drawDL();
+    await delay(300);
+    // Now some can eat
+    for (let i = 0; i < N; i++) {
+      const leftFork = i, rightFork = (i + 1) % N;
+      if (forkState[leftFork] === null && forkState[rightFork] === null) {
+        forkState[leftFork] = i;
+        forkState[rightFork] = i;
+        philState[i] = 'eating';
+        drawDL();
+        addLog(`철학자 P${i}이 식사를 시작합니다! (F${leftFork}, F${rightFork})`, 'resolve');
+        await delay(400);
+        forkState[leftFork] = null;
+        forkState[rightFork] = null;
+        philState[i] = 'freed';
+        drawDL();
+        await delay(300);
+      }
+    }
+    for (let i = 0; i < N; i++) philState[i] = 'thinking';
+    drawDL();
+    addLog('🎉 데드락이 해결되었습니다! 모든 철학자가 식사를 마쳤습니다.', 'resolve');
+    document.getElementById('dlStartBtn').disabled = false;
+  }
+}
+
+initDL();
+</script>
+</body>
+</html>

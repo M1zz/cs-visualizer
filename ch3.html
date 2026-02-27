@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.3 알고리즘 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── ch3-only overrides ── */
+.bm-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0;}
+.bm-label{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);width:28px;flex-shrink:0;}
+.bm-bits{display:flex;gap:4px;}
+.bm-bit{width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;border:2px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.18s;user-select:none;color:var(--text-dim);background:var(--surface2);}
+.bm-bit.one{border-color:var(--accent4);background:rgba(255,170,0,0.15);color:var(--accent4);box-shadow:0 0 10px rgba(255,170,0,0.15);}
+.bm-bit.result-bit{cursor:default;}
+.bm-bit.result-bit.one{border-color:var(--accent);background:rgba(0,255,170,0.15);color:var(--accent);}
+.bm-decimal{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--accent4);margin-left:10px;}
+.bm-result-decimal{color:var(--accent);}
+.bm-op-display{font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:var(--text-dim);margin:16px 0;padding:12px 16px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.bm-op-display .op-sym{color:var(--accent2);font-weight:700;font-size:1.1rem;}
+.bm-op-display .eq-sym{color:var(--text-dim);}
+.bm-examples{margin-top:20px;display:flex;flex-wrap:wrap;gap:10px;}
+.bm-example-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;line-height:1.8;}
+.bm-example-card .ex-title{color:var(--accent4);font-size:0.7rem;margin-bottom:4px;}
+.bm-example-card code{color:var(--accent);background:rgba(0,255,170,0.08);padding:1px 5px;border-radius:3px;}
+/* suffix array */
+.sa-table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:0.82rem;margin-top:12px;}
+.sa-table th{background:var(--surface2);color:var(--text-dim);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:0.72rem;letter-spacing:1px;}
+.sa-table td{padding:7px 12px;border-bottom:1px solid rgba(42,42,58,0.5);transition:all 0.2s;color:var(--text-dim);}
+.sa-table tr.sa-match td{background:rgba(0,255,170,0.08);color:var(--accent);border-left:2px solid var(--accent);}
+.sa-table td.sa-suffix{color:var(--text);}
+.sa-table td.sa-rank{color:var(--accent3);}
+.sa-table td.sa-lcp{color:var(--accent2);}
+.sa-input-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.sa-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:1rem;padding:9px 14px;outline:none;width:180px;}
+.sa-input:focus{border-color:var(--accent4);}
+.sa-search-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:16px;}
+.sa-match-info{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);margin-top:10px;min-height:20px;}
+/* flow graph */
+.flow-info{font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--text-dim);margin-top:14px;display:flex;gap:24px;flex-wrap:wrap;align-items:center;}
+.flow-info .flow-val{font-size:1.6rem;font-weight:700;color:var(--accent);}
+</style>
+</head>
+<body class="page-body">
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:var(--accent4)">Ch.3 — 알고리즘</div>
+  <div class="nav-sections">
+    <a href="#sorting" class="nav-sec-link">정렬</a>
+    <a href="#search" class="nav-sec-link">탐색</a>
+    <a href="#recursion" class="nav-sec-link">재귀</a>
+    <a href="#bigo" class="nav-sec-link">빅오</a>
+    <a href="#bitmask" class="nav-sec-link">비트마스크</a>
+    <a href="#suffixarray" class="nav-sec-link">접미사배열</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 1: 정렬 알고리즘 -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="sorting">
+  <div class="section-header">
+    <div class="tag tag-ch3">01 — SORTING</div>
+    <h2>정렬 알고리즘</h2>
+    <p>배열을 정렬하는 다양한 알고리즘을 시각적으로 비교합니다. 노란색=비교, 분홍색=교환, 초록색=정렬 완료.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" id="sortBtnBubble" onclick="startSort('bubble')">버블 정렬</button>
+      <button class="btn" id="sortBtnSelection" onclick="startSort('selection')">선택 정렬</button>
+      <button class="btn" id="sortBtnInsertion" onclick="startSort('insertion')">삽입 정렬</button>
+      <button class="btn" id="sortBtnQuick" onclick="startSort('quick')">퀵 정렬</button>
+      <button class="btn" id="sortBtnMerge" onclick="startSort('merge')">병합 정렬</button>
+      <button class="btn danger" onclick="resetSort()">새 배열</button>
+      <div class="sort-speed">
+        속도: <input type="range" id="sortSpeed" min="1" max="10" value="5"> <span id="sortSpeedLabel">5</span>
+      </div>
+    </div>
+    <div class="sort-bars" id="sortBars"></div>
+    <div class="sort-array-view" id="sortArrayView"></div>
+    <div class="info-text" id="sortInfo">알고리즘을 선택하면 시각화가 시작됩니다.</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 2: 탐색 알고리즘 -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="search">
+  <div class="section-header">
+    <div class="tag tag-ch3">02 — SEARCH</div>
+    <h2>탐색 알고리즘</h2>
+    <p>선형 탐색과 이진 탐색을 동시에 비교합니다. 정렬된 배열에서 이진 탐색이 얼마나 효율적인지 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="search-input-row">
+      <label style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim)">찾는 값:</label>
+      <input type="number" class="search-input" id="searchTarget" value="42" min="1" max="99">
+      <button class="btn" onclick="runSearch()">동시 실행</button>
+      <button class="btn danger" onclick="resetSearch()">초기화</button>
+    </div>
+    <div class="search-grid">
+      <div>
+        <div class="search-label">선형 탐색 (Linear Search)</div>
+        <div class="search-arr" id="linearArr"></div>
+        <div class="search-steps"><span id="linearSteps">0</span><br><small>단계</small></div>
+      </div>
+      <div>
+        <div class="search-label">이진 탐색 (Binary Search)</div>
+        <div class="search-arr" id="binaryArr"></div>
+        <div class="search-steps"><span id="binarySteps">0</span><br><small>단계</small></div>
+      </div>
+    </div>
+    <div class="info-text" id="searchInfo">배열에서 찾을 값을 입력하고 "동시 실행"을 클릭하세요.</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 3: 재귀 -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="recursion">
+  <div class="section-header">
+    <div class="tag tag-ch3">03 — RECURSION</div>
+    <h2>재귀</h2>
+    <p>재귀 함수는 자기 자신을 호출합니다. factorial(n)의 콜 스택이 쌓이고 되돌아오는 과정을 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="recursion-controls">
+      <label style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim)">n =</label>
+      <input type="range" id="recursionN" min="1" max="8" value="5" oninput="updateRecursion()">
+      <span class="recursion-n-display" id="recursionNDisplay">5</span>
+      <button class="btn" onclick="updateRecursion()">시각화</button>
+    </div>
+    <div class="recursion-stack-visual" id="recursionStack"></div>
+    <div class="info-text" id="recursionInfo"></div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 4: 빅오 표기법 -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="bigo">
+  <div class="section-header">
+    <div class="tag tag-ch3">04 — BIG-O</div>
+    <h2>빅오 표기법</h2>
+    <p>알고리즘의 시간 복잡도를 비교합니다. n이 커질수록 각 복잡도 클래스의 차이가 얼마나 커지는지 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls" style="margin-bottom:16px">
+      <div class="sort-speed">
+        n: <input type="range" id="bigoN" min="1" max="50" value="20" oninput="drawBigO()">
+        <span id="bigoNDisplay" class="bigo-n-display">20</span>
+      </div>
+    </div>
+    <canvas id="bigoCanvas" height="300"></canvas>
+    <div class="bigo-legend" id="bigoLegend"></div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 5: 비트마스크 [NEW] -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="bitmask">
+  <div class="section-header">
+    <div class="tag tag-ch3">05 — BITMASK ✦ NEW</div>
+    <h2>비트마스크</h2>
+    <p>비트마스크는 정수의 각 비트를 플래그로 사용해 집합을 표현합니다. 상태 압축, 부분집합 탐색에서 강력한 도구입니다. AND, OR, XOR, NOT, SHIFT 연산을 직접 체험해보세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" id="bmBtnAND" onclick="setBmOp('AND')" >AND</button>
+      <button class="btn" id="bmBtnOR"  onclick="setBmOp('OR')"  >OR</button>
+      <button class="btn" id="bmBtnXOR" onclick="setBmOp('XOR')" >XOR</button>
+      <button class="btn" id="bmBtnNOT" onclick="setBmOp('NOT')" >NOT A</button>
+      <button class="btn" id="bmBtnSHL" onclick="setBmOp('SHL')" >&lt;&lt;1</button>
+      <button class="btn" id="bmBtnSHR" onclick="setBmOp('SHR')" >&gt;&gt;1</button>
+    </div>
+
+    <!-- A row -->
+    <div class="bm-row">
+      <span class="bm-label">A</span>
+      <div class="bm-bits" id="bmBitsA"></div>
+      <span class="bm-decimal" id="bmDecA">0</span>
+    </div>
+    <!-- op symbol -->
+    <div id="bmOpSymbol" style="font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--accent2);margin:4px 0 4px 40px;font-weight:700;">AND</div>
+    <!-- B row -->
+    <div class="bm-row" id="bmBRowEl">
+      <span class="bm-label">B</span>
+      <div class="bm-bits" id="bmBitsB"></div>
+      <span class="bm-decimal" id="bmDecB">0</span>
+    </div>
+    <div style="border-top:1px solid var(--border);margin:10px 0 10px 40px;"></div>
+    <!-- Result row -->
+    <div class="bm-row">
+      <span class="bm-label" style="color:var(--accent)">=</span>
+      <div class="bm-bits" id="bmBitsR"></div>
+      <span class="bm-decimal bm-result-decimal" id="bmDecR">0</span>
+    </div>
+
+    <div class="bm-op-display" id="bmOpDisplay"></div>
+
+    <!-- Practical examples -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-top:20px;margin-bottom:8px;letter-spacing:1px;">실용 예제</div>
+    <div class="bm-examples">
+      <div class="bm-example-card">
+        <div class="ex-title">집합 표현</div>
+        집합 {1,3,5} → 비트 1,3,5 ON<br>
+        <code>0b00101010 = 42</code><br>
+        bit i가 1 ↔ 원소 i 포함
+      </div>
+      <div class="bm-example-card">
+        <div class="ex-title">원소 추가/제거</div>
+        추가: <code>S |= (1 &lt;&lt; i)</code><br>
+        제거: <code>S &= ~(1 &lt;&lt; i)</code><br>
+        포함: <code>(S &gt;&gt; i) &amp; 1</code>
+      </div>
+      <div class="bm-example-card">
+        <div class="ex-title">부분집합 순회</div>
+        <code>for(s=S;s;s=(s-1)&amp;S)</code><br>
+        전체 부분집합: <code>2^n</code>가지<br>
+        상태압축 DP에서 활용
+      </div>
+      <div class="bm-example-card">
+        <div class="ex-title">비트 트릭</div>
+        최하위비트: <code>x &amp; (-x)</code><br>
+        비트수 세기: <code>popcount(x)</code><br>
+        짝수 검사: <code>(x &amp; 1) == 0</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 6: 접미사 배열 [NEW] -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="suffixarray">
+  <div class="section-header">
+    <div class="tag tag-ch3">06 — SUFFIX ARRAY ✦ NEW</div>
+    <h2>접미사 배열</h2>
+    <p>문자열의 모든 접미사를 정렬한 배열입니다. 문자열 검색(O(m log n)), 최장 공통 부분 문자열 탐색 등에 사용됩니다. 접미사를 사전순 정렬하면 이진 탐색으로 패턴을 빠르게 찾을 수 있습니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="sa-input-row">
+      <label style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim)">문자열:</label>
+      <input type="text" class="sa-input" id="saInput" value="banana" maxlength="20" oninput="renderSuffixArray()">
+      <button class="btn" onclick="renderSuffixArray()">배열 생성</button>
+    </div>
+    <div class="sa-search-row">
+      <label style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim)">패턴 검색:</label>
+      <input type="text" class="sa-input" id="saPattern" placeholder="패턴 입력" maxlength="10">
+      <button class="btn" onclick="searchPattern()">검색</button>
+      <button class="btn danger" onclick="clearSaSearch()">초기화</button>
+    </div>
+    <div class="sa-match-info" id="saMatchInfo"></div>
+    <div style="overflow-x:auto;margin-top:4px">
+      <table class="sa-table" id="saTable">
+        <thead><tr><th>순위</th><th>원본 인덱스</th><th>접미사</th><th>LCP</th></tr></thead>
+        <tbody id="saTableBody"></tbody>
+      </table>
+    </div>
+    <div class="info-text" style="margin-top:16px">
+      LCP = 인접한 정렬된 접미사 간의 최장 공통 접두사 길이. 첫 번째 항목은 정의되지 않습니다(—).
+    </div>
+  </div>
+</section>
+
+<footer>CS Visualizer · <a href="index.html" style="color:var(--accent4);text-decoration:none;">목차로 돌아가기</a></footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// SECTION 1: SORTING
+// ═══════════════════════════════════════════════════════════════════
+let sA = [], sR = false;
+const N_BARS = 30;
+
+function gD() {
+  const spd = parseInt(document.getElementById('sortSpeed').value);
+  return Math.max(10, 310 - spd * 30);
+}
+function sl(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function initSort() {
+  sA = Array.from({length: N_BARS}, () => Math.floor(Math.random() * 95) + 5);
+  renderBars([]);
+  document.getElementById('sortInfo').textContent = '알고리즘을 선택하면 시각화가 시작됩니다.';
+}
+
+function renderBars(state) {
+  const container = document.getElementById('sortBars');
+  const arrView = document.getElementById('sortArrayView');
+  const max = Math.max(...sA);
+  container.innerHTML = '';
+  arrView.innerHTML = '';
+  sA.forEach((v, i) => {
+    const bar = document.createElement('div');
+    bar.className = 'sort-bar' + (state[i] ? ' ' + state[i] : '');
+    bar.style.height = (v / max * 240 + 10) + 'px';
+    container.appendChild(bar);
+    const cell = document.createElement('div');
+    cell.className = 'sarr-cell' + (state[i] ? ' ' + state[i] : '');
+    cell.textContent = v;
+    arrView.appendChild(cell);
+  });
+}
+
+function rSB(indices, cls, duration) {
+  const state = {};
+  indices.forEach(i => { state[i] = cls; });
+  renderBars(state);
+  return sl(duration);
+}
+
+async function startSort(type) {
+  if (sR) return;
+  sR = true;
+  // disable buttons
+  ['Bubble','Selection','Insertion','Quick','Merge'].forEach(t =>
+    document.getElementById('sortBtn' + t).disabled = true
+  );
+  const arr = [...sA];
+  document.getElementById('sortInfo').textContent = {
+    bubble: '버블 정렬: 인접 원소 비교·교환 O(n²)',
+    selection: '선택 정렬: 최솟값 선택 O(n²)',
+    insertion: '삽입 정렬: 올바른 위치에 삽입 O(n²)',
+    quick: '퀵 정렬: 피벗 기준 분할 O(n log n) avg',
+    merge: '병합 정렬: 분할 후 병합 O(n log n)'
+  }[type];
+
+  if (type === 'bubble') await bubbleSort();
+  else if (type === 'selection') await selectionSort();
+  else if (type === 'insertion') await insertionSort();
+  else if (type === 'quick') await quickSortWrapper();
+  else if (type === 'merge') await mergeSortWrapper();
+
+  // mark all sorted
+  const s = {};
+  sA.forEach((_, i) => s[i] = 'sorted');
+  renderBars(s);
+  sR = false;
+  ['Bubble','Selection','Insertion','Quick','Merge'].forEach(t =>
+    document.getElementById('sortBtn' + t).disabled = false
+  );
+}
+
+async function bubbleSort() {
+  const n = sA.length;
+  for (let i = 0; i < n - 1; i++) {
+    for (let j = 0; j < n - 1 - i; j++) {
+      await rSB([j, j + 1], 'comparing', gD());
+      if (sA[j] > sA[j + 1]) {
+        [sA[j], sA[j + 1]] = [sA[j + 1], sA[j]];
+        await rSB([j, j + 1], 'swapping', gD());
+      }
+    }
+  }
+}
+
+async function selectionSort() {
+  const n = sA.length;
+  for (let i = 0; i < n - 1; i++) {
+    let minIdx = i;
+    for (let j = i + 1; j < n; j++) {
+      await rSB([minIdx, j], 'comparing', gD());
+      if (sA[j] < sA[minIdx]) minIdx = j;
+    }
+    if (minIdx !== i) {
+      [sA[i], sA[minIdx]] = [sA[minIdx], sA[i]];
+      await rSB([i, minIdx], 'swapping', gD());
+    }
+  }
+}
+
+async function insertionSort() {
+  const n = sA.length;
+  for (let i = 1; i < n; i++) {
+    let j = i;
+    while (j > 0) {
+      await rSB([j - 1, j], 'comparing', gD());
+      if (sA[j - 1] > sA[j]) {
+        [sA[j - 1], sA[j]] = [sA[j], sA[j - 1]];
+        await rSB([j - 1, j], 'swapping', gD());
+        j--;
+      } else break;
+    }
+  }
+}
+
+async function quickSortWrapper() {
+  await quickSort(0, sA.length - 1);
+}
+async function quickSort(lo, hi) {
+  if (lo >= hi) return;
+  let pivot = sA[hi], i = lo;
+  for (let j = lo; j < hi; j++) {
+    await rSB([j, hi], 'comparing', gD());
+    if (sA[j] <= pivot) {
+      [sA[i], sA[j]] = [sA[j], sA[i]];
+      if (i !== j) await rSB([i, j], 'swapping', gD());
+      i++;
+    }
+  }
+  [sA[i], sA[hi]] = [sA[hi], sA[i]];
+  await rSB([i, hi], 'swapping', gD());
+  await quickSort(lo, i - 1);
+  await quickSort(i + 1, hi);
+}
+
+async function mergeSortWrapper() {
+  await mergeSort(0, sA.length - 1);
+}
+async function mergeSort(lo, hi) {
+  if (lo >= hi) return;
+  const mid = (lo + hi) >> 1;
+  await mergeSort(lo, mid);
+  await mergeSort(mid + 1, hi);
+  await merge(lo, mid, hi);
+}
+async function merge(lo, mid, hi) {
+  const left = sA.slice(lo, mid + 1);
+  const right = sA.slice(mid + 1, hi + 1);
+  let i = 0, j = 0, k = lo;
+  while (i < left.length && j < right.length) {
+    await rSB([k, mid + 1 + j], 'comparing', gD());
+    if (left[i] <= right[j]) sA[k++] = left[i++];
+    else sA[k++] = right[j++];
+    await rSB([k - 1], 'swapping', gD() / 2);
+  }
+  while (i < left.length) sA[k++] = left[i++];
+  while (j < right.length) sA[k++] = right[j++];
+}
+
+function resetSort() {
+  sR = false;
+  ['Bubble','Selection','Insertion','Quick','Merge'].forEach(t =>
+    document.getElementById('sortBtn' + t).disabled = false
+  );
+  initSort();
+}
+
+document.getElementById('sortSpeed').addEventListener('input', function() {
+  document.getElementById('sortSpeedLabel').textContent = this.value;
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// SECTION 2: SEARCH
+// ═══════════════════════════════════════════════════════════════════
+let searchArr = [];
+
+function initSearch() {
+  const set = new Set();
+  while (set.size < 20) set.add(Math.floor(Math.random() * 90) + 5);
+  searchArr = [...set].sort((a, b) => a - b);
+  renderSearchBoth([], [], -1, -1, [], []);
+}
+
+function renderSearchBoth(linState, binState, linFound, binFound, binRange, binMid) {
+  ['linear', 'binary'].forEach(type => {
+    const el = document.getElementById(type + 'Arr');
+    el.innerHTML = '';
+    searchArr.forEach((v, i) => {
+      const cell = document.createElement('div');
+      let cls = 'search-cell';
+      if (type === 'linear') {
+        if (i < linState.length) cls += ' ' + (i === linFound ? 'found' : linState[i] ? 'cur' : '');
+      } else {
+        if (binRange.length && (i < binRange[0] || i > binRange[1])) cls += ' out';
+        else if (i === binMid[0]) cls += ' mid';
+        else if (binRange.length) cls += ' range';
+        if (i === binFound) cls += ' found';
+      }
+      cell.className = cls.trim();
+      cell.textContent = v;
+      el.appendChild(cell);
+    });
+  });
+}
+
+async function runSearch() {
+  const target = parseInt(document.getElementById('searchTarget').value);
+  if (isNaN(target)) return;
+  document.getElementById('linearSteps').textContent = '0';
+  document.getElementById('binarySteps').textContent = '0';
+  document.getElementById('searchInfo').textContent = '탐색 중...';
+
+  // Run both simultaneously
+  let linDone = false, binDone = false;
+  let linStep = 0, binStep = 0;
+  let linFound = -1, binFound = -1;
+  let binLo = 0, binHi = searchArr.length - 1;
+  let i = 0;
+
+  // Interleave animation
+  const delay = 400;
+  const maxSteps = Math.max(searchArr.length, Math.ceil(Math.log2(searchArr.length)) + 2);
+
+  for (let step = 0; step < maxSteps + searchArr.length; step++) {
+    let anyProgress = false;
+    // linear step
+    if (!linDone && i < searchArr.length) {
+      linStep++;
+      if (searchArr[i] === target) { linFound = i; linDone = true; }
+      anyProgress = true;
+    }
+    // binary step
+    if (!binDone && binLo <= binHi) {
+      const mid = (binLo + binHi) >> 1;
+      binStep++;
+      const range = [binLo, binHi];
+      const midArr = [mid];
+      // draw
+      const linState = Array.from({length: searchArr.length}, (_, idx) => idx < linStep ? true : false);
+      renderSearchBoth(linState, [], linFound, binLo <= mid && mid <= binHi ? -1 : binFound, range, midArr);
+      document.getElementById('linearSteps').textContent = linStep;
+      document.getElementById('binarySteps').textContent = binStep;
+      await sl(delay);
+      if (searchArr[mid] === target) { binFound = mid; binDone = true; }
+      else if (searchArr[mid] < target) binLo = mid + 1;
+      else binHi = mid - 1;
+      anyProgress = true;
+    }
+    if (!anyProgress && linDone && binDone) break;
+    // advance linear pointer
+    if (!linDone) i++;
+    const linState2 = Array.from({length: searchArr.length}, (_, idx) => idx < i ? true : false);
+    const rng = binDone ? [] : [binLo, binHi];
+    const md = [];
+    renderSearchBoth(linState2, [], linFound, binFound, rng, md);
+    document.getElementById('linearSteps').textContent = linStep;
+    document.getElementById('binarySteps').textContent = binStep;
+    if (linDone && binDone) break;
+    await sl(delay / 2);
+  }
+
+  const linResult = linFound >= 0 ? `선형: ${linStep}단계에서 발견` : `선형: ${linStep}단계, 없음`;
+  const binResult = binFound >= 0 ? `이진: ${binStep}단계에서 발견` : `이진: ${binStep}단계, 없음`;
+  document.getElementById('searchInfo').textContent = `${target} → ${linResult} | ${binResult}`;
+  document.getElementById('linearSteps').textContent = linStep;
+  document.getElementById('binarySteps').textContent = binStep;
+}
+
+function resetSearch() {
+  initSearch();
+  document.getElementById('linearSteps').textContent = '0';
+  document.getElementById('binarySteps').textContent = '0';
+  document.getElementById('searchInfo').textContent = '배열에서 찾을 값을 입력하고 "동시 실행"을 클릭하세요.';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SECTION 3: RECURSION
+// ═══════════════════════════════════════════════════════════════════
+function updateRecursion() {
+  const n = parseInt(document.getElementById('recursionN').value);
+  document.getElementById('recursionNDisplay').textContent = n;
+  const stack = document.getElementById('recursionStack');
+  stack.innerHTML = '';
+
+  // Build call frames bottom to top (displayed column-reverse)
+  // First: show all calls descending, then base case, then results
+  const frames = [];
+  // Descending calls
+  for (let i = n; i >= 1; i--) {
+    frames.push({ call: `factorial(${i})`, result: i === 1 ? '= 1' : `= ${i} × factorial(${i-1})`, isBase: i === 1 });
+  }
+
+  let factorial = 1;
+  const results = [];
+  for (let i = 1; i <= n; i++) factorial *= i;
+  // Compute partial results
+  const partials = [1];
+  for (let i = 2; i <= n; i++) partials.push(partials[partials.length-1] * i);
+
+  frames.forEach((f, idx) => {
+    const div = document.createElement('div');
+    div.className = 'call-frame' + (f.isBase ? ' base-case' : '');
+    div.style.animationDelay = (idx * 0.06) + 's';
+    const callN = n - idx;
+    const returnVal = partials[callN - 1];
+    div.innerHTML = `<span class="call-fn">factorial(${callN})</span>
+      <span class="call-result">${f.isBase ? '→ 1 (기저 사례)' : `→ ${callN} × ${partials[callN-2] || 1} = ${returnVal}`}</span>`;
+    stack.appendChild(div);
+  });
+
+  document.getElementById('recursionInfo').textContent =
+    `factorial(${n}) = ${factorial} — 콜 스택 깊이: ${n}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SECTION 4: BIG-O
+// ═══════════════════════════════════════════════════════════════════
+const BIGO_COLORS = ['#00ffaa', '#6b8aff', '#ffaa00', '#ff6b9d', '#ff4466'];
+const BIGO_LABELS = ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)', 'O(n²)'];
+const BIGO_FNS = [
+  n => 1,
+  n => Math.log2(n + 1),
+  n => n,
+  n => n * Math.log2(n + 1),
+  n => n * n
+];
+
+function drawBigO() {
+  const canvas = document.getElementById('bigoCanvas');
+  const nSlider = parseInt(document.getElementById('bigoN').value);
+  document.getElementById('bigoNDisplay').textContent = nSlider;
+  const W = canvas.offsetWidth || 800;
+  const H = 300;
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = { l: 50, r: 20, t: 20, b: 40 };
+  const maxN = nSlider;
+  // Compute max value (cap at n² for display)
+  const maxVal = Math.min(BIGO_FNS[4](maxN), maxN * maxN);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let g = 0; g <= 4; g++) {
+    const y = pad.t + (1 - g / 4) * (H - pad.t - pad.b);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(136,136,170,0.5)';
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillText(Math.round(maxVal * g / 4), 2, y + 4);
+  }
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, H - pad.b);
+  ctx.lineTo(W - pad.r, H - pad.b);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(136,136,170,0.6)';
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.fillText('n', W - pad.r + 4, H - pad.b + 4);
+  ctx.fillText('ops', pad.l - 28, pad.t + 4);
+
+  BIGO_FNS.forEach((fn, idx) => {
+    ctx.strokeStyle = BIGO_COLORS[idx];
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = BIGO_COLORS[idx];
+    ctx.shadowBlur = 4;
+    ctx.beginPath();
+    let first = true;
+    for (let n = 1; n <= maxN; n++) {
+      const x = pad.l + (n / maxN) * (W - pad.l - pad.r);
+      const val = Math.min(fn(n), maxVal);
+      const y = H - pad.b - (val / maxVal) * (H - pad.t - pad.b);
+      if (first) { ctx.moveTo(x, y); first = false; }
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  });
+
+  // Legend
+  const legend = document.getElementById('bigoLegend');
+  legend.innerHTML = BIGO_LABELS.map((label, i) =>
+    `<div class="bigo-item">
+      <div class="bigo-dot" style="background:${BIGO_COLORS[i]}"></div>
+      <span style="color:${BIGO_COLORS[i]}">${label}</span>
+      <span style="color:var(--text-dim);font-size:0.7rem;margin-left:4px">
+        = ${Math.round(BIGO_FNS[i](nSlider))}
+      </span>
+    </div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SECTION 5: BITMASK
+// ═══════════════════════════════════════════════════════════════════
+let bmA = 0b10110101, bmB = 0b01100110, bmOp = 'AND';
+
+function setBmOp(op) {
+  bmOp = op;
+  document.querySelectorAll('[id^=bmBtn]').forEach(b => b.classList.remove('active'));
+  const map = {AND:'bmBtnAND',OR:'bmBtnOR',XOR:'bmBtnXOR',NOT:'bmBtnNOT',SHL:'bmBtnSHL',SHR:'bmBtnSHR'};
+  document.getElementById(map[op]).classList.add('active');
+  // Hide B row for unary ops
+  const bRow = document.getElementById('bmBRowEl');
+  bRow.style.opacity = (op === 'NOT' || op === 'SHL' || op === 'SHR') ? '0.25' : '1';
+  document.getElementById('bmOpSymbol').textContent = {
+    AND:'AND',OR:'OR',XOR:'XOR',NOT:'NOT A',SHL:'A << 1',SHR:'A >> 1'
+  }[op];
+  bmCalc();
+}
+
+function bmCalc() {
+  let r;
+  if (bmOp === 'AND') r = bmA & bmB;
+  else if (bmOp === 'OR')  r = bmA | bmB;
+  else if (bmOp === 'XOR') r = bmA ^ bmB;
+  else if (bmOp === 'NOT') r = (~bmA) & 0xFF;
+  else if (bmOp === 'SHL') r = (bmA << 1) & 0xFF;
+  else if (bmOp === 'SHR') r = (bmA >> 1) & 0xFF;
+  renderBitmask(r);
+}
+
+function renderBitmask(result) {
+  const renderBits = (containerId, value, interactive, whichAB) => {
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    for (let bit = 7; bit >= 0; bit--) {
+      const isOne = (value >> bit) & 1;
+      const cell = document.createElement('div');
+      cell.className = 'bm-bit' + (isOne ? ' one' : '') + (interactive ? '' : ' result-bit');
+      cell.textContent = isOne ? '1' : '0';
+      if (interactive) {
+        const b = bit; const w = whichAB;
+        cell.onclick = () => toggleBit(w, b);
+        cell.title = `비트 ${bit} 토글`;
+      }
+      el.appendChild(cell);
+    }
+  };
+  renderBits('bmBitsA', bmA, true, 'A');
+  renderBits('bmBitsB', bmB, true, 'B');
+  renderBits('bmBitsR', result, false, null);
+
+  document.getElementById('bmDecA').textContent = bmA;
+  document.getElementById('bmDecB').textContent = bmB;
+  document.getElementById('bmDecR').textContent = result;
+
+  const opSym = { AND: '&', OR: '|', XOR: '^', NOT: '~A', SHL: 'A<<1', SHR: 'A>>1' }[bmOp];
+  const showB = !(bmOp === 'NOT' || bmOp === 'SHL' || bmOp === 'SHR');
+  const binStr = v => ('00000000' + v.toString(2)).slice(-8);
+  document.getElementById('bmOpDisplay').innerHTML =
+    `<span>A = <b style="color:var(--accent4)">${bmA}</b> (0b${binStr(bmA)})</span>
+     <span class="op-sym">${opSym}</span>
+     ${showB ? `<span>B = <b style="color:var(--accent4)">${bmB}</b> (0b${binStr(bmB)})</span>` : ''}
+     <span class="eq-sym">=</span>
+     <span style="color:var(--accent)"><b>${result}</b> (0b${binStr(result)})</span>`;
+}
+
+function toggleBit(which, pos) {
+  if (which === 'A') bmA ^= (1 << pos);
+  else bmB ^= (1 << pos);
+  bmCalc();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SECTION 6: SUFFIX ARRAY
+// ═══════════════════════════════════════════════════════════════════
+let currentSA = [];
+let currentStr = '';
+
+function buildSuffixArray(s) {
+  const n = s.length;
+  const suffixes = Array.from({length: n}, (_, i) => ({idx: i, suf: s.slice(i)}));
+  suffixes.sort((a, b) => a.suf < b.suf ? -1 : a.suf > b.suf ? 1 : 0);
+  return suffixes;
+}
+
+function computeLCP(sa, s) {
+  const lcp = [null]; // first is undefined
+  for (let i = 1; i < sa.length; i++) {
+    const a = sa[i - 1].suf, b = sa[i].suf;
+    let l = 0;
+    while (l < a.length && l < b.length && a[l] === b[l]) l++;
+    lcp.push(l);
+  }
+  return lcp;
+}
+
+function renderSuffixArray(matchStart, matchEnd) {
+  const s = document.getElementById('saInput').value.trim();
+  if (!s) return;
+  currentStr = s;
+  currentSA = buildSuffixArray(s);
+  const lcp = computeLCP(currentSA, s);
+  const body = document.getElementById('saTableBody');
+  body.innerHTML = '';
+  currentSA.forEach((item, rank) => {
+    const tr = document.createElement('tr');
+    const isMatch = (matchStart !== undefined && rank >= matchStart && rank <= matchEnd);
+    if (isMatch) tr.classList.add('sa-match');
+    tr.innerHTML = `<td class="sa-rank">${rank}</td>
+      <td>${item.idx}</td>
+      <td class="sa-suffix">${item.suf}</td>
+      <td class="sa-lcp">${lcp[rank] === null ? '—' : lcp[rank]}</td>`;
+    body.appendChild(tr);
+  });
+  document.getElementById('saMatchInfo').textContent = '';
+}
+
+function searchPattern() {
+  const pattern = document.getElementById('saPattern').value;
+  if (!pattern || !currentSA.length) return;
+  // Binary search on suffix array
+  let lo = 0, hi = currentSA.length - 1;
+  let firstMatch = -1, lastMatch = -1;
+
+  // Find first occurrence
+  let l = 0, r = currentSA.length;
+  while (l < r) {
+    const mid = (l + r) >> 1;
+    if (currentSA[mid].suf.slice(0, pattern.length) < pattern) l = mid + 1;
+    else r = mid;
+  }
+  firstMatch = l;
+  // Find last occurrence
+  l = 0; r = currentSA.length;
+  while (l < r) {
+    const mid = (l + r) >> 1;
+    if (currentSA[mid].suf.slice(0, pattern.length) <= pattern) {
+      if (currentSA[mid].suf.slice(0, pattern.length) === pattern) l = mid + 1;
+      else l = mid + 1;
+    } else r = mid;
+  }
+  lastMatch = l - 1;
+
+  // Validate
+  const valid = firstMatch <= lastMatch &&
+    firstMatch < currentSA.length &&
+    currentSA[firstMatch].suf.startsWith(pattern);
+
+  if (!valid) {
+    renderSuffixArray();
+    document.getElementById('saMatchInfo').textContent =
+      `"${pattern}" 패턴을 찾을 수 없습니다.`;
+    document.getElementById('saMatchInfo').style.color = 'var(--danger)';
+  } else {
+    renderSuffixArray(firstMatch, lastMatch);
+    const count = lastMatch - firstMatch + 1;
+    document.getElementById('saMatchInfo').textContent =
+      `"${pattern}" — ${count}개 발견 (순위 ${firstMatch}~${lastMatch})`;
+    document.getElementById('saMatchInfo').style.color = 'var(--accent)';
+    // Scroll to first match
+    const rows = document.querySelectorAll('#saTableBody tr');
+    if (rows[firstMatch]) rows[firstMatch].scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+}
+
+function clearSaSearch() {
+  document.getElementById('saPattern').value = '';
+  renderSuffixArray();
+  document.getElementById('saMatchInfo').textContent = '';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  initSort();
+  initSearch();
+  updateRecursion();
+  drawBigO();
+  // bitmask
+  setBmOp('AND');
+  // suffix array
+  renderSuffixArray();
+});
+
+window.addEventListener('resize', () => { drawBigO(); });
+</script>
+</body>
+</html>

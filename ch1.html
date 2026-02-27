@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.1 컴퓨터의 언어 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="page-body">
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:var(--accent)">Ch.1 — 컴퓨터의 언어</div>
+  <div class="nav-sections">
+    <a href="#binary" class="nav-sec-link">이진수</a>
+    <a href="#gates" class="nav-sec-link">논리게이트</a>
+    <a href="#numconv" class="nav-sec-link">진법변환</a>
+    <a href="#encoding" class="nav-sec-link">문자인코딩</a>
+  </div>
+</nav>
+
+<!-- SECTION 1: 이진수 -->
+<section id="binary">
+  <div class="section-header">
+    <div class="tag tag-ch1">01 — BINARY</div>
+    <h2>이진수</h2>
+    <p>컴퓨터는 모든 정보를 0과 1로 표현합니다. 아래 8개의 비트를 클릭해 값을 토글하고, 10진수 변환 결과를 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="resetBinary()">초기화</button>
+      <button class="btn" onclick="randomBinary()">랜덤</button>
+      <button class="btn" onclick="incrementBinary()">+1 증가</button>
+    </div>
+    <div class="binary-display" id="binaryDisplay"></div>
+    <div class="decimal-result" id="decimalResult">
+      <small>10진수 =</small> <span id="decVal">0</span>
+    </div>
+    <div class="info-text" id="binaryInfo">
+      각 비트는 2의 거듭제곱 자리값을 가집니다. 가장 왼쪽 비트(MSB)는 2⁷=128, 가장 오른쪽 비트(LSB)는 2⁰=1입니다.
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SECTION 2: 논리게이트 -->
+<section id="gates">
+  <div class="section-header">
+    <div class="tag tag-ch1">02 — LOGIC GATES</div>
+    <h2>논리게이트</h2>
+    <p>논리게이트는 디지털 회로의 기본 빌딩 블록입니다. 입력을 클릭해 0/1을 토글하고 출력 결과를 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls" id="gateTabs"></div>
+    <div class="gate-container" id="gateContainer">
+      <div class="gate-row" id="gateRow">
+        <!-- rendered by JS -->
+      </div>
+      <div class="info-text" id="gateInfo"></div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SECTION 3: 진법변환 -->
+<section id="numconv">
+  <div class="section-header">
+    <div class="tag tag-ch1">03 — NUMBER CONVERSION</div>
+    <h2>진법변환</h2>
+    <p>같은 숫자를 2진수, 8진수, 10진수, 16진수로 표현할 수 있습니다. 숫자와 진수를 입력해 모든 표현을 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="numconv-input-group" style="margin-bottom:20px">
+      <input type="text" class="numconv-input" id="numconvInput" placeholder="숫자 입력" value="255" oninput="convertNum()">
+      <select class="numconv-select" id="numconvBase" onchange="convertNum()">
+        <option value="2">2진수</option>
+        <option value="8">8진수</option>
+        <option value="10" selected>10진수</option>
+        <option value="16">16진수</option>
+      </select>
+      <button class="btn" onclick="randomNumConv()">랜덤</button>
+    </div>
+    <div class="numconv-grid" id="numconvGrid"></div>
+    <div id="colorPreviewWrap"></div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SECTION 4: 문자인코딩 -->
+<section id="encoding">
+  <div class="section-header">
+    <div class="tag tag-ch1">04 — CHARACTER ENCODING</div>
+    <h2>문자인코딩</h2>
+    <p>텍스트는 컴퓨터 내부에서 숫자로 저장됩니다. 아래에 텍스트를 입력하면 각 문자의 Unicode 코드포인트와 UTF-8 바이트를 확인할 수 있습니다.</p>
+  </div>
+  <div class="viz-box">
+    <input type="text" class="enc-input" id="encInput" placeholder="텍스트를 입력하세요... (예: Hello, 안녕)" value="Hello, 안녕!" oninput="updateEncoding()">
+    <div class="enc-display" id="encDisplay"></div>
+    <div class="info-text" style="margin-top:16px">
+      ASCII 문자(영문)는 UTF-8에서 1바이트, 한글은 3바이트를 사용합니다. 이모지는 4바이트까지 사용하기도 합니다.
+    </div>
+  </div>
+</section>
+
+<footer>CS Visualizer · <a href="index.html" style="color:var(--accent);text-decoration:none;">목차로 돌아가기</a></footer>
+
+<script>
+// ─────────────────────────────────────────
+// SECTION 1: BINARY
+// ─────────────────────────────────────────
+const binaryBits = [0, 0, 0, 0, 0, 0, 0, 0];
+
+function initBinary() {
+  const display = document.getElementById('binaryDisplay');
+  display.innerHTML = '';
+  binaryBits.forEach((bit, i) => {
+    const weight = Math.pow(2, 7 - i);
+    const cell = document.createElement('div');
+    cell.className = 'bit-cell' + (bit ? ' on' : '');
+    cell.id = 'bit-' + i;
+    cell.innerHTML = `<div class="bit-val">${bit}</div><div class="bit-weight">2<sup>${7 - i}</sup>=${weight}</div>`;
+    cell.onclick = () => toggleBit(i);
+    display.appendChild(cell);
+  });
+  updateDecimal();
+}
+
+function toggleBit(i) {
+  binaryBits[i] = binaryBits[i] ? 0 : 1;
+  const cell = document.getElementById('bit-' + i);
+  const val = cell.querySelector('.bit-val');
+  val.textContent = binaryBits[i];
+  if (binaryBits[i]) {
+    cell.classList.add('on');
+  } else {
+    cell.classList.remove('on');
+  }
+  updateDecimal();
+}
+
+function updateDecimal() {
+  const dec = binaryBits.reduce((acc, bit, i) => acc + bit * Math.pow(2, 7 - i), 0);
+  document.getElementById('decVal').textContent = dec;
+  const binStr = binaryBits.join('');
+  const hexStr = dec.toString(16).toUpperCase().padStart(2, '0');
+  document.getElementById('binaryInfo').innerHTML =
+    `이진수: <span style="color:var(--accent)">${binStr}</span> &nbsp;|&nbsp; 10진수: <span style="color:var(--accent4)">${dec}</span> &nbsp;|&nbsp; 16진수: <span style="color:var(--accent2)">0x${hexStr}</span>`;
+}
+
+function resetBinary() {
+  binaryBits.fill(0);
+  initBinary();
+}
+
+function randomBinary() {
+  for (let i = 0; i < 8; i++) {
+    binaryBits[i] = Math.random() > 0.5 ? 1 : 0;
+  }
+  initBinary();
+}
+
+function incrementBinary() {
+  let carry = 1;
+  for (let i = 7; i >= 0 && carry; i--) {
+    const sum = binaryBits[i] + carry;
+    binaryBits[i] = sum % 2;
+    carry = Math.floor(sum / 2);
+  }
+  initBinary();
+}
+
+// ─────────────────────────────────────────
+// SECTION 2: LOGIC GATES
+// ─────────────────────────────────────────
+const gates = [
+  { name: 'AND',  twoInput: true,  fn: (a, b) => a & b,  desc: 'AND: 두 입력이 모두 1일 때만 출력이 1입니다.' },
+  { name: 'OR',   twoInput: true,  fn: (a, b) => a | b,  desc: 'OR: 두 입력 중 하나라도 1이면 출력이 1입니다.' },
+  { name: 'NOT',  twoInput: false, fn: (a) => a ? 0 : 1, desc: 'NOT: 입력의 반대 값을 출력합니다. 인버터라고도 합니다.' },
+  { name: 'XOR',  twoInput: true,  fn: (a, b) => a ^ b,  desc: 'XOR: 두 입력이 다를 때만 출력이 1입니다 (배타적 OR).' },
+  { name: 'NAND', twoInput: true,  fn: (a, b) => (a & b) ? 0 : 1, desc: 'NAND: AND의 반대입니다. 두 입력이 모두 1일 때만 출력이 0입니다.' },
+  { name: 'NOR',  twoInput: true,  fn: (a, b) => (a | b) ? 0 : 1, desc: 'NOR: OR의 반대입니다. 두 입력이 모두 0일 때만 출력이 1입니다.' },
+];
+
+let gateIdx = 0;
+let gateInputs = [0, 0];
+
+function initGates() {
+  const tabsEl = document.getElementById('gateTabs');
+  tabsEl.innerHTML = '';
+  gates.forEach((g, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn' + (i === gateIdx ? ' active' : '');
+    btn.textContent = g.name;
+    btn.onclick = () => { gateIdx = i; gateInputs = [0, 0]; renderGate(); };
+    tabsEl.appendChild(btn);
+  });
+  renderGate();
+}
+
+function renderGate() {
+  // update tab highlight
+  const tabs = document.querySelectorAll('#gateTabs .btn');
+  tabs.forEach((t, i) => t.classList.toggle('active', i === gateIdx));
+
+  const g = gates[gateIdx];
+  const row = document.getElementById('gateRow');
+  row.innerHTML = '';
+
+  if (g.twoInput) {
+    // Input A
+    const inA = makeGateInput(0);
+    // Arrow
+    const arr1 = document.createElement('div');
+    arr1.style.cssText = 'font-family:JetBrains Mono,monospace;color:var(--text-dim);font-size:1.2rem;';
+    arr1.textContent = '→';
+    // Gate symbol
+    const sym = document.createElement('div');
+    sym.className = 'gate-symbol';
+    sym.textContent = g.name;
+    // Arrow
+    const arr2 = document.createElement('div');
+    arr2.style.cssText = 'font-family:JetBrains Mono,monospace;color:var(--text-dim);font-size:1.2rem;';
+    arr2.textContent = '→';
+    // Output
+    const out = makeGateOutput(g.fn(gateInputs[0], gateInputs[1]));
+    // Input B below (we stack inputs vertically)
+    const inB = makeGateInput(1);
+
+    // Layout: [A, B] GATE out
+    const inputsWrap = document.createElement('div');
+    inputsWrap.style.cssText = 'display:flex;flex-direction:column;gap:12px;align-items:center;';
+    inputsWrap.appendChild(inA);
+    inputsWrap.appendChild(inB);
+
+    row.appendChild(inputsWrap);
+    row.appendChild(arr1);
+    row.appendChild(sym);
+    row.appendChild(arr2);
+    row.appendChild(out);
+  } else {
+    // NOT gate: single input
+    const inA = makeGateInput(0);
+    const arr1 = document.createElement('div');
+    arr1.style.cssText = 'font-family:JetBrains Mono,monospace;color:var(--text-dim);font-size:1.2rem;';
+    arr1.textContent = '→';
+    const sym = document.createElement('div');
+    sym.className = 'gate-symbol';
+    sym.textContent = g.name;
+    const arr2 = document.createElement('div');
+    arr2.style.cssText = 'font-family:JetBrains Mono,monospace;color:var(--text-dim);font-size:1.2rem;';
+    arr2.textContent = '→';
+    const out = makeGateOutput(g.fn(gateInputs[0]));
+
+    row.appendChild(inA);
+    row.appendChild(arr1);
+    row.appendChild(sym);
+    row.appendChild(arr2);
+    row.appendChild(out);
+  }
+
+  document.getElementById('gateInfo').textContent = g.desc;
+}
+
+function makeGateInput(idx) {
+  const el = document.createElement('div');
+  el.className = 'gate-input' + (gateInputs[idx] ? ' on' : '');
+  el.textContent = gateInputs[idx];
+  el.onclick = () => {
+    gateInputs[idx] = gateInputs[idx] ? 0 : 1;
+    renderGate();
+  };
+  return el;
+}
+
+function makeGateOutput(val) {
+  const el = document.createElement('div');
+  el.className = 'gate-output' + (val ? ' on' : '');
+  el.textContent = val;
+  return el;
+}
+
+function rGate() {
+  renderGate();
+}
+
+// ─────────────────────────────────────────
+// SECTION 3: NUMBER CONVERSION
+// ─────────────────────────────────────────
+const baseNames = { 2: '2진수 (Binary)', 8: '8진수 (Octal)', 10: '10진수 (Decimal)', 16: '16진수 (Hexadecimal)' };
+const baseLabels = { 2: 'BIN', 8: 'OCT', 10: 'DEC', 16: 'HEX' };
+
+function convertNum() {
+  const rawInput = document.getElementById('numconvInput').value.trim();
+  const base = parseInt(document.getElementById('numconvBase').value);
+  const grid = document.getElementById('numconvGrid');
+  const colorWrap = document.getElementById('colorPreviewWrap');
+
+  if (!rawInput) { grid.innerHTML = ''; colorWrap.innerHTML = ''; return; }
+
+  let decimal;
+  try {
+    decimal = parseInt(rawInput, base);
+  } catch (e) { decimal = NaN; }
+
+  if (isNaN(decimal) || decimal < 0) {
+    grid.innerHTML = '<div style="font-family:JetBrains Mono,monospace;color:var(--danger);font-size:0.85rem;">유효하지 않은 입력입니다.</div>';
+    colorWrap.innerHTML = '';
+    return;
+  }
+
+  const conversions = [
+    { base: 2,  value: decimal.toString(2) },
+    { base: 8,  value: decimal.toString(8) },
+    { base: 10, value: decimal.toString(10) },
+    { base: 16, value: decimal.toString(16).toUpperCase() },
+  ];
+
+  grid.innerHTML = '';
+  conversions.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'numconv-card' + (c.base === base ? ' highlight' : '');
+    card.innerHTML = `
+      <div class="numconv-base">${baseLabels[c.base]} — ${baseNames[c.base]}</div>
+      <div class="numconv-value">${c.value}</div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Color preview for hex values in range 000000 – FFFFFF
+  colorWrap.innerHTML = '';
+  const hexVal = decimal.toString(16).padStart(6, '0');
+  if (decimal >= 0 && decimal <= 0xFFFFFF) {
+    const preview = document.createElement('div');
+    preview.className = 'color-preview';
+    const bg = '#' + hexVal.slice(-6).padStart(6, '0');
+    const luminance = (parseInt(hexVal.slice(-6).padStart(6, '0'), 16) >> 16 & 0xff) * 0.299
+      + (parseInt(hexVal.slice(-6).padStart(6, '0'), 16) >> 8 & 0xff) * 0.587
+      + (parseInt(hexVal.slice(-6).padStart(6, '0'), 16) & 0xff) * 0.114;
+    preview.style.background = bg;
+    preview.style.color = luminance > 128 ? '#000' : '#fff';
+    preview.textContent = `색상 미리보기: #${decimal.toString(16).toUpperCase().padStart(6, '0')}`;
+    colorWrap.appendChild(preview);
+  }
+}
+
+function randomNumConv() {
+  const val = Math.floor(Math.random() * 65536);
+  document.getElementById('numconvInput').value = val;
+  document.getElementById('numconvBase').value = '10';
+  convertNum();
+}
+
+// ─────────────────────────────────────────
+// SECTION 4: CHARACTER ENCODING
+// ─────────────────────────────────────────
+function getUTF8Bytes(codePoint) {
+  const bytes = [];
+  if (codePoint <= 0x7F) {
+    bytes.push(codePoint);
+  } else if (codePoint <= 0x7FF) {
+    bytes.push(0xC0 | (codePoint >> 6));
+    bytes.push(0x80 | (codePoint & 0x3F));
+  } else if (codePoint <= 0xFFFF) {
+    bytes.push(0xE0 | (codePoint >> 12));
+    bytes.push(0x80 | ((codePoint >> 6) & 0x3F));
+    bytes.push(0x80 | (codePoint & 0x3F));
+  } else {
+    bytes.push(0xF0 | (codePoint >> 18));
+    bytes.push(0x80 | ((codePoint >> 12) & 0x3F));
+    bytes.push(0x80 | ((codePoint >> 6) & 0x3F));
+    bytes.push(0x80 | (codePoint & 0x3F));
+  }
+  return bytes;
+}
+
+function updateEncoding() {
+  const text = document.getElementById('encInput').value;
+  const display = document.getElementById('encDisplay');
+  display.innerHTML = '';
+
+  if (!text) return;
+
+  // iterate over code points (handles emoji/surrogate pairs)
+  const codePoints = [...text];
+  codePoints.slice(0, 40).forEach(char => {
+    const cp = char.codePointAt(0);
+    const utf8 = getUTF8Bytes(cp);
+    const hexBytes = utf8.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+    const binStr = cp.toString(2).padStart(cp > 0x7F ? (cp > 0x7FF ? (cp > 0xFFFF ? 21 : 16) : 11) : 7, '0');
+
+    const card = document.createElement('div');
+    card.className = 'enc-char-card';
+    card.innerHTML = `
+      <div class="enc-glyph">${char === ' ' ? '␣' : char}</div>
+      <div class="enc-row">DEC <span>U+${cp.toString(16).toUpperCase().padStart(4, '0')}</span></div>
+      <div class="enc-row">BIN <span style="font-size:0.6rem">${binStr}</span></div>
+      <div class="enc-row">UTF-8 <span style="font-size:0.6rem">${hexBytes}</span></div>
+    `;
+    display.appendChild(card);
+  });
+
+  if (codePoints.length > 40) {
+    const more = document.createElement('div');
+    more.style.cssText = 'font-family:JetBrains Mono,monospace;font-size:0.75rem;color:var(--text-dim);align-self:center;padding:12px;';
+    more.textContent = `... +${codePoints.length - 40}개`;
+    display.appendChild(more);
+  }
+}
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+initBinary();
+initGates();
+convertNum();
+updateEncoding();
+</script>
+</body>
+</html>

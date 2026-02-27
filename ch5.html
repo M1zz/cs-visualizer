@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.5 고급 알고리즘 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── ch5-only styles ── */
+.flow-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+.flow-max-label{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);}
+.flow-max-val{font-family:'JetBrains Mono',monospace;font-size:1.8rem;font-weight:700;color:var(--accent);margin-left:6px;}
+.flow-path-info{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);margin-top:10px;min-height:20px;}
+
+/* bipartite matching */
+.match-result{font-family:'JetBrains Mono',monospace;font-size:0.9rem;color:var(--text-dim);margin-top:12px;padding:12px 16px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--accent);min-height:36px;}
+
+/* hull */
+.hull-stats{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);margin-top:12px;display:flex;gap:24px;flex-wrap:wrap;}
+.hull-stat-item{display:flex;gap:6px;align-items:center;}
+.hull-stat-val{color:var(--accent);font-size:1.1rem;font-weight:700;}
+
+/* TSP */
+.tsp-dist-matrix{margin-top:16px;overflow-x:auto;}
+.tsp-matrix-table{border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:0.72rem;}
+.tsp-matrix-table th,.tsp-matrix-table td{padding:5px 10px;border:1px solid var(--border);text-align:center;color:var(--text-dim);}
+.tsp-matrix-table th{background:var(--surface2);color:var(--text-dim);font-size:0.65rem;}
+.tsp-matrix-table td.diag{color:var(--border);}
+.tsp-result-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;}
+.tsp-result-box{flex:1;min-width:200px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;}
+.tsp-result-box .tsp-method{font-size:0.7rem;color:var(--text-dim);margin-bottom:4px;}
+.tsp-result-box .tsp-path{color:var(--accent3);margin-bottom:4px;}
+.tsp-result-box .tsp-dist-val{color:var(--accent);font-size:1.3rem;font-weight:700;}
+
+/* NP-Complete */
+.np-diagram{display:grid;grid-template-columns:1fr;gap:16px;margin:20px 0;}
+.np-class{border:2px solid var(--border);border-radius:var(--radius);padding:20px 24px;position:relative;transition:all 0.25s;}
+.np-class-label{font-family:'JetBrains Mono',monospace;font-size:0.75rem;letter-spacing:2px;margin-bottom:12px;font-weight:600;}
+.np-cards{display:flex;flex-wrap:wrap;gap:8px;}
+.np-card{padding:7px 14px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all 0.22s;user-select:none;}
+.np-card:hover{transform:translateY(-2px);}
+.np-card.selected{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.3);}
+.np-card-desc{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);line-height:1.8;min-height:48px;margin-top:12px;transition:all 0.2s;}
+.np-reduction-arrow{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);display:flex;align-items:center;gap:4px;}
+.np-reduction-arrow span{color:var(--accent2);}
+/* SAT demo */
+.sat-demo{margin-top:20px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:18px;}
+.sat-title{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:12px;}
+.sat-vars{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.sat-var{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:0.85rem;}
+.sat-var-btn{width:36px;height:36px;border:2px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:0.85rem;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;}
+.sat-var-btn.true{border-color:var(--accent);background:rgba(0,255,170,0.12);color:var(--accent);}
+.sat-var-btn.false{border-color:var(--danger);background:rgba(255,68,102,0.1);color:var(--danger);}
+.sat-clauses{font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--text-dim);margin-bottom:12px;line-height:2;}
+.sat-clauses .clause-true{color:var(--accent);}
+.sat-clauses .clause-false{color:var(--danger);}
+.sat-result{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;padding:10px 16px;border-radius:8px;text-align:center;}
+.sat-result.sat{background:rgba(0,255,170,0.1);border:1px solid var(--accent);color:var(--accent);}
+.sat-result.unsat{background:rgba(255,68,102,0.1);border:1px solid var(--danger);color:var(--danger);}
+</style>
+</head>
+<body class="page-body">
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:var(--danger)">Ch.5 — 고급 알고리즘</div>
+  <div class="nav-sections">
+    <a href="#flow"        class="nav-sec-link">네트워크 플로우</a>
+    <a href="#matching"    class="nav-sec-link">이분 매칭</a>
+    <a href="#convexhull"  class="nav-sec-link">볼록 껍질</a>
+    <a href="#tsp"         class="nav-sec-link">외판원</a>
+    <a href="#npcomplete"  class="nav-sec-link">NP-Complete</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 1: 네트워크 플로우 -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="flow">
+  <div class="section-header">
+    <div class="tag tag-ch5">01 — NETWORK FLOW</div>
+    <h2>네트워크 플로우</h2>
+    <p>방향 그래프에서 소스(S)에서 싱크(T)로 흘러갈 수 있는 최대 유량을 구하는 문제입니다. Ford-Fulkerson 알고리즘은 잔여 그래프에서 증가 경로(augmenting path)를 반복해 찾아 최대 유량을 계산합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="flow-controls">
+      <button class="btn" onclick="findNextPath()">다음 증가 경로</button>
+      <button class="btn danger" onclick="resetFlow()">초기화</button>
+      <span class="flow-max-label">최대 유량: <span class="flow-max-val" id="flowMaxVal">0</span></span>
+    </div>
+    <canvas id="flowCanvas" height="380"></canvas>
+    <div class="flow-path-info" id="flowPathInfo">버튼을 눌러 증가 경로를 찾으세요.</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 2: 이분 매칭 -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="matching">
+  <div class="section-header">
+    <div class="tag tag-ch5">02 — BIPARTITE MATCHING</div>
+    <h2>이분 매칭</h2>
+    <p>이분 그래프(Bipartite Graph)에서 최대 매칭을 찾는 문제입니다. 구직자-일자리, 학생-기숙사 배정 같은 할당 문제를 모델링합니다. 증가 경로 기반으로 O(VE)에 해결합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="findMatching()">매칭 찾기</button>
+      <button class="btn danger" onclick="resetMatching()">초기화</button>
+    </div>
+    <canvas id="matchCanvas" height="340"></canvas>
+    <div class="match-result" id="matchResult">아직 매칭을 실행하지 않았습니다.</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 3: 볼록 껍질 -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="convexhull">
+  <div class="section-header">
+    <div class="tag tag-ch5">03 — CONVEX HULL</div>
+    <h2>볼록 껍질</h2>
+    <p>주어진 점들을 모두 포함하는 가장 작은 볼록 다각형입니다. Graham Scan 알고리즘은 정렬 후 스택으로 O(n log n)에 구합니다. GPS 좌표 경계, 충돌 감지, 컴퓨터 비전에 활용됩니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="computeHull()">볼록 껍질 계산</button>
+      <button class="btn danger" onclick="resetHull()">초기화</button>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-dim);">캔버스를 클릭해 점 추가</span>
+    </div>
+    <canvas id="hullCanvas" class="hull-canvas" height="340" style="cursor:crosshair;"></canvas>
+    <div class="hull-stats">
+      <div class="hull-stat-item">점 개수: <span class="hull-stat-val" id="hullPtCount">0</span></div>
+      <div class="hull-stat-item">껍질 꼭짓점: <span class="hull-stat-val" id="hullVertCount">0</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 4: 외판원 문제 -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="tsp">
+  <div class="section-header">
+    <div class="tag tag-ch5">04 — TSP</div>
+    <h2>외판원 문제</h2>
+    <p>N개의 도시를 모두 정확히 한 번씩 방문하고 출발지로 돌아오는 최단 경로를 찾는 문제입니다. 완전 탐색(Brute Force)은 O(n!)이라 비현실적이고, 근사 알고리즘(최근접 이웃)으로 O(n²)에 해결합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn" onclick="tspBruteforce()">브루트포스 (n≤6)</button>
+      <button class="btn" onclick="tspNearestNeighbor()">최근접 이웃</button>
+      <button class="btn danger" onclick="resetTsp()">초기화</button>
+    </div>
+    <canvas id="tspCanvas" height="340"></canvas>
+    <div class="tsp-dist-matrix" id="tspDistMatrix"></div>
+    <div class="tsp-result-row" id="tspResultRow"></div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION 5: NP-Complete -->
+<!-- ══════════════════════════════════════════════════ -->
+<section id="npcomplete">
+  <div class="section-header">
+    <div class="tag tag-ch5">05 — NP-COMPLETE</div>
+    <h2>NP-Complete</h2>
+    <p>NP-완전 문제는 다항 시간에 풀 수 있는 알고리즘이 아직 알려지지 않은 문제들입니다. P=NP 문제는 컴퓨터 과학 최대의 미해결 문제입니다.</p>
+  </div>
+  <div class="viz-box">
+    <div id="npDiagram"></div>
+    <div class="np-card-desc" id="npCardDesc">문제 카드를 클릭하면 설명이 표시됩니다.</div>
+
+    <!-- SAT demo -->
+    <div class="sat-demo">
+      <div class="sat-title">3-SAT SOLVER DEMO</div>
+      <div class="sat-vars">
+        <div class="sat-var">
+          <span style="color:var(--text-dim);font-size:0.78rem">x₁:</span>
+          <button class="sat-var-btn true" id="satV1Btn" onclick="toggleSat(1)">T</button>
+        </div>
+        <div class="sat-var">
+          <span style="color:var(--text-dim);font-size:0.78rem">x₂:</span>
+          <button class="sat-var-btn false" id="satV2Btn" onclick="toggleSat(2)">F</button>
+        </div>
+        <div class="sat-var">
+          <span style="color:var(--text-dim);font-size:0.78rem">x₃:</span>
+          <button class="sat-var-btn true" id="satV3Btn" onclick="toggleSat(3)">T</button>
+        </div>
+      </div>
+      <div class="sat-clauses" id="satClauses"></div>
+      <div class="sat-result" id="satResult"></div>
+    </div>
+  </div>
+</section>
+
+<footer>CS Visualizer · <a href="index.html" style="color:var(--danger);text-decoration:none;">목차로 돌아가기</a></footer>
+
+<script>
+// helpers
+function sl(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ═══════════════════════════════════════════════════════════════════
+// SECTION 1: NETWORK FLOW (Ford-Fulkerson / BFS augmenting path)
+// ═══════════════════════════════════════════════════════════════════
+// Nodes: 0=S, 1=A, 2=B, 3=C, 4=D, 5=T
+const FLOW_NODE_NAMES = ['S','A','B','C','D','T'];
+// Node positions (fractions of canvas)
+const FLOW_NODE_POS = [
+  [0.08, 0.50], // S
+  [0.32, 0.20], // A
+  [0.32, 0.80], // B
+  [0.58, 0.20], // C
+  [0.58, 0.80], // D
+  [0.92, 0.50], // T
+];
+// Edges: [from, to, capacity]
+const FLOW_EDGES_INIT = [
+  [0,1,10],[0,2,8],
+  [1,3,6],[1,2,4],
+  [2,4,10],
+  [3,5,10],[3,4,4],
+  [4,5,10]
+];
+
+let flowGraph = []; // adjacency matrix [cap][flow]
+let flowEdgeFlows = []; // current flow per edge
+let flowMaxVal = 0;
+let flowHighlightPath = [];
+let flowDone = false;
+
+function resetFlow() {
+  flowMaxVal = 0;
+  flowDone = false;
+  flowHighlightPath = [];
+  // Build graph: flowGraph[i][j] = {cap, flow}
+  flowGraph = Array.from({length:6}, () => Array.from({length:6}, () => ({cap:0,flow:0})));
+  FLOW_EDGES_INIT.forEach(([u,v,c]) => { flowGraph[u][v].cap = c; });
+  document.getElementById('flowMaxVal').textContent = 0;
+  document.getElementById('flowPathInfo').textContent = '버튼을 눌러 증가 경로를 찾으세요.';
+  drawFlowGraph();
+}
+
+function findAugmentingPath() {
+  // BFS on residual graph
+  const n = 6;
+  const parent = Array(n).fill(-1);
+  const visited = Array(n).fill(false);
+  const queue = [0];
+  visited[0] = true;
+  while (queue.length) {
+    const u = queue.shift();
+    for (let v = 0; v < n; v++) {
+      if (!visited[v]) {
+        const residual = flowGraph[u][v].cap - flowGraph[u][v].flow;
+        const backResidual = flowGraph[v][u].flow;
+        if (residual > 0) { visited[v] = true; parent[v] = u; queue.push(v); }
+        else if (backResidual > 0 && parent[v] === -1) {
+          // back edge
+          visited[v] = true; parent[v] = -(u + 10); queue.push(v);
+        }
+      }
+    }
+  }
+  if (!visited[5]) return null; // no path
+  // Reconstruct path
+  const path = [];
+  let cur = 5;
+  while (cur !== 0) {
+    const p = parent[cur];
+    const realP = p < 0 ? (-p - 10) : p;
+    const isBack = p < 0;
+    path.unshift({from: realP, to: cur, back: isBack});
+    cur = realP;
+  }
+  return path;
+}
+
+function updateFlow() {
+  const path = findAugmentingPath();
+  if (!path) {
+    flowDone = true;
+    document.getElementById('flowPathInfo').textContent =
+      `더 이상 증가 경로가 없습니다. 최대 유량 = ${flowMaxVal}`;
+    return;
+  }
+  // Find bottleneck
+  let bottleneck = Infinity;
+  path.forEach(({from, to, back}) => {
+    if (!back) bottleneck = Math.min(bottleneck, flowGraph[from][to].cap - flowGraph[from][to].flow);
+    else bottleneck = Math.min(bottleneck, flowGraph[to][from].flow);
+  });
+  // Update flows
+  path.forEach(({from, to, back}) => {
+    if (!back) {
+      flowGraph[from][to].flow += bottleneck;
+      // Also update reverse
+      if (!flowGraph[to][from].cap) flowGraph[to][from].flow -= bottleneck;
+    } else {
+      flowGraph[to][from].flow -= bottleneck;
+    }
+  });
+  flowMaxVal += bottleneck;
+  flowHighlightPath = path;
+  document.getElementById('flowMaxVal').textContent = flowMaxVal;
+  const pathStr = path.map(e => FLOW_NODE_NAMES[e.from] + '→' + FLOW_NODE_NAMES[e.to]).join(' ');
+  document.getElementById('flowPathInfo').textContent =
+    `경로: ${pathStr} | 유량 +${bottleneck} | 누적 최대 유량: ${flowMaxVal}`;
+  drawFlowGraph();
+  // Clear highlight after delay
+  setTimeout(() => { flowHighlightPath = []; drawFlowGraph(); }, 1200);
+}
+
+function findNextPath() {
+  if (flowDone) {
+    document.getElementById('flowPathInfo').textContent = `이미 최대 유량 ${flowMaxVal}에 도달했습니다. 초기화 후 다시 시도하세요.`;
+    return;
+  }
+  updateFlow();
+}
+
+function drawFlowGraph() {
+  const canvas = document.getElementById('flowCanvas');
+  const W = canvas.offsetWidth || 820;
+  const H = 380;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  const pos = FLOW_NODE_POS.map(([fx, fy]) => [fx * W, fy * H]);
+  const R = 26;
+
+  // Draw edges
+  for (let u = 0; u < 6; u++) {
+    for (let v = 0; v < 6; v++) {
+      if (flowGraph[u][v].cap === 0) continue;
+      const [x1,y1] = pos[u], [x2,y2] = pos[v];
+      const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
+      const nx = dx/len, ny = dy/len;
+      const sx = x1 + nx*R, sy = y1 + ny*R;
+      const ex = x2 - nx*R, ey = y2 - ny*R;
+
+      const isHighlighted = flowHighlightPath.some(e => e.from===u && e.to===v);
+      ctx.strokeStyle = isHighlighted ? 'var(--accent)' : 'rgba(107,138,255,0.45)';
+      ctx.lineWidth = isHighlighted ? 3.5 : 2;
+      ctx.shadowColor = isHighlighted ? 'var(--accent)' : 'transparent';
+      ctx.shadowBlur = isHighlighted ? 10 : 0;
+
+      // Arrow
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      // Slight curve if bidirectional
+      const hasBoth = flowGraph[v][u].cap > 0;
+      if (hasBoth) {
+        const mx = (sx+ex)/2 - ny*20, my = (sy+ey)/2 + nx*20;
+        ctx.quadraticCurveTo(mx, my, ex, ey);
+      } else {
+        ctx.lineTo(ex, ey);
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Arrowhead
+      const ang = Math.atan2(ey - sy, ex - sx);
+      const headLen = 10;
+      ctx.fillStyle = isHighlighted ? 'var(--accent)' : 'rgba(107,138,255,0.6)';
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex - headLen*Math.cos(ang-0.4), ey - headLen*Math.sin(ang-0.4));
+      ctx.lineTo(ex - headLen*Math.cos(ang+0.4), ey - headLen*Math.sin(ang+0.4));
+      ctx.closePath(); ctx.fill();
+
+      // Label (flow/cap)
+      const {cap, flow} = flowGraph[u][v];
+      const lx = hasBoth ? (sx+ex)/2 - ny*28 : (sx+ex)/2 - ny*14;
+      const ly = hasBoth ? (sy+ey)/2 + nx*28 : (sy+ey)/2 + nx*14;
+      ctx.fillStyle = flow > 0 ? 'var(--accent4)' : 'rgba(136,136,170,0.7)';
+      ctx.font = 'bold 11px JetBrains Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${flow}/${cap}`, lx, ly);
+    }
+  }
+
+  // Draw nodes
+  pos.forEach(([x,y], i) => {
+    const isEndpoint = i===0 || i===5;
+    ctx.beginPath();
+    ctx.arc(x, y, R, 0, Math.PI*2);
+    ctx.fillStyle = isEndpoint ? 'rgba(255,68,102,0.2)' : 'rgba(107,138,255,0.15)';
+    ctx.fill();
+    ctx.strokeStyle = isEndpoint ? 'var(--danger)' : 'var(--accent3)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = isEndpoint ? 'var(--danger)' : 'var(--accent3)';
+    ctx.font = 'bold 16px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(FLOW_NODE_NAMES[i], x, y);
+    ctx.textBaseline = 'alphabetic';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SECTION 2: BIPARTITE MATCHING
+// ═══════════════════════════════════════════════════════════════════
+const MATCH_LEFT  = ['A','B','C','D'];
+const MATCH_RIGHT = ['1','2','3','4'];
+const MATCH_EDGES_INIT = [[0,[0,1]],[1,[1,2]],[2,[0,2,3]],[3,[2,3]]]; // left idx -> [right idxs]
+let matchResult = Array(4).fill(-1); // matchResult[right] = left
+let matchHighlight = []; // [{l,r,state:'searching'|'matched'}]
+let matchAnim = false;
+
+function resetMatching() {
+  matchResult = Array(4).fill(-1);
+  matchHighlight = [];
+  matchAnim = false;
+  document.getElementById('matchResult').textContent = '아직 매칭을 실행하지 않았습니다.';
+  drawBipartite([], []);
+}
+
+async function findMatching() {
+  if (matchAnim) return;
+  matchAnim = true;
+  matchResult = Array(4).fill(-1);
+  let total = 0;
+  const adj = MATCH_EDGES_INIT;
+
+  for (let u = 0; u < 4; u++) {
+    const visited = Array(4).fill(false);
+    const found = await animAugment(u, visited, adj);
+    if (found) total++;
+    drawBipartite(matchResult, [{l:u,state:'done'}]);
+    await sl(300);
+  }
+
+  matchAnim = false;
+  document.getElementById('matchResult').innerHTML =
+    `최대 매칭: <b style="color:var(--accent)">${total}쌍</b> — ` +
+    matchResult.map((l,r) => l>=0 ? `${MATCH_LEFT[l]}↔${MATCH_RIGHT[r]}` : '').filter(Boolean).join(', ');
+  drawBipartite(matchResult, []);
+}
+
+async function animAugment(u, visited, adj) {
+  for (const v of adj[u][1]) {
+    if (!visited[v]) {
+      visited[v] = true;
+      drawBipartite(matchResult, [{l:u,r:v,state:'searching'}]);
+      await sl(350);
+      if (matchResult[v] === -1 || await animAugment(matchResult[v], visited, adj)) {
+        matchResult[v] = u;
+        drawBipartite(matchResult, [{l:u,r:v,state:'matched'}]);
+        await sl(300);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function drawBipartite(matching, highlights) {
+  const canvas = document.getElementById('matchCanvas');
+  const W = canvas.offsetWidth || 820;
+  const H = 340;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  const R = 24;
+  const lx = W * 0.2, rx = W * 0.8;
+  const leftY  = MATCH_LEFT.map((_,i) => H*0.15 + i * (H*0.7/3));
+  const rightY = MATCH_RIGHT.map((_,i) => H*0.15 + i * (H*0.7/3));
+
+  // Draw all edges
+  MATCH_EDGES_INIT.forEach(([l, rights]) => {
+    rights.forEach(r => {
+      const isMatched = matching[r] === l;
+      const isSearching = highlights.some(h => h.l===l && h.r===r);
+      ctx.strokeStyle = isMatched ? 'var(--accent)' :
+                        isSearching ? 'var(--accent4)' : 'rgba(107,138,255,0.2)';
+      ctx.lineWidth = isMatched ? 3 : isSearching ? 2.5 : 1;
+      ctx.setLineDash(isMatched ? [] : [4,4]);
+      ctx.shadowColor = isMatched ? 'var(--accent)' : 'transparent';
+      ctx.shadowBlur = isMatched ? 8 : 0;
+      ctx.beginPath();
+      ctx.moveTo(lx+R, leftY[l]);
+      ctx.lineTo(rx-R, rightY[r]);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.setLineDash([]);
+    });
+  });
+
+  // Draw left nodes
+  MATCH_LEFT.forEach((name, i) => {
+    const isActive = highlights.some(h => h.l===i);
+    ctx.beginPath(); ctx.arc(lx, leftY[i], R, 0, Math.PI*2);
+    ctx.fillStyle = isActive ? 'rgba(255,170,0,0.2)' : 'rgba(107,138,255,0.15)';
+    ctx.fill();
+    ctx.strokeStyle = isActive ? 'var(--accent4)' : 'var(--accent3)';
+    ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = isActive ? 'var(--accent4)' : 'var(--accent3)';
+    ctx.font = 'bold 14px JetBrains Mono, monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(name, lx, leftY[i]);
+    ctx.textBaseline = 'alphabetic';
+    // Label
+    ctx.fillStyle = 'rgba(136,136,170,0.6)';
+    ctx.font = '10px Noto Sans KR, sans-serif';
+    ctx.fillText('구직자 ' + name, lx, leftY[i] - R - 6);
+  });
+
+  // Draw right nodes
+  MATCH_RIGHT.forEach((name, i) => {
+    const isMatched = matching[i] >= 0;
+    ctx.beginPath(); ctx.arc(rx, rightY[i], R, 0, Math.PI*2);
+    ctx.fillStyle = isMatched ? 'rgba(0,255,170,0.15)' : 'rgba(107,138,255,0.08)';
+    ctx.fill();
+    ctx.strokeStyle = isMatched ? 'var(--accent)' : 'rgba(107,138,255,0.4)';
+    ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = isMatched ? 'var(--accent)' : 'var(--text-dim)';
+    ctx.font = 'bold 14px JetBrains Mono, monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(name, rx, rightY[i]);
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = 'rgba(136,136,170,0.6)';
+    ctx.font = '10px Noto Sans KR, sans-serif';
+    ctx.fillText('일자리 ' + name, rx, rightY[i] - R - 6);
+  });
+
+  // Side labels
+  ctx.fillStyle = 'rgba(136,136,170,0.45)';
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('LEFT (구직자)', lx, H - 12);
+  ctx.fillText('RIGHT (일자리)', rx, H - 12);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SECTION 3: CONVEX HULL (Graham Scan)
+// ═══════════════════════════════════════════════════════════════════
+let hullPoints = [];
+let hullResult = [];
+
+function grahamScan(pts) {
+  if (pts.length < 3) return [...pts];
+  // Find lowest-leftmost point
+  let pivot = pts.reduce((a, b) => (a.y > b.y || (a.y === b.y && a.x > b.x)) ? b : a);
+  const sorted = pts.slice().sort((a, b) => {
+    const angA = Math.atan2(a.y - pivot.y, a.x - pivot.x);
+    const angB = Math.atan2(b.y - pivot.y, b.x - pivot.x);
+    if (angA !== angB) return angA - angB;
+    const dA = (a.x-pivot.x)**2+(a.y-pivot.y)**2;
+    const dB = (b.x-pivot.x)**2+(b.y-pivot.y)**2;
+    return dA - dB;
+  });
+  const stack = [sorted[0], sorted[1]];
+  for (let i = 2; i < sorted.length; i++) {
+    while (stack.length >= 2) {
+      const a = stack[stack.length-2], b = stack[stack.length-1], c = sorted[i];
+      const cross = (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
+      if (cross <= 0) stack.pop(); else break;
+    }
+    stack.push(sorted[i]);
+  }
+  return stack;
+}
+
+function drawHullCanvas() {
+  const canvas = document.getElementById('hullCanvas');
+  const W = canvas.offsetWidth || 820;
+  const H = 340;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Hull polygon
+  if (hullResult.length >= 3) {
+    ctx.beginPath();
+    ctx.moveTo(hullResult[0].x, hullResult[0].y);
+    hullResult.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(0,255,170,0.06)';
+    ctx.fill();
+    ctx.strokeStyle = 'var(--accent)';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = 'var(--accent)';
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Points
+  hullPoints.forEach((p, i) => {
+    const onHull = hullResult.some(h => h.x===p.x && h.y===p.y);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, onHull ? 7 : 5, 0, Math.PI*2);
+    ctx.fillStyle = onHull ? 'var(--accent)' : 'var(--accent3)';
+    ctx.fill();
+    if (onHull) {
+      ctx.strokeStyle = 'rgba(0,255,170,0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 11, 0, Math.PI*2); ctx.stroke();
+    }
+  });
+
+  document.getElementById('hullPtCount').textContent = hullPoints.length;
+  document.getElementById('hullVertCount').textContent = hullResult.length;
+}
+
+function hullCanvasClick(e) {
+  const canvas = document.getElementById('hullCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  hullPoints.push({ x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY });
+  hullResult = [];
+  drawHullCanvas();
+}
+
+function computeHull() {
+  if (hullPoints.length < 3) {
+    alert('점을 3개 이상 추가하세요.');
+    return;
+  }
+  hullResult = grahamScan(hullPoints);
+  drawHullCanvas();
+}
+
+function resetHull() {
+  hullPoints = [];
+  hullResult = [];
+  drawHullCanvas();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SECTION 4: TSP
+// ═══════════════════════════════════════════════════════════════════
+const TSP_CITIES = [
+  {x:0.18, y:0.35, name:'0'},
+  {x:0.40, y:0.12, name:'1'},
+  {x:0.72, y:0.22, name:'2'},
+  {x:0.85, y:0.58, name:'3'},
+  {x:0.55, y:0.85, name:'4'},
+  {x:0.22, y:0.75, name:'5'},
+];
+let tspBFPath = null, tspNNPath = null, tspBFDist = Infinity, tspNNDist = Infinity;
+let tspAnimPath = [];
+
+function tspDist(path) {
+  let d = 0;
+  for (let i = 0; i < path.length; i++) {
+    const a = path[i], b = path[(i+1) % path.length];
+    const ca = tspCitiesScaled()[a], cb = tspCitiesScaled()[b];
+    d += Math.sqrt((ca.x-cb.x)**2 + (ca.y-cb.y)**2);
+  }
+  return d;
+}
+
+function tspCitiesScaled() {
+  const canvas = document.getElementById('tspCanvas');
+  const W = canvas.width || 820, H = canvas.height || 340;
+  return TSP_CITIES.map(c => ({x: c.x*W, y: c.y*H, name: c.name}));
+}
+
+function permutations(arr) {
+  if (arr.length <= 1) return [arr];
+  const result = [];
+  for (let i = 0; i < arr.length; i++) {
+    const rest = [...arr.slice(0,i), ...arr.slice(i+1)];
+    permutations(rest).forEach(p => result.push([arr[i], ...p]));
+  }
+  return result;
+}
+
+async function tspBruteforce() {
+  const n = TSP_CITIES.length;
+  const others = Array.from({length:n-1},(_,i)=>i+1);
+  const perms = permutations(others);
+  let best = Infinity, bestPath = null;
+  for (const perm of perms) {
+    const path = [0, ...perm];
+    const d = tspDist(path);
+    if (d < best) { best = d; bestPath = [...path]; }
+    tspAnimPath = path;
+    drawTspCanvas(path, null);
+    await sl(20);
+  }
+  tspBFPath = bestPath; tspBFDist = best;
+  tspAnimPath = bestPath;
+  drawTspCanvas(bestPath, tspNNPath);
+  renderTspResults();
+}
+
+async function tspNearestNeighbor() {
+  const n = TSP_CITIES.length;
+  const visited = Array(n).fill(false);
+  const path = [0];
+  visited[0] = true;
+  while (path.length < n) {
+    const cur = path[path.length-1];
+    const cities = tspCitiesScaled();
+    let nearest = -1, minD = Infinity;
+    for (let j = 0; j < n; j++) {
+      if (!visited[j]) {
+        const d = Math.sqrt((cities[cur].x-cities[j].x)**2+(cities[cur].y-cities[j].y)**2);
+        if (d < minD) { minD = d; nearest = j; }
+      }
+    }
+    visited[nearest] = true;
+    path.push(nearest);
+    drawTspCanvas(tspBFPath, path);
+    await sl(250);
+  }
+  tspNNPath = path; tspNNDist = tspDist(path);
+  drawTspCanvas(tspBFPath, path);
+  renderTspResults();
+}
+
+function drawTspCanvas(bfPath, nnPath) {
+  const canvas = document.getElementById('tspCanvas');
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  const cities = tspCitiesScaled();
+  const R = 18;
+
+  // Draw BF path
+  if (bfPath) {
+    ctx.strokeStyle = 'rgba(0,255,170,0.55)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    cities[bfPath[0]] && ctx.moveTo(cities[bfPath[0]].x, cities[bfPath[0]].y);
+    for (let i = 1; i <= bfPath.length; i++) {
+      const c = cities[bfPath[i % bfPath.length]];
+      ctx.lineTo(c.x, c.y);
+    }
+    ctx.stroke();
+  }
+
+  // Draw NN path (partial or full)
+  if (nnPath && nnPath.length > 1) {
+    ctx.strokeStyle = 'rgba(255,170,0,0.7)';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([6,3]);
+    ctx.beginPath();
+    ctx.moveTo(cities[nnPath[0]].x, cities[nnPath[0]].y);
+    for (let i = 1; i < nnPath.length; i++) ctx.lineTo(cities[nnPath[i]].x, cities[nnPath[i]].y);
+    if (nnPath.length === TSP_CITIES.length) ctx.lineTo(cities[nnPath[0]].x, cities[nnPath[0]].y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw cities
+  cities.forEach((c, i) => {
+    ctx.beginPath(); ctx.arc(c.x, c.y, R, 0, Math.PI*2);
+    ctx.fillStyle = i===0 ? 'rgba(255,68,102,0.25)' : 'rgba(107,138,255,0.18)';
+    ctx.fill();
+    ctx.strokeStyle = i===0 ? 'var(--danger)' : 'var(--accent3)';
+    ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = i===0 ? 'var(--danger)' : 'var(--text)';
+    ctx.font = 'bold 13px JetBrains Mono, monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(c.name, c.x, c.y);
+    ctx.textBaseline = 'alphabetic';
+  });
+
+  // Legend
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.fillStyle = 'rgba(0,255,170,0.7)'; ctx.textAlign = 'left';
+  ctx.fillText('━ 브루트포스', 10, H-32);
+  ctx.fillStyle = 'rgba(255,170,0,0.8)';
+  ctx.fillText('╌ 최근접 이웃', 10, H-14);
+}
+
+function renderTspResults() {
+  const row = document.getElementById('tspResultRow');
+  row.innerHTML = '';
+  if (tspBFPath) {
+    const box = document.createElement('div');
+    box.className = 'tsp-result-box';
+    box.innerHTML = `<div class="tsp-method" style="color:var(--accent)">브루트포스</div>
+      <div class="tsp-path">${tspBFPath.join(' → ')} → 0</div>
+      <div class="tsp-dist-val">${Math.round(tspBFDist)}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim)">최단 거리 (픽셀)</div>`;
+    row.appendChild(box);
+  }
+  if (tspNNPath) {
+    const ratio = tspBFPath ? ((tspNNDist/tspBFDist-1)*100).toFixed(1) : '-';
+    const box = document.createElement('div');
+    box.className = 'tsp-result-box';
+    box.innerHTML = `<div class="tsp-method" style="color:var(--accent4)">최근접 이웃</div>
+      <div class="tsp-path">${tspNNPath.join(' → ')} → 0</div>
+      <div class="tsp-dist-val" style="color:var(--accent4)">${Math.round(tspNNDist)}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim)">
+        ${tspBFPath ? `최적 대비 +${ratio}% 오차` : '거리 (픽셀)'}
+      </div>`;
+    row.appendChild(box);
+  }
+}
+
+function initTsp() {
+  const canvas = document.getElementById('tspCanvas');
+  const W = canvas.offsetWidth || 820;
+  canvas.width = W; canvas.height = 340;
+  tspBFPath = null; tspNNPath = null; tspBFDist = Infinity; tspNNDist = Infinity;
+  drawTspCanvas(null, null);
+  renderDistMatrix();
+}
+
+function renderDistMatrix() {
+  const cities = tspCitiesScaled();
+  const n = cities.length;
+  let html = '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:8px">거리 행렬 (픽셀)</div><table class="tsp-matrix-table"><thead><tr><th></th>';
+  for (let i = 0; i < n; i++) html += `<th>${i}</th>`;
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i < n; i++) {
+    html += `<tr><th>${i}</th>`;
+    for (let j = 0; j < n; j++) {
+      if (i === j) html += '<td class="diag">—</td>';
+      else {
+        const d = Math.round(Math.sqrt((cities[i].x-cities[j].x)**2+(cities[i].y-cities[j].y)**2));
+        html += `<td>${d}</td>`;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('tspDistMatrix').innerHTML = html;
+}
+
+function resetTsp() {
+  initTsp();
+  document.getElementById('tspResultRow').innerHTML = '';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SECTION 5: NP-COMPLETE
+// ═══════════════════════════════════════════════════════════════════
+const NP_DATA = {
+  P: {
+    label: 'P 클래스 (다항 시간 해결 가능)',
+    color: 'var(--accent)',
+    borderColor: 'rgba(0,255,170,0.4)',
+    bg: 'rgba(0,255,170,0.04)',
+    problems: [
+      { name: '정렬', desc: '배열 정렬. Merge Sort는 O(n log n)에 해결. 비교 기반 정렬의 하한선이 Ω(n log n)이다.' },
+      { name: '탐색', desc: '배열에서 원소 찾기. 선형 탐색 O(n), 정렬된 배열에서 이진 탐색 O(log n).' },
+      { name: 'MST', desc: '최소 신장 트리. Kruskal/Prim 알고리즘으로 O(E log V)에 해결.' },
+      { name: '최단경로', desc: 'Dijkstra O((V+E)log V), Bellman-Ford O(VE). 음수 간선 포함 가능.' },
+      { name: '이분 매칭', desc: '이분 그래프에서 최대 매칭. Hopcroft-Karp O(E√V).' },
+      { name: '네트워크 플로우', desc: '최대 유량. Ford-Fulkerson O(E·maxflow), Dinic O(V²E).' },
+    ]
+  },
+  NP: {
+    label: 'NP 클래스 (해 검증은 다항 시간 가능)',
+    color: 'var(--accent3)',
+    borderColor: 'rgba(107,138,255,0.4)',
+    bg: 'rgba(107,138,255,0.04)',
+    problems: [
+      { name: 'SAT', desc: '불리언 수식이 만족 가능한가? NP-완전. Cook-Levin 정리에 의해 NP-완전 문제의 원형.' },
+      { name: '3-SAT', desc: '각 절이 정확히 3개의 리터럴인 CNF. NP-완전. SAT ≤p 3-SAT.' },
+      { name: 'Clique', desc: '그래프에서 크기 k의 완전 부분 그래프 존재 여부. NP-완전.' },
+      { name: 'Vertex Cover', desc: '모든 간선을 커버하는 크기 k의 정점 집합 존재 여부. NP-완전.' },
+      { name: 'Hamiltonian', desc: '모든 정점을 정확히 한 번 방문하는 경로 존재 여부. NP-완전.' },
+      { name: 'Subset Sum', desc: '합이 T인 부분집합 존재 여부. NP-완전. 의사다항시간 DP 가능.' },
+    ]
+  },
+  NPC: {
+    label: 'NP-Complete (NP 중 가장 어려운 문제)',
+    color: 'var(--accent4)',
+    borderColor: 'rgba(255,170,0,0.4)',
+    bg: 'rgba(255,170,0,0.03)',
+    problems: [
+      { name: 'SAT → 3-SAT', desc: '환원: 임의 SAT 수식을 3-CNF 형태로 변환. O(n) 환원 가능.' },
+      { name: '3-SAT → Clique', desc: '환원: 각 절을 트리플릿 정점으로 변환해 Clique 인스턴스 생성.' },
+      { name: 'Clique → VertexCover', desc: '환원: 보완 그래프에서 Clique ↔ VertexCover 관계 활용.' },
+      { name: 'VertexCover → TSP', desc: '환원: 도시 방문 문제로 변환. TSP 결정 문제는 NP-완전.' },
+    ]
+  },
+  NPH: {
+    label: 'NP-Hard (NP보다 어렵거나 같은 문제)',
+    color: 'var(--danger)',
+    borderColor: 'rgba(255,68,102,0.4)',
+    bg: 'rgba(255,68,102,0.03)',
+    problems: [
+      { name: 'TSP 최적화', desc: '최단 경로 찾기(결정 문제가 아님). NP에 속하지 않지만 NP-Hard.' },
+      { name: 'Halting Problem', desc: '프로그램이 정지하는가? 결정 불가(undecidable). NP-Hard보다 어려움.' },
+      { name: 'Graph Coloring', desc: '최소 색으로 인접 정점 다르게 칠하기 (최적화 버전). NP-Hard.' },
+    ]
+  }
+};
+
+function renderNPDiagram() {
+  const container = document.getElementById('npDiagram');
+  container.innerHTML = '';
+  Object.entries(NP_DATA).forEach(([key, cls]) => {
+    const div = document.createElement('div');
+    div.className = 'np-class';
+    div.style.borderColor = cls.borderColor;
+    div.style.background = cls.bg;
+    div.innerHTML = `<div class="np-class-label" style="color:${cls.color}">${cls.label}</div>
+      <div class="np-cards" id="npCards_${key}"></div>`;
+    container.appendChild(div);
+    const cardsEl = div.querySelector(`#npCards_${key}`);
+    cls.problems.forEach((p, i) => {
+      const card = document.createElement('div');
+      card.className = 'np-card';
+      card.style.borderColor = cls.borderColor;
+      card.style.color = cls.color;
+      card.textContent = p.name;
+      card.onclick = () => showNPDesc(p.desc, cls.color);
+      cardsEl.appendChild(card);
+    });
+
+    // Reduction arrows for NPC
+    if (key === 'NPC') {
+      const arrowDiv = document.createElement('div');
+      arrowDiv.style.marginTop = '10px';
+      arrowDiv.innerHTML = `<div class="np-reduction-arrow">
+        환원 관계: <span>SAT</span> ≤p <span>3-SAT</span> ≤p <span>Clique</span> ≤p <span>VertexCover</span> ≤p <span>TSP</span>
+      </div>`;
+      div.appendChild(arrowDiv);
+    }
+  });
+
+  // P⊆NP note
+  const note = document.createElement('div');
+  note.className = 'info-text';
+  note.style.marginTop = '16px';
+  note.innerHTML = `P ⊆ NP ⊆ NP-Hard. <b style="color:var(--accent4)">P = NP?</b>는 100만 달러 밀레니엄 문제. 대부분 P ≠ NP로 추정하지만 증명 미완.`;
+  document.getElementById('npDiagram').appendChild(note);
+}
+
+function showNPDesc(desc, color) {
+  const el = document.getElementById('npCardDesc');
+  el.style.borderLeftColor = color;
+  el.style.color = 'var(--text)';
+  el.textContent = desc;
+}
+
+// ── SAT Solver Demo ──
+let satVars = [true, false, true]; // x1, x2, x3
+// Clauses: (x1 OR ¬x2 OR x3) AND (¬x1 OR x2 OR ¬x3)
+const SAT_CLAUSES = [
+  [{v:0,neg:false},{v:1,neg:true},{v:2,neg:false}],   // x1 ∨ ¬x2 ∨ x3
+  [{v:0,neg:true},{v:1,neg:false},{v:2,neg:true}],    // ¬x1 ∨ x2 ∨ ¬x3
+];
+
+function toggleSat(v) {
+  satVars[v-1] = !satVars[v-1];
+  satCheck();
+}
+
+function satCheck() {
+  [1,2,3].forEach(i => {
+    const btn = document.getElementById(`satV${i}Btn`);
+    const val = satVars[i-1];
+    btn.textContent = val ? 'T' : 'F';
+    btn.className = 'sat-var-btn ' + (val ? 'true' : 'false');
+  });
+
+  const litName = (lit) => {
+    const name = `x${lit.v+1}`;
+    return (lit.neg ? '¬' : '') + name;
+  };
+  const evalLit = (lit) => lit.neg ? !satVars[lit.v] : satVars[lit.v];
+  const evalClause = (clause) => clause.some(evalLit);
+
+  const clauseHtml = SAT_CLAUSES.map((clause, ci) => {
+    const val = evalClause(clause);
+    const litStrs = clause.map(lit => {
+      const v = evalLit(lit);
+      return `<span style="color:${v?'var(--accent)':'var(--danger)'}">${litName(lit)}</span>`;
+    }).join(' ∨ ');
+    const cls = val ? 'clause-true' : 'clause-false';
+    return `<span class="${cls}">C${ci+1}: (${litStrs}) = <b>${val?'T':'F'}</b></span>`;
+  }).join('  AND  ');
+
+  document.getElementById('satClauses').innerHTML = clauseHtml;
+
+  const sat = SAT_CLAUSES.every(evalClause);
+  const resultEl = document.getElementById('satResult');
+  resultEl.textContent = sat ? 'SATISFIABLE — 현재 배정으로 모든 절이 참' : 'UNSATISFIED — 하나 이상의 절이 거짓';
+  resultEl.className = 'sat-result ' + (sat ? 'sat' : 'unsat');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT ALL
+// ═══════════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  // Flow
+  resetFlow();
+  // Matching
+  drawBipartite(Array(4).fill(-1), []);
+  // Hull
+  drawHullCanvas();
+  document.getElementById('hullCanvas').addEventListener('click', hullCanvasClick);
+  // TSP
+  initTsp();
+  // NP
+  renderNPDiagram();
+  satCheck();
+});
+
+window.addEventListener('resize', () => {
+  resetFlow();
+  drawBipartite(matchResult, []);
+  drawHullCanvas();
+  initTsp();
+  if (tspBFPath || tspNNPath) drawTspCanvas(tspBFPath, tspNNPath);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch.8 네트워크 | CS Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="page-body">
+<nav class="page-nav">
+  <a href="index.html" class="nav-back">← 홈</a>
+  <div class="nav-chapter-title" style="color:#22d3ee">Ch.8 — 네트워크</div>
+  <div class="nav-sections">
+    <a href="#osi" class="nav-sec-link">OSI7계층</a>
+    <a href="#tcp" class="nav-sec-link">TCP핸드셰이크</a>
+    <a href="#http" class="nav-sec-link">HTTP요청응답</a>
+    <a href="#dns" class="nav-sec-link">DNS조회</a>
+  </div>
+</nav>
+
+<div class="chapter-banner cb8" style="--cb8-color:#22d3ee;">
+  <div class="ch-num">CHAPTER 08</div>
+  <h2 style="color:#22d3ee">네트워크</h2>
+  <p class="ch-desc">OSI 7계층, TCP 핸드셰이크, HTTP 요청/응답, DNS 조회 과정을 시각화합니다.</p>
+  <div class="ch-pills">
+    <span>OSI7계층</span><span>TCP핸드셰이크</span><span>HTTP요청응답</span><span>DNS조회</span>
+  </div>
+</div>
+
+<!-- OSI 7계층 -->
+<section id="osi">
+  <div class="section-header">
+    <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">OSI</div>
+    <h2>OSI 7계층 모델</h2>
+    <p>각 계층을 클릭하여 역할과 프로토콜 예시를 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div class="osi-stack" id="osiStack"></div>
+    <div class="info-text" style="margin-top:16px;">계층을 클릭하면 상세 정보를 확인할 수 있습니다.</div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- TCP 3-way Handshake -->
+<section id="tcp">
+  <div class="section-header">
+    <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">TCP</div>
+    <h2>TCP 3-way 핸드셰이크</h2>
+    <p>연결 수립과 종료 과정을 단계별로 시뮬레이션합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn active" onclick="tcpNext()" id="tcpNextBtn">다음 단계 →</button>
+      <button class="btn danger" onclick="tcpReset()">초기화</button>
+    </div>
+    <div class="tcp-diagram">
+      <div class="tcp-node" id="tcpClient">
+        <div class="tcp-node-title">CLIENT</div>
+        <div class="tcp-node-state" id="tcpClientState">CLOSED</div>
+      </div>
+      <div class="tcp-node" id="tcpServer">
+        <div class="tcp-node-title" style="color:var(--accent2)">SERVER</div>
+        <div class="tcp-node-state" id="tcpServerState">LISTEN</div>
+      </div>
+    </div>
+    <div class="tcp-messages" id="tcpMessages"></div>
+    <div class="tcp-step-desc" id="tcpStepDesc">다음 단계 버튼을 눌러 TCP 핸드셰이크를 시작하세요.</div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- HTTP 요청/응답 -->
+<section id="http">
+  <div class="section-header">
+    <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">HTTP</div>
+    <h2>HTTP 요청 / 응답</h2>
+    <p>메서드와 상태코드를 선택하여 HTTP 메시지 구조를 확인하세요.</p>
+  </div>
+  <div class="viz-box">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:6px;">HTTP 메서드</div>
+        <select class="http-select" id="httpMethod" onchange="updateHTTP()">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="DELETE">DELETE</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);margin-bottom:6px;">응답 상태코드</div>
+        <select class="http-select" id="httpStatus" onchange="updateHTTP()">
+          <option value="200">200 OK</option>
+          <option value="201">201 Created</option>
+          <option value="204">204 No Content</option>
+          <option value="301">301 Moved Permanently</option>
+          <option value="304">304 Not Modified</option>
+          <option value="400">400 Bad Request</option>
+          <option value="401">401 Unauthorized</option>
+          <option value="403">403 Forbidden</option>
+          <option value="404">404 Not Found</option>
+          <option value="500">500 Internal Server Error</option>
+          <option value="502">502 Bad Gateway</option>
+          <option value="503">503 Service Unavailable</option>
+        </select>
+      </div>
+    </div>
+    <div class="http-layout">
+      <div class="http-panel">
+        <div class="http-panel-title">REQUEST →</div>
+        <div id="httpReqPanel"></div>
+      </div>
+      <div class="http-panel">
+        <div class="http-panel-title">← RESPONSE</div>
+        <div id="httpResPanel"></div>
+      </div>
+    </div>
+    <table class="status-table" style="margin-top:24px;">
+      <thead><tr><th>코드</th><th>의미</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td class="http-status-2">1xx</td><td>정보</td><td>요청 수신, 처리 중</td></tr>
+        <tr><td class="http-status-2">2xx</td><td>성공</td><td>요청 성공적으로 처리됨</td></tr>
+        <tr><td class="http-status-3">3xx</td><td>리다이렉션</td><td>추가 동작 필요</td></tr>
+        <tr><td class="http-status-4">4xx</td><td>클라이언트 오류</td><td>잘못된 요청</td></tr>
+        <tr><td class="http-status-5">5xx</td><td>서버 오류</td><td>서버 처리 실패</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- DNS 조회 -->
+<section id="dns">
+  <div class="section-header">
+    <div class="tag" style="background:rgba(34,211,238,0.12);color:#22d3ee;">DNS</div>
+    <h2>DNS 조회 과정</h2>
+    <p>도메인 이름이 IP 주소로 변환되는 과정을 단계별로 확인합니다.</p>
+  </div>
+  <div class="viz-box">
+    <div class="controls">
+      <button class="btn active" onclick="dnsNext()" id="dnsNextBtn">다음 단계 →</button>
+      <button class="btn danger" onclick="dnsReset()">초기화</button>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-dim);margin-bottom:12px;">
+      조회 도메인: <span style="color:#22d3ee">www.example.com</span>
+    </div>
+    <div class="dns-nodes" id="dnsNodes"></div>
+    <div class="info-text" id="dnsInfo" style="margin-top:16px;">다음 단계 버튼을 눌러 DNS 조회를 시작하세요.</div>
+  </div>
+</section>
+
+<footer>CS Visualizer · <a href="index.html" style="color:var(--accent);text-decoration:none;">목차로 돌아가기</a></footer>
+
+<script>
+/* ===== OSI 7계층 ===== */
+const OSI_LAYERS = [
+  {
+    num: 7, name: '응용 계층', en: 'Application',
+    unit: '데이터', color: 'var(--accent)',
+    desc: '사용자와 직접 상호작용하는 최상위 계층입니다. 네트워크 서비스를 응용 프로그램에 제공합니다.',
+    examples: 'HTTP, HTTPS, FTP, SMTP, DNS, SSH, Telnet'
+  },
+  {
+    num: 6, name: '표현 계층', en: 'Presentation',
+    unit: '데이터', color: 'var(--accent3)',
+    desc: '데이터의 형식 변환, 암호화, 압축을 담당합니다. 서로 다른 시스템 간의 데이터 표현 방식을 통일합니다.',
+    examples: 'SSL/TLS, JPEG, PNG, ASCII, Unicode, MPEG'
+  },
+  {
+    num: 5, name: '세션 계층', en: 'Session',
+    unit: '데이터', color: 'var(--accent4)',
+    desc: '통신 세션을 설정, 유지, 종료하는 역할을 합니다. 대화 제어와 동기화를 관리합니다.',
+    examples: 'NetBIOS, RPC, NFS, SQL, SIP'
+  },
+  {
+    num: 4, name: '전송 계층', en: 'Transport',
+    unit: '세그먼트', color: 'var(--accent2)',
+    desc: '종단 간(end-to-end) 신뢰성 있는 데이터 전송을 보장합니다. 포트 번호로 프로세스를 구분합니다.',
+    examples: 'TCP, UDP, SCTP — 포트: HTTP(80), HTTPS(443), SSH(22)'
+  },
+  {
+    num: 3, name: '네트워크 계층', en: 'Network',
+    unit: '패킷', color: 'var(--success)',
+    desc: '서로 다른 네트워크 간의 경로 선택(라우팅)과 논리 주소(IP) 지정을 담당합니다.',
+    examples: 'IP(IPv4/IPv6), ICMP, ARP, OSPF, BGP, 라우터'
+  },
+  {
+    num: 2, name: '데이터링크 계층', en: 'Data Link',
+    unit: '프레임', color: 'var(--danger)',
+    desc: '물리적으로 연결된 두 노드 간의 신뢰성 있는 전송을 담당합니다. MAC 주소로 장치를 식별합니다.',
+    examples: 'Ethernet, Wi-Fi(802.11), PPP, MAC 주소, 스위치, 브리지'
+  },
+  {
+    num: 1, name: '물리 계층', en: 'Physical',
+    unit: '비트', color: 'var(--text-dim)',
+    desc: '물리적 매체를 통한 비트 스트림 전송을 담당합니다. 전기적, 광학적 신호를 정의합니다.',
+    examples: 'USB, RJ45, 광케이블, 허브, 리피터, RS-232'
+  },
+];
+
+let osiOpen = new Set();
+
+function renderOSI() {
+  const stack = document.getElementById('osiStack');
+  stack.innerHTML = OSI_LAYERS.map(layer => {
+    const isOpen = osiOpen.has(layer.num);
+    return `<div class="osi-layer" onclick="toggleOSI(${layer.num})" style="${isOpen ? 'border-color:'+layer.color+';background:rgba(0,0,0,0.15)' : ''}">
+      <div class="osi-layer-header">
+        <span class="osi-num" style="color:${layer.color}">${layer.num}</span>
+        <span class="osi-name" style="color:${layer.color}">${layer.name}</span>
+        <span class="osi-en">${layer.en}</span>
+        <span class="osi-unit" style="border-color:${layer.color}33;color:${layer.color}">${layer.unit}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text-dim);margin-left:8px;">${isOpen ? '▲' : '▼'}</span>
+      </div>
+      ${isOpen ? `<div class="osi-detail">
+        <p>${layer.desc}</p>
+        <div class="osi-examples" style="color:${layer.color}">프로토콜/예시: ${layer.examples}</div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function toggleOSI(num) {
+  if (osiOpen.has(num)) osiOpen.delete(num);
+  else osiOpen.add(num);
+  renderOSI();
+}
+
+renderOSI();
+
+/* ===== TCP 3-way 핸드셰이크 ===== */
+const TCP_STEPS = [
+  {
+    msg: 'SYN', dir: 'c2s',
+    clientState: 'SYN-SENT', serverState: 'LISTEN',
+    desc: '① 클라이언트가 연결을 요청합니다. SYN 패킷을 서버로 전송 (seq=100)',
+    arrow: '→'
+  },
+  {
+    msg: 'SYN-ACK', dir: 's2c',
+    clientState: 'SYN-RECEIVED', serverState: 'SYN-RECEIVED',
+    desc: '② 서버가 SYN을 받고 SYN-ACK로 응답합니다. (seq=300, ack=101)',
+    arrow: '←'
+  },
+  {
+    msg: 'ACK', dir: 'c2s',
+    clientState: 'ESTABLISHED', serverState: 'ESTABLISHED',
+    desc: '③ 클라이언트가 ACK를 보내 연결을 확립합니다. (ack=301) — 3-way 핸드셰이크 완료!',
+    arrow: '→'
+  },
+  {
+    msg: '연결 완료 — 데이터 전송 중...', dir: 'info',
+    clientState: 'ESTABLISHED', serverState: 'ESTABLISHED',
+    desc: '✓ TCP 연결이 수립되었습니다. 신뢰성 있는 양방향 통신이 가능합니다.',
+    arrow: '⟷'
+  },
+  {
+    msg: 'FIN', dir: 'c2s',
+    clientState: 'FIN-WAIT-1', serverState: 'ESTABLISHED',
+    desc: '④ 클라이언트가 연결 종료를 요청합니다. (4-way close 시작)',
+    arrow: '→'
+  },
+  {
+    msg: 'ACK', dir: 's2c',
+    clientState: 'FIN-WAIT-2', serverState: 'CLOSE-WAIT',
+    desc: '⑤ 서버가 FIN을 확인합니다.',
+    arrow: '←'
+  },
+  {
+    msg: 'FIN', dir: 's2c',
+    clientState: 'TIME-WAIT', serverState: 'LAST-ACK',
+    desc: '⑥ 서버도 연결 종료를 요청합니다.',
+    arrow: '←'
+  },
+  {
+    msg: 'ACK', dir: 'c2s',
+    clientState: 'CLOSED', serverState: 'CLOSED',
+    desc: '⑦ 클라이언트가 최종 ACK를 보냅니다. 연결이 완전히 종료됩니다.',
+    arrow: '→'
+  },
+];
+
+let tcpStep = 0;
+
+function tcpNext() {
+  if (tcpStep >= TCP_STEPS.length) return;
+  const step = TCP_STEPS[tcpStep];
+
+  document.getElementById('tcpClientState').textContent = step.clientState;
+  document.getElementById('tcpServerState').textContent = step.serverState;
+
+  // Color states
+  const clientStateEl = document.getElementById('tcpClientState');
+  const serverStateEl = document.getElementById('tcpServerState');
+  const stateColor = (s) => {
+    if (s === 'ESTABLISHED') return 'var(--accent)';
+    if (s === 'CLOSED') return 'var(--text-dim)';
+    if (s.includes('WAIT') || s.includes('LAST')) return 'var(--accent4)';
+    return 'var(--accent2)';
+  };
+  clientStateEl.style.color = stateColor(step.clientState);
+  serverStateEl.style.color = stateColor(step.serverState);
+
+  const msgs = document.getElementById('tcpMessages');
+  if (step.dir !== 'info') {
+    const el = document.createElement('div');
+    el.className = `tcp-msg ${step.dir}`;
+    el.innerHTML = `<span class="tcp-msg-arrow">${step.arrow}</span><span class="tcp-msg-text">${step.msg}</span>`;
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+  } else {
+    const el = document.createElement('div');
+    el.style.cssText = 'font-family:JetBrains Mono,monospace;font-size:0.82rem;color:var(--accent);text-align:center;padding:10px;background:rgba(0,255,170,0.06);border-radius:8px;border:1px solid rgba(0,255,170,0.2);animation:fadeSlideIn 0.3s;';
+    el.textContent = step.msg;
+    msgs.appendChild(el);
+  }
+
+  document.getElementById('tcpStepDesc').textContent = step.desc;
+  tcpStep++;
+
+  if (tcpStep >= TCP_STEPS.length) {
+    document.getElementById('tcpNextBtn').disabled = true;
+    document.getElementById('tcpNextBtn').textContent = '완료';
+  }
+}
+
+function tcpReset() {
+  tcpStep = 0;
+  document.getElementById('tcpClientState').textContent = 'CLOSED';
+  document.getElementById('tcpClientState').style.color = '';
+  document.getElementById('tcpServerState').textContent = 'LISTEN';
+  document.getElementById('tcpServerState').style.color = '';
+  document.getElementById('tcpMessages').innerHTML = '';
+  document.getElementById('tcpStepDesc').textContent = '다음 단계 버튼을 눌러 TCP 핸드셰이크를 시작하세요.';
+  document.getElementById('tcpNextBtn').disabled = false;
+  document.getElementById('tcpNextBtn').textContent = '다음 단계 →';
+}
+
+/* ===== HTTP 요청/응답 ===== */
+const HTTP_BODIES = {
+  GET: {
+    req: '',
+    res200: '{\n  "id": 1,\n  "name": "홍길동",\n  "email": "hong@example.com"\n}',
+  },
+  POST: {
+    req: '{\n  "name": "김철수",\n  "email": "kim@example.com"\n}',
+    res200: '{\n  "id": 2,\n  "name": "김철수",\n  "message": "Created"\n}',
+  },
+  PUT: {
+    req: '{\n  "name": "이영희",\n  "email": "lee@example.com"\n}',
+    res200: '{\n  "id": 1,\n  "name": "이영희",\n  "message": "Updated"\n}',
+  },
+  DELETE: {
+    req: '',
+    res200: '{\n  "message": "Deleted successfully"\n}',
+  },
+};
+
+const HTTP_STATUS_TEXTS = {
+  '200': 'OK', '201': 'Created', '204': 'No Content',
+  '301': 'Moved Permanently', '304': 'Not Modified',
+  '400': 'Bad Request', '401': 'Unauthorized', '403': 'Forbidden',
+  '404': 'Not Found',
+  '500': 'Internal Server Error', '502': 'Bad Gateway', '503': 'Service Unavailable'
+};
+
+function updateHTTP() {
+  const method = document.getElementById('httpMethod').value;
+  const statusCode = document.getElementById('httpStatus').value;
+  const statusText = HTTP_STATUS_TEXTS[statusCode] || 'Unknown';
+  const statusClass = 'http-status-' + statusCode[0];
+  const body = HTTP_BODIES[method] || HTTP_BODIES.GET;
+  const endpoints = { GET: '/api/users/1', POST: '/api/users', PUT: '/api/users/1', DELETE: '/api/users/1' };
+  const url = endpoints[method] || '/api/resource';
+
+  const methodColors = { GET: 'var(--accent)', POST: 'var(--accent2)', PUT: 'var(--accent4)', DELETE: 'var(--danger)' };
+  const mColor = methodColors[method] || 'var(--accent)';
+
+  const reqPanel = document.getElementById('httpReqPanel');
+  const bodyLines = body.req ? body.req.split('\n').map(l =>
+    `<div class="http-line http-body-line">${escapeHTML(l)}</div>`).join('') : '';
+
+  reqPanel.innerHTML = `
+    <div class="http-line"><span style="color:${mColor};font-weight:700">${method}</span> <span class="http-url">${url}</span> <span style="color:var(--text-dim)">HTTP/1.1</span></div>
+    <div class="http-line"><span class="http-header-k">Host:</span> <span class="http-header-v">api.example.com</span></div>
+    <div class="http-line"><span class="http-header-k">Accept:</span> <span class="http-header-v">application/json</span></div>
+    <div class="http-line"><span class="http-header-k">Authorization:</span> <span class="http-header-v">Bearer eyJhbGci...</span></div>
+    <div class="http-line"><span class="http-header-k">User-Agent:</span> <span class="http-header-v">Mozilla/5.0</span></div>
+    ${body.req ? `<div class="http-line"><span class="http-header-k">Content-Type:</span> <span class="http-header-v">application/json</span></div>
+    <div class="http-line"><span class="http-header-k">Content-Length:</span> <span class="http-header-v">${body.req.length}</span></div>
+    <div class="http-line" style="margin-top:8px;color:var(--text-dim)">— body —</div>
+    ${bodyLines}` : ''}
+  `;
+
+  const resPanel = document.getElementById('httpResPanel');
+  const resBodySrc = parseInt(statusCode) >= 200 && parseInt(statusCode) < 300 ? body.res200 :
+    `{\n  "error": "${statusText}",\n  "code": ${statusCode}\n}`;
+  const resBodyLines = resBodySrc.split('\n').map(l =>
+    `<div class="http-line http-body-line">${escapeHTML(l)}</div>`).join('');
+
+  resPanel.innerHTML = `
+    <div class="http-line"><span style="color:var(--text-dim)">HTTP/1.1</span> <span class="${statusClass}">${statusCode} ${statusText}</span></div>
+    <div class="http-line"><span class="http-header-k">Content-Type:</span> <span class="http-header-v">application/json</span></div>
+    <div class="http-line"><span class="http-header-k">Date:</span> <span class="http-header-v">Thu, 27 Feb 2026 00:00:00 GMT</span></div>
+    <div class="http-line"><span class="http-header-k">Server:</span> <span class="http-header-v">nginx/1.24.0</span></div>
+    <div class="http-line"><span class="http-header-k">Cache-Control:</span> <span class="http-header-v">no-cache</span></div>
+    ${statusCode !== '204' ? `<div class="http-line" style="margin-top:8px;color:var(--text-dim)">— body —</div>${resBodyLines}` : ''}
+  `;
+}
+
+function escapeHTML(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+updateHTTP();
+
+/* ===== DNS 조회 ===== */
+const DNS_STEPS = [
+  {
+    icon: '🌐',
+    name: '브라우저 캐시',
+    desc: 'www.example.com 의 IP를 브라우저 캐시에서 검색합니다.',
+    packet: '캐시 미스',
+    result: null
+  },
+  {
+    icon: '💻',
+    name: 'OS / hosts 파일',
+    desc: '/etc/hosts 파일과 OS DNS 캐시를 검색합니다.',
+    packet: '캐시 미스',
+    result: null
+  },
+  {
+    icon: '🔄',
+    name: 'Recursive Resolver',
+    desc: 'ISP 또는 로컬 DNS 서버에 재귀 질의를 요청합니다.',
+    packet: 'Query: www.example.com?',
+    result: null
+  },
+  {
+    icon: '🌍',
+    name: 'Root Name Server',
+    desc: '루트 네임서버에 .com TLD 서버 주소를 요청합니다.',
+    packet: 'Referral → .com TLD',
+    result: '192.5.6.30'
+  },
+  {
+    icon: '📡',
+    name: 'TLD Name Server (.com)',
+    desc: '.com TLD 서버에서 example.com의 권한 서버 주소를 반환합니다.',
+    packet: 'Referral → Authoritative',
+    result: '205.251.196.1'
+  },
+  {
+    icon: '🏢',
+    name: 'Authoritative Name Server',
+    desc: 'example.com의 권한 서버에서 최종 IP 주소를 반환합니다.',
+    packet: 'A Record: 93.184.216.34',
+    result: '93.184.216.34'
+  },
+  {
+    icon: '✅',
+    name: 'IP 주소 반환',
+    desc: 'www.example.com → 93.184.216.34 로 해석 완료! 브라우저가 해당 IP로 TCP 연결을 시도합니다.',
+    packet: '93.184.216.34',
+    result: '93.184.216.34'
+  },
+];
+
+let dnsStep = -1;
+
+function renderDNS() {
+  const container = document.getElementById('dnsNodes');
+  container.innerHTML = DNS_STEPS.map((step, i) => {
+    let cls = 'dns-node';
+    if (i < dnsStep) cls += ' done';
+    else if (i === dnsStep) cls += ' active';
+    return `<div class="${cls}" id="dns-node-${i}">
+      <span class="dns-node-icon">${step.icon}</span>
+      <span class="dns-node-name">${step.name}</span>
+      <span class="dns-node-desc">${i <= dnsStep ? step.desc : '대기 중...'}</span>
+      ${i <= dnsStep && step.packet ? `<span class="dns-packet">${step.packet}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function dnsNext() {
+  dnsStep++;
+  if (dnsStep >= DNS_STEPS.length) {
+    dnsStep = DNS_STEPS.length;
+    document.getElementById('dnsNextBtn').disabled = true;
+    document.getElementById('dnsNextBtn').textContent = '완료';
+    document.getElementById('dnsInfo').textContent =
+      '✓ DNS 조회 완료: www.example.com = 93.184.216.34 (TTL: 3600s)';
+    renderDNS();
+    return;
+  }
+  renderDNS();
+  const step = DNS_STEPS[dnsStep];
+  const msgs = [
+    '브라우저 캐시를 확인합니다...',
+    'OS 캐시 및 hosts 파일을 확인합니다...',
+    'Recursive Resolver에 DNS 질의를 보냅니다...',
+    'Root Name Server에 .com TLD 서버를 질의합니다...',
+    '.com TLD 서버에서 권한 서버 주소를 가져옵니다...',
+    '권한 서버에서 최종 IP 주소를 가져옵니다...',
+    `DNS 해석 완료! IP: ${step.result}`,
+  ];
+  document.getElementById('dnsInfo').textContent = msgs[dnsStep] || '';
+}
+
+function dnsReset() {
+  dnsStep = -1;
+  document.getElementById('dnsNextBtn').disabled = false;
+  document.getElementById('dnsNextBtn').textContent = '다음 단계 →';
+  document.getElementById('dnsInfo').textContent = '다음 단계 버튼을 눌러 DNS 조회를 시작하세요.';
+  renderDNS();
+}
+
+renderDNS();
+</script>
+</body>
+</html>
