@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -94,5 +94,20 @@
 <footer>
   <p>CS Visualizer · MIT License · <a href="https://github.com/M1zz/cs-visualizer" style="color:var(--accent);text-decoration:none;">GitHub</a></p>
 </footer>
+<button class="theme-toggle-btn" id="themeToggleIndex" title="다크 모드로 전환">🌙</button>
+<script>
+(function(){
+  const btn=document.getElementById('themeToggleIndex');
+  const saved=localStorage.getItem('cs_viz_theme')||'light';
+  document.documentElement.setAttribute('data-theme',saved);
+  function upd(){const dark=document.documentElement.getAttribute('data-theme')==='dark';btn.textContent=dark?'☀️':'🌙';btn.title=dark?'라이트 모드로 전환':'다크 모드로 전환';}
+  upd();
+  btn.addEventListener('click',()=>{
+    const next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('cs_viz_theme',next);upd();
+  });
+})();
+</script>
 </body>
 </html>

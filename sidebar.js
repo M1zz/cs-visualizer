@@ -1,3 +1,9 @@
+// 테마 초기화 (flash 최소화)
+(function(){
+  const saved=localStorage.getItem('cs_viz_theme')||'light';
+  document.documentElement.setAttribute('data-theme',saved);
+})();
+
 (function () {
   // 챕터 색상 가져오기
   const navTitle = document.querySelector('.nav-chapter-title');
@@ -93,4 +99,18 @@
 
   // 초기 활성화
   if (sections[0]) setActive(sections[0].id);
+})();
+
+// 테마 토글 버튼
+(function(){
+  const btn=document.createElement('button');
+  btn.className='theme-toggle-btn';
+  function upd(){const dark=document.documentElement.getAttribute('data-theme')==='dark';btn.textContent=dark?'☀️':'🌙';btn.title=dark?'라이트 모드로 전환':'다크 모드로 전환';}
+  upd();
+  btn.addEventListener('click',()=>{
+    const next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('cs_viz_theme',next);upd();
+  });
+  document.body.appendChild(btn);
 })();
